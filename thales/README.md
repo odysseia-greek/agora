@@ -20,4 +20,4 @@ Common layer for odysseia-greek it holds the kubernetes interface
 
 ## Usage
 
-`go get github.com/odysseia-greek/thales`
+`go get github.com/odysseia-greek/agora/thales`

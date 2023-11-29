@@ -1,7 +1,7 @@
 package thales
 
 import (
-	"github.com/odysseia-greek/thales/models"
+	"github.com/odysseia-greek/agora/thales/models"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	v1cert "k8s.io/api/certificates/v1"

@@ -1,7 +1,7 @@
 package thales
 
 import (
-	"github.com/odysseia-greek/thales/models"
+	"github.com/odysseia-greek/agora/thales/models"
 	"io/ioutil"
 )
 

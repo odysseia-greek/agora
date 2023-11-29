@@ -1,7 +1,7 @@
 package thales
 
 import (
-	"github.com/odysseia-greek/thales/models"
+	"github.com/odysseia-greek/agora/thales/models"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"path/filepath"

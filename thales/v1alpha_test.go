@@ -1,7 +1,7 @@
 package thales
 
 import (
-	"github.com/odysseia-greek/thales/crd/v1alpha"
+	"github.com/odysseia-greek/agora/thales/crd/v1alpha"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"testing"

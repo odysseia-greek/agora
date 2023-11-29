@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/odysseia-greek/thales/crd/v1alpha"
+	"github.com/odysseia-greek/agora/thales/crd/v1alpha"
 	"io/ioutil"
 	appsv1 "k8s.io/api/apps/v1"
 	apiextensionv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
