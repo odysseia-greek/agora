@@ -1,0 +1,7 @@
+venv
+.idea
+.code
+Dockerfile
+Makefile
+__pycache__
+README.md
