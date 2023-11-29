@@ -6,4 +6,4 @@ Common layer for odysseia-greek it holds the elasticsearch interface
 
 ## Usage
 
-`go get github.com/odysseia-greek/aristoteles`
+`go get github.com/odysseia-greek/agora/aristoteles`

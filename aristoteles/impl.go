@@ -5,7 +5,7 @@ import (
 	"crypto/x509"
 	"errors"
 	"github.com/elastic/go-elasticsearch/v8"
-	"github.com/odysseia-greek/aristoteles/models"
+	"github.com/odysseia-greek/agora/aristoteles/models"
 	"log"
 	"net/http"
 	"time"

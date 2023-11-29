@@ -4,7 +4,6 @@ go 1.20
 
 require (
 	github.com/elastic/go-elasticsearch/v8 v8.11.1
-	github.com/odysseia-greek/aristoteles v0.6.0
 	github.com/stretchr/testify v1.8.4
 )
 

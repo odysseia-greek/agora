@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/elastic/go-elasticsearch/v8/esapi"
-	"github.com/odysseia-greek/aristoteles/models"
+	"github.com/odysseia-greek/agora/aristoteles/models"
 	"io"
 )
 

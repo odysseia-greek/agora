@@ -2,7 +2,7 @@ package aristoteles
 
 import (
 	"fmt"
-	"github.com/odysseia-greek/aristoteles/models"
+	"github.com/odysseia-greek/agora/aristoteles/models"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
