@@ -1,4 +1,4 @@
-package cache
+package archytas
 
 import (
 	"github.com/dgraph-io/badger/v3"
