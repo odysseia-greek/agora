@@ -10,11 +10,11 @@ import (
 func TestFilePath(t *testing.T) {
 	homeDir, err := os.UserHomeDir()
 	assert.Nil(t, err)
-	defaultPath := "odysseia-greek"
+	defaultPath := "agora"
 
 	t.Run("LocalFilePath", func(t *testing.T) {
 		filePath := OdysseiaRootPath(defaultPath)
-		sut := filepath.Join(homeDir, "/go/src/github.com/", defaultPath)
+		sut := filepath.Join(homeDir, "/go/src/github.com/", ODYSSEIA_PATH, defaultPath)
 		assert.Equal(t, sut, filePath)
 	})
 
@@ -27,7 +27,7 @@ func TestFilePath(t *testing.T) {
 	t.Run("PlatoPathFlat", func(t *testing.T) {
 		filePath := OdysseiaRootPath(defaultPath)
 		platoPath := PlatoPath(filePath)
-		sut := filepath.Join(homeDir, "/go/src/github.com/", defaultPath, PLATO)
+		sut := filepath.Join(homeDir, "/go/src/github.com/", ODYSSEIA_PATH, defaultPath, PLATO)
 		assert.Equal(t, sut, platoPath)
 	})
 

@@ -15,6 +15,15 @@ We welcome contributions to the Agora repository. For detailed guidelines on how
 
 ## Interfaces
 
+### Archytas - Ἀρχύτας
+
+Ἀνάγκη γάρ ποτε τῷ ἀκριβεῖ λόγῳ τὰ πολλὰ τῶν ἀνθρώπων ὑποτεταχέναι - For many things among men are necessarily subjected to accurate reason.
+
+<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a4/Archytas_of_Taras.jpg/220px-Archytas_of_Taras.jpg" alt="Aristoteles" width="200"/>
+
+Cache interface
+
+
 ### Aristoteles - Ἀριστοτέλης
 
 Τριών δει παιδεία: φύσεως, μαθήσεως, ασκήσεως. - Education needs these three: natural endowment, study, practice.
