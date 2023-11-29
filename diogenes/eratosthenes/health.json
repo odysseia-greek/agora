@@ -1,0 +1,18 @@
+{
+  "initialized": true,
+  "sealed": false,
+  "standby": false,
+  "performance_standby": false,
+  "replication_performance_mode": "disabled",
+  "replication_dr_mode": "disabled",
+  "server_time_utc": 1626898586,
+  "version": "1.7.2",
+  "cluster_name": "vault-cluster-1c1615af",
+  "cluster_id": "b04a5d1a-dc7e-1fd1-a3db-25f6186a21c4",
+  "raft_cluster": {
+    "peers": [
+      "https://127.0.0.1:8200"
+    ],
+    "leader": ""
+  }
+}

@@ -1,0 +1,20 @@
+GRPC localhost:50051/proto.Eupalinos/EnqueueMessage
+
+{
+  "data": "{\"method\":\"\",\"category\":\"\",\"greek\":\"Ἄβδηρα\",\"translation\":\"town of Abdera, known for stupidity of inhabitants\",\"chapter\":57}",
+  "channel": "eupalinos"
+}
+
+###
+GRPC localhost:50052/proto.Eupalinos/DequeueMessage
+
+{
+  "name": "test-channel"
+}
+
+###
+GRPC localhost:50051/proto.Eupalinos/GetQueueLength
+
+{
+  "name": "eupalinos"
+}

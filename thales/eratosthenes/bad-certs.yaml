@@ -1,0 +1,19 @@
+apiVersion: v1
+clusters:
+  - cluster:
+      certificate-authority-data: VEhJU0lTTk9UQVJFQUxDRVJUCg==
+      server: https://kubernetes.internal:6443
+    name: odysseia-test
+contexts:
+  - context:
+      cluster: odysseia-test
+      user: odysseia-test
+    name: odysseia-test
+current-context: odysseia-test
+kind: Config
+preferences: {}
+users:
+  - name: odysseia-test
+    user:
+      client-certificate-data: VEhJU0lTTk9UQVJFQUxDRVJUCg==
+      client-key-data: VEhJU0lTTk9UQVJFQUxLRVkK==

@@ -1,0 +1,64 @@
+syntax = "proto3";
+option go_package = "github.com/odysseia-greek/agora/eupalinos/proto";
+
+package proto;
+
+enum Operation {
+  ENQUEUE = 0;
+  DEQUEUE = 1;
+}
+
+// Internal Epistello message with traceid
+message InternalEpistello {
+  string id = 1;
+  string data = 2;
+  string channel = 4;
+  string traceid = 5;
+}
+
+// Public Epistello message without traceid
+message Epistello {
+  string id = 1;
+  string data = 2;
+  string channel = 4;
+}
+
+message MessageUpdate {
+  Operation operation = 1;
+  InternalEpistello message = 2;
+}
+
+message Diexodos {
+  string name = 1;
+}
+
+// Message for specifying the channel name
+message ChannelInfo {
+  string name = 1;
+}
+
+message Empty {}
+
+// Response message for getting the length of the queue
+message QueueLength {
+  int32 length = 1;
+}
+
+message EnqueueResponse {
+  string id = 1;
+}
+
+
+service Eupalinos {
+  // Bidirectional Streaming for task updates between Eupalinos pods
+  rpc StreamQueueUpdates(stream MessageUpdate) returns (stream InternalEpistello);
+
+  // Unary RPC for epistello enqueueing
+  rpc EnqueueMessage(Epistello) returns (EnqueueResponse);
+
+  // Unary RPC for epistello dequeueing
+  rpc DequeueMessage(ChannelInfo) returns (Epistello);
+
+  // Unary RPC for getting the length of the queue
+  rpc GetQueueLength(ChannelInfo) returns (QueueLength);
+}

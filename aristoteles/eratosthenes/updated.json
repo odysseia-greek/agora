@@ -1,0 +1,13 @@
+{
+  "_index": "tracing-2023.08.15",
+  "_id": "841a4f73-ba5b-4c38-9237-e1ad91459028",
+  "_version": 2,
+  "result": "updated",
+  "_shards": {
+    "total": 2,
+    "successful": 1,
+    "failed": 0
+  },
+  "_seq_no": 119,
+  "_primary_term": 4
+}

@@ -1,0 +1,112 @@
+{
+  "took": 8,
+  "timed_out": false,
+  "_shards": {
+    "total": 1,
+    "successful": 1,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": {
+      "value": 8,
+      "relation": "eq"
+    },
+    "max_score": 1.0,
+    "hits": [
+      {
+        "_index": "dictionary",
+        "_type": "_doc",
+        "_id": "Wkzd1ocBSKBq_nTnS81A",
+        "_score": 1.0,
+        "_source": {
+          "greek": "ως",
+          "english": "as, since, so that (+ subj / opt ), (indirectstatement) that, to (+ acc .)",
+          "original": "ὡς",
+          "dutch": "om te (geeft een bedoeling aan)"
+        }
+      },
+      {
+        "_index": "dictionary",
+        "_type": "_doc",
+        "_id": "zEzd1ocBSKBq_nTnfM67",
+        "_score": 1.0,
+        "_source": {
+          "greek": "γῆρας –ως, τό",
+          "english": "old age",
+          "dutch": "om te (geeft een bedoeling aan)"
+        }
+      },
+      {
+        "_index": "dictionary",
+        "_type": "_doc",
+        "_id": "-kzd1ocBSKBq_nTng87E",
+        "_score": 1.0,
+        "_source": {
+          "greek": "γηρας –ως, το",
+          "english": "old age",
+          "original": "γῆρας –ως, τό",
+          "dutch": "om te (geeft een bedoeling aan)"
+        }
+      },
+      {
+        "_index": "dictionary",
+        "_type": "_doc",
+        "_id": "Lkzd1ocBSKBq_nTnaM5c",
+        "_score": 1.0,
+        "_source": {
+          "greek": "γέρας –ως, τό",
+          "english": "prize",
+          "dutch": "om te (geeft een bedoeling aan)"
+        }
+      },
+      {
+        "_index": "dictionary",
+        "_type": "_doc",
+        "_id": "Y0zd1ocBSKBq_nTnb85x",
+        "_score": 1.0,
+        "_source": {
+          "greek": "γερας –ως, το",
+          "english": "prize",
+          "original": "γέρας –ως, τό",
+          "dutch": "om te (geeft een bedoeling aan)"
+        }
+      },
+      {
+        "_index": "dictionary",
+        "_type": "_doc",
+        "_id": "fUzj1ocBSKBq_nTnnuIM",
+        "_score": 1.0,
+        "_source": {
+          "greek": "ως (als οτι)",
+          "english": "",
+          "dutch": "om te (geeft een bedoeling aan)",
+          "original": "ὡς (als ὅτι)"
+        }
+      },
+      {
+        "_index": "dictionary",
+        "_type": "_doc",
+        "_id": "d0zj1ocBSKBq_nTnnOJK",
+        "_score": 1.0,
+        "_source": {
+          "greek": "ως in vergelijkingen",
+          "english": "",
+          "dutch": "om te (geeft een bedoeling aan)",
+          "original": "ὡς in vergelijkingen"
+        }
+      },
+      {
+        "_index": "dictionary",
+        "_type": "_doc",
+        "_id": "ZUzk1ocBSKBq_nTnKuRM",
+        "_score": 1.0,
+        "_source": {
+          "greek": "ως",
+          "english": "as, how",
+          "original": "ὡς"
+        }
+      }
+    ]
+  }
+}
