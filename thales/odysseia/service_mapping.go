@@ -1,4 +1,4 @@
-package thales
+package odysseia
 
 import (
 	"bytes"
@@ -44,7 +44,7 @@ const (
 
 var updatedMapping v1alpha.Mapping
 
-func NewServiceMappingImpl(restConfig *rest.Config) (*ServiceMappingsImpl, error) {
+func NewServiceMappingImpl(restConfig *rest.Config) (ServiceMapping, error) {
 	config := *restConfig
 	config.ContentConfig.GroupVersion = &schema.GroupVersion{Group: v1alpha.GroupName, Version: v1alpha.Version}
 	config.APIPath = "/apis"
@@ -67,7 +67,7 @@ func NewServiceMappingImpl(restConfig *rest.Config) (*ServiceMappingsImpl, error
 	}, nil
 }
 
-func NewFakeServiceMappingImpl() (*ServiceMappingsImpl, error) {
+func NewFakeServiceMappingImpl() (ServiceMapping, error) {
 	ns := "odysseia"
 	mappingName := "testCrd"
 	kubeType := "Deployment"
