@@ -18,6 +18,8 @@ import (
 	fakeauthorizationv1 "k8s.io/client-go/kubernetes/typed/authorization/v1/fake"
 	batchv1 "k8s.io/client-go/kubernetes/typed/batch/v1"
 	fakebatchv1 "k8s.io/client-go/kubernetes/typed/batch/v1/fake"
+	certificatesv1 "k8s.io/client-go/kubernetes/typed/certificates/v1"
+	fakecertificatesv1 "k8s.io/client-go/kubernetes/typed/certificates/v1/fake"
 	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	fakecorev1 "k8s.io/client-go/kubernetes/typed/core/v1/fake"
 	rbacv1 "k8s.io/client-go/kubernetes/typed/rbac/v1"
@@ -40,6 +42,7 @@ type KubeClient struct {
 	discovery       discovery.DiscoveryInterface
 	authorizationV1 authorizationv1.AuthorizationV1Interface
 	apiextensionsV1 apiextensionsv1.ApiextensionsV1Interface
+	certificatesV1  certificatesv1.CertificatesV1Interface
 	dynamic         dynamic.Interface
 }
 
@@ -73,6 +76,7 @@ func NewFakeKubeClient() *KubeClient {
 		storageV1:       &fakestoragev1.FakeStorageV1{Fake: &fake},
 		authorizationV1: &fakeauthorizationv1.FakeAuthorizationV1{Fake: &fake},
 		apiextensionsV1: &fakeapiextensionsv1.FakeApiextensionsV1{Fake: &fake},
+		certificatesV1:  &fakecertificatesv1.FakeCertificatesV1{Fake: &fake},
 	}
 }
 
@@ -126,6 +130,11 @@ func NewKubeClient(c *rest.Config) (*KubeClient, error) {
 		return nil, err
 	}
 
+	kc.certificatesV1, err = certificatesv1.NewForConfigAndClient(c, httpClient)
+	if err != nil {
+		return nil, err
+	}
+
 	kc.dynamic, err = dynamic.NewForConfig(c)
 	if err != nil {
 		return nil, err
@@ -166,6 +175,10 @@ func (c *KubeClient) ApiextensionsV1() apiextensionsv1.ApiextensionsV1Interface 
 	return c.apiextensionsV1
 }
 
+func (c *KubeClient) CertificatesV1() certificatesv1.CertificatesV1Interface {
+	return c.certificatesV1
+}
+
 func (c *KubeClient) Dynamic() dynamic.Interface {
 	return c.dynamic
 }
@@ -176,6 +189,10 @@ func (c *KubeClient) Host() string {
 
 func (c *KubeClient) RestConfig() *rest.Config {
 	return c.config
+}
+
+func (c *KubeClient) Cert() corev1.CoreV1Interface {
+	return c.coreV1
 }
 
 func (c *KubeClient) KubeCliConfig(namespace string) (*genericclioptions.ConfigFlags, error) {
