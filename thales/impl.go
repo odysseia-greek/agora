@@ -12,6 +12,8 @@ import (
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
+	admissionregistrationv1 "k8s.io/client-go/kubernetes/typed/admissionregistration/v1"
+	fakeadmissionregistrationv1 "k8s.io/client-go/kubernetes/typed/admissionregistration/v1/fake"
 	appsv1 "k8s.io/client-go/kubernetes/typed/apps/v1"
 	fakeappsv1 "k8s.io/client-go/kubernetes/typed/apps/v1/fake"
 	authorizationv1 "k8s.io/client-go/kubernetes/typed/authorization/v1"
@@ -32,18 +34,20 @@ import (
 )
 
 type KubeClient struct {
-	fake            bool
-	config          *rest.Config
-	coreV1          corev1.CoreV1Interface
-	appsV1          appsv1.AppsV1Interface
-	rbacV1          rbacv1.RbacV1Interface
-	batchV1         batchv1.BatchV1Interface
-	storageV1       storagev1.StorageV1Interface
-	discovery       discovery.DiscoveryInterface
-	authorizationV1 authorizationv1.AuthorizationV1Interface
-	apiextensionsV1 apiextensionsv1.ApiextensionsV1Interface
-	certificatesV1  certificatesv1.CertificatesV1Interface
-	dynamic         dynamic.Interface
+	fake                    bool
+	config                  *rest.Config
+	coreV1                  corev1.CoreV1Interface
+	appsV1                  appsv1.AppsV1Interface
+	rbacV1                  rbacv1.RbacV1Interface
+	batchV1                 batchv1.BatchV1Interface
+	storageV1               storagev1.StorageV1Interface
+	discovery               discovery.DiscoveryInterface
+	authorizationV1         authorizationv1.AuthorizationV1Interface
+	apiextensionsV1         apiextensionsv1.ApiextensionsV1Interface
+	certificatesV1          certificatesv1.CertificatesV1Interface
+	admissionregistrationv1 admissionregistrationv1.AdmissionregistrationV1Interface
+
+	dynamic dynamic.Interface
 }
 
 func must(err error) {
@@ -68,15 +72,16 @@ func NewFakeKubeClient() *KubeClient {
 	fake.AddReactor("*", "*", testing.ObjectReaction(tracker))
 
 	return &KubeClient{
-		fake:            true,
-		coreV1:          &fakecorev1.FakeCoreV1{Fake: &fake},
-		appsV1:          &fakeappsv1.FakeAppsV1{Fake: &fake},
-		rbacV1:          &fakerbacv1.FakeRbacV1{Fake: &fake},
-		batchV1:         &fakebatchv1.FakeBatchV1{Fake: &fake},
-		storageV1:       &fakestoragev1.FakeStorageV1{Fake: &fake},
-		authorizationV1: &fakeauthorizationv1.FakeAuthorizationV1{Fake: &fake},
-		apiextensionsV1: &fakeapiextensionsv1.FakeApiextensionsV1{Fake: &fake},
-		certificatesV1:  &fakecertificatesv1.FakeCertificatesV1{Fake: &fake},
+		fake:                    true,
+		coreV1:                  &fakecorev1.FakeCoreV1{Fake: &fake},
+		appsV1:                  &fakeappsv1.FakeAppsV1{Fake: &fake},
+		rbacV1:                  &fakerbacv1.FakeRbacV1{Fake: &fake},
+		batchV1:                 &fakebatchv1.FakeBatchV1{Fake: &fake},
+		storageV1:               &fakestoragev1.FakeStorageV1{Fake: &fake},
+		authorizationV1:         &fakeauthorizationv1.FakeAuthorizationV1{Fake: &fake},
+		apiextensionsV1:         &fakeapiextensionsv1.FakeApiextensionsV1{Fake: &fake},
+		certificatesV1:          &fakecertificatesv1.FakeCertificatesV1{Fake: &fake},
+		admissionregistrationv1: &fakeadmissionregistrationv1.FakeAdmissionregistrationV1{Fake: &fake},
 	}
 }
 
@@ -135,6 +140,11 @@ func NewKubeClient(c *rest.Config) (*KubeClient, error) {
 		return nil, err
 	}
 
+	kc.admissionregistrationv1, err = admissionregistrationv1.NewForConfigAndClient(c, httpClient)
+	if err != nil {
+		return nil, err
+	}
+
 	kc.dynamic, err = dynamic.NewForConfig(c)
 	if err != nil {
 		return nil, err
@@ -177,6 +187,10 @@ func (c *KubeClient) ApiextensionsV1() apiextensionsv1.ApiextensionsV1Interface 
 
 func (c *KubeClient) CertificatesV1() certificatesv1.CertificatesV1Interface {
 	return c.certificatesV1
+}
+
+func (c *KubeClient) AdmissionRegistrationV1() admissionregistrationv1.AdmissionregistrationV1Interface {
+	return c.admissionregistrationv1
 }
 
 func (c *KubeClient) Dynamic() dynamic.Interface {
