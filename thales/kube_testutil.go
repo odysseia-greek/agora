@@ -16,7 +16,7 @@ const (
 	jobCommand    string            = "ls"
 )
 
-func CreatePodObject(name, ns, access, role string) *corev1.Pod {
+func TestPodObject(name, ns, access, role string) *corev1.Pod {
 	pod := &corev1.Pod{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       podKind,
@@ -51,7 +51,7 @@ func CreatePodObject(name, ns, access, role string) *corev1.Pod {
 	return pod
 }
 
-func CreatePodObjectWithExit(name, ns string) *corev1.Pod {
+func TestPodObjectWithExit(name, ns string) *corev1.Pod {
 	pod := &corev1.Pod{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       podKind,
@@ -106,7 +106,7 @@ func CreatePodObjectWithExit(name, ns string) *corev1.Pod {
 	return pod
 }
 
-func CreateJobObject(name, ns string, completed bool) *batchv1.Job {
+func TestJobObject(name, ns string, completed bool) *batchv1.Job {
 	var conditionType batchv1.JobConditionType
 	if completed {
 		conditionType = batchv1.JobComplete
@@ -150,7 +150,7 @@ func CreateJobObject(name, ns string, completed bool) *batchv1.Job {
 	return job
 }
 
-func CreateDeploymentObject(name, ns string) *appsv1.Deployment {
+func TestDeploymentObject(name, ns string) *appsv1.Deployment {
 	return &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{},
 		ObjectMeta: metav1.ObjectMeta{
@@ -171,7 +171,7 @@ func CreateDeploymentObject(name, ns string) *appsv1.Deployment {
 	}
 }
 
-func CreateAnnotatedDeploymentObject(name, ns string, annotations map[string]string) *appsv1.Deployment {
+func TestAnnotatedDeploymentObject(name, ns string, annotations map[string]string) *appsv1.Deployment {
 	return &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{},
 		ObjectMeta: metav1.ObjectMeta{
@@ -190,7 +190,7 @@ func CreateAnnotatedDeploymentObject(name, ns string, annotations map[string]str
 	}
 }
 
-func CreatePodSpecVolume(name, secretName string) []corev1.Volume {
+func TestPodSpecVolume(name, secretName string) []corev1.Volume {
 	return []corev1.Volume{
 		{
 			Name: name,
@@ -204,16 +204,4 @@ func CreatePodSpecVolume(name, secretName string) []corev1.Volume {
 			},
 		},
 	}
-}
-
-func CreatePodForTest(name, ns, access, role string, client KubeClient) error {
-	pod := CreatePodObject(name, ns, access, role)
-	_, err := client.Workload().CreatePod(ns, pod)
-	return err
-}
-
-func CreateDeploymentForTest(name, ns string, client KubeClient) error {
-	deploy := CreateDeploymentObject(name, ns)
-	_, err := client.Workload().CreateDeployment(ns, deploy)
-	return err
 }

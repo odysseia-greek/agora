@@ -1,4 +1,4 @@
-package thales
+package odysseia
 
 import (
 	"github.com/odysseia-greek/agora/thales/crd/v1alpha"
@@ -12,17 +12,17 @@ func TestServiceMappingClient(t *testing.T) {
 	ns := "odysseia"
 	updatedName := "fakemappingname"
 	updatedApiVersion := "fakeversionafterupdate"
-	testClient, err := FakeKubeClient(ns)
+	testClient, err := NewFakeServiceMappingImpl()
 	assert.Nil(t, err)
 
 	t.Run("Get", func(t *testing.T) {
-		sut, err := testClient.V1Alpha1().ServiceMapping().Get("sdfsdf")
+		sut, err := testClient.Get("sdfsdf")
 		assert.Nil(t, err)
 		assert.NotNil(t, sut)
 	})
 
 	t.Run("Create", func(t *testing.T) {
-		sut, err := testClient.V1Alpha1().ServiceMapping().Create(nil)
+		sut, err := testClient.Create(nil)
 		assert.Nil(t, err)
 		assert.NotNil(t, sut)
 	})
@@ -36,7 +36,7 @@ func TestServiceMappingClient(t *testing.T) {
 			Spec:       v1alpha.Spec{},
 		}
 		mapping.Name = updatedName
-		sut, err := testClient.V1Alpha1().ServiceMapping().Update(&mapping)
+		sut, err := testClient.Update(&mapping)
 		assert.Nil(t, err)
 		assert.NotNil(t, sut)
 		assert.Equal(t, updatedName, sut.Name)
@@ -52,9 +52,9 @@ func TestServiceMappingClient(t *testing.T) {
 			Spec:       v1alpha.Spec{},
 		}
 		mapping.Name = updatedName
-		_, err = testClient.V1Alpha1().ServiceMapping().Update(&mapping)
+		_, err = testClient.Update(&mapping)
 		assert.Nil(t, err)
-		sut, err := testClient.V1Alpha1().ServiceMapping().Get(updatedName)
+		sut, err := testClient.Get(updatedName)
 		assert.Nil(t, err)
 		assert.NotNil(t, sut)
 		assert.Equal(t, updatedName, sut.Name)
@@ -76,11 +76,11 @@ func TestServiceMappingClient(t *testing.T) {
 			Clients:    nil,
 		},
 		}
-		mapping, err := testClient.V1Alpha1().ServiceMapping().Parse(service, updatedName, ns)
+		mapping, err := testClient.Parse(service, updatedName, ns)
 		assert.Nil(t, err)
-		_, err = testClient.V1Alpha1().ServiceMapping().Update(mapping)
+		_, err = testClient.Update(mapping)
 		assert.Nil(t, err)
-		sut, err := testClient.V1Alpha1().ServiceMapping().Get(updatedName)
+		sut, err := testClient.Get(updatedName)
 		assert.Nil(t, err)
 		assert.NotNil(t, sut)
 		assert.Equal(t, updatedName, sut.Name)

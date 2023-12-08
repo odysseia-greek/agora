@@ -7,7 +7,6 @@ import (
 	"io"
 	"io/ioutil"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -19,18 +18,11 @@ import (
 	"strings"
 )
 
-type UtilImpl struct {
-	rest rest.Interface
-	ns   string
+func GetHostCaCertFromConfig(config *rest.Config) []byte {
+	return config.TLSClientConfig.CAData
 }
 
-func NewUtilClient(kube kubernetes.Interface, namespace string) (*UtilImpl, error) {
-	set := kube.CoreV1().RESTClient()
-
-	return &UtilImpl{rest: set, ns: namespace}, nil
-}
-
-func (c *UtilImpl) CopyFileToPod(podName, destPath, srcPath string) (string, error) {
+func CopyFileToPod(podName, destPath, srcPath, ns string, rest rest.Interface) (string, error) {
 	kubeCfg := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
 		clientcmd.NewDefaultClientConfigLoadingRules(),
 		&clientcmd.ConfigOverrides{},
@@ -62,7 +54,7 @@ func (c *UtilImpl) CopyFileToPod(podName, destPath, srcPath string) (string, err
 		cmdArr = append(cmdArr, "-C", destDir)
 	}
 
-	req := c.rest.Post().Resource("pods").Name(podName).Namespace(c.ns).SubResource("exec").
+	req := rest.Post().Resource("pods").Name(podName).Namespace(ns).SubResource("exec").
 		VersionedParams(&corev1.PodExecOptions{
 			Command: cmdArr,
 			Stdin:   true,
@@ -86,7 +78,7 @@ func (c *UtilImpl) CopyFileToPod(podName, destPath, srcPath string) (string, err
 	return commandBuffer.String(), nil
 }
 
-func (c *UtilImpl) CopyFileFromPod(srcPath, destPath, namespace, podName string) error {
+func CopyFileFromPod(srcPath, destPath, namespace, podName string, rest rest.Interface) error {
 	kubeCfg := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
 		clientcmd.NewDefaultClientConfigLoadingRules(),
 		&clientcmd.ConfigOverrides{},
@@ -99,7 +91,7 @@ func (c *UtilImpl) CopyFileFromPod(srcPath, destPath, namespace, podName string)
 
 	reader, outStream := io.Pipe()
 	cmdArr := []string{"tar", "cf", "-", srcPath}
-	req := c.rest.Get().
+	req := rest.Get().
 		Namespace(namespace).
 		Resource("pods").
 		Name(podName).
