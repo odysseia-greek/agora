@@ -109,6 +109,13 @@ func CreateVaultClient(env string, healthCheck, debugMode bool) (Client, error) 
 		}
 
 		vaultClient = client
+	} else {
+		client, err := NewVaultClient(vaultService, "", tlsConfig)
+		if err != nil {
+			return nil, err
+		}
+
+		vaultClient = client
 	}
 
 	return vaultClient, nil
