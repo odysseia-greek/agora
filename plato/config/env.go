@@ -1,7 +1,6 @@
 package config
 
 import (
-	"log"
 	"os"
 	"strings"
 )
@@ -10,7 +9,6 @@ func StringFromEnv(envName, defaultValue string) string {
 	var value string
 	value = os.Getenv(envName)
 	if value == "" {
-		log.Printf("%s empty set as env variable - defaulting to %s", envName, defaultValue)
 		value = defaultValue
 	}
 
@@ -32,7 +30,6 @@ func BoolFromEnv(envName string) bool {
 func ParsedPodNameFromEnv() string {
 	envPodName := os.Getenv(EnvPodName)
 	if envPodName == "" {
-		log.Printf("%s empty set as env variable - defaulting to %s", EnvPodName, DefaultPodname)
 		envPodName = DefaultPodname
 	}
 	splitPodName := strings.Split(envPodName, "-")
@@ -43,11 +40,6 @@ func ParsedPodNameFromEnv() string {
 
 func SliceFromEnv(sliceName string) []string {
 	slice := os.Getenv(sliceName)
-
-	if slice == "" {
-		log.Print("ELASTIC_ROLES or ELASTIC_INDEXES env variables not set!")
-	}
-
 	splitSlice := strings.Split(slice, ";")
 
 	return splitSlice

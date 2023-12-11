@@ -2,13 +2,10 @@ package diogenes
 
 import (
 	vault "github.com/hashicorp/vault/api"
-	"log"
 )
 
 func (v *Vault) SetOnetimeToken(token string) {
-	log.Printf("setting token to: %s", token)
 	v.Connection.SetToken(token)
-	log.Print("one time token set")
 }
 
 func (v *Vault) LoginWithRootToken(rootToken string) error {

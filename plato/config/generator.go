@@ -12,10 +12,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strconv"
-	"strings"
-	"time"
 )
 
 func CreateOdysseiaClient() (service.OdysseiaClient, error) {
@@ -78,10 +75,8 @@ func CreateOdysseiaClient() (service.OdysseiaClient, error) {
 	}
 
 	if tlsEnabled {
-		log.Print("setting up certs because TLS is enabled")
 		rootPath := os.Getenv("CERT_ROOT")
-		log.Printf("rootPath: %s", rootPath)
-		dirs, err := ioutil.ReadDir(rootPath)
+		dirs, err := os.ReadDir(rootPath)
 		if err != nil {
 			return nil, err
 		}
@@ -95,12 +90,10 @@ func CreateOdysseiaClient() (service.OdysseiaClient, error) {
 				keyPath := filepath.Join(dirPath, "tls.key")
 
 				if _, err := os.Stat(certPath); errors.Is(err, os.ErrNotExist) {
-					log.Printf("cannot get file because it does not exist: %s", certPath)
 					continue
 				}
 
 				if _, err := os.Stat(keyPath); errors.Is(err, os.ErrNotExist) {
-					log.Printf("cannot get file because it does not exist: %s", keyPath)
 					continue
 				}
 
@@ -112,7 +105,6 @@ func CreateOdysseiaClient() (service.OdysseiaClient, error) {
 				if config.Ca == nil {
 					caPath := filepath.Join(rootPath, dir.Name(), "tls.pem")
 					if _, err := os.Stat(caPath); errors.Is(err, os.ErrNotExist) {
-						log.Printf("cannot get file because it does not exist: %s", caPath)
 						continue
 					}
 					config.Ca, _ = ioutil.ReadFile(caPath)
@@ -143,7 +135,6 @@ func RetrieveCertPathLocally(testOverwrite bool, service string) (cert string, k
 	certName := "tls.crt"
 
 	if testOverwrite {
-		log.Print("trying to read cert file from file")
 		rootPath := helpers.OdysseiaRootPath()
 		if service == "" {
 			service = "solon"
@@ -157,7 +148,6 @@ func RetrieveCertPathLocally(testOverwrite bool, service string) (cert string, k
 		cert = filepath.Join(rootPath, service, certName)
 		key = filepath.Join(rootPath, service, keyName)
 
-		log.Printf("found certpath: %s - found keypath: %s", cert, key)
 	}
 
 	return
@@ -184,42 +174,4 @@ func CreateCertClient(org []string) (certificates.CertClient, error) {
 	}
 
 	return certClient, nil
-}
-
-func PlatoPath(path string) string {
-	dirs, _ := ioutil.ReadDir(path)
-	var currentModTime time.Time
-	var latestPath string
-	for _, dir := range dirs {
-
-		if dir.Name() == PLATO {
-			latestPath = dir.Name()
-			break
-		}
-
-		if currentModTime.Before(dir.ModTime()) {
-			currentModTime = dir.ModTime()
-			latestPath = dir.Name()
-		}
-	}
-
-	return filepath.Join(path, latestPath)
-}
-
-func OdysseiaRootPath(path string) string {
-	_, callingFile, _, _ := runtime.Caller(0)
-	callingDir := filepath.Dir(callingFile)
-	dirParts := strings.Split(callingDir, string(os.PathSeparator))
-	var odysseiaPath []string
-	for i, part := range dirParts {
-		if part == path {
-			odysseiaPath = dirParts[0 : i+1]
-		}
-	}
-	l := "/"
-	for _, path := range odysseiaPath {
-		l = filepath.Join(l, path)
-	}
-
-	return l
 }
