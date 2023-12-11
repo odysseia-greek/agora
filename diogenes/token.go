@@ -31,8 +31,6 @@ func (v *Vault) CreateOneTimeToken(policy []string) (string, error) {
 		Renewable:   &renew,
 	}
 
-	log.Print("request created")
-
 	resp, err := v.Connection.Auth().Token().Create(&tokenRequest)
 	if err != nil {
 		return "", err
