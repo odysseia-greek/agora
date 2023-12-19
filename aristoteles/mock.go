@@ -13,8 +13,12 @@ import (
 )
 
 var (
-	fixtures = make(map[string]io.ReadCloser)
+	fixtures = make(map[string][]byte)
 )
+
+func AddRawFixture(name string, data []byte) {
+	fixtures[name] = data
+}
 
 func init() {
 	_, callingFile, _, _ := runtime.Caller(0)
@@ -41,21 +45,16 @@ func init() {
 		if err != nil {
 			panic(fmt.Sprintf("Cannot read fixture file: %s", err))
 		}
-		fixtures[filepath.Base(fpath)] = io.NopCloser(bytes.NewReader(f))
+		fixtures[filepath.Base(fpath)] = f
 	}
 }
 
-func fixture(fname string) io.ReadCloser {
-	out := new(bytes.Buffer)
-	b1 := bytes.NewBuffer([]byte{})
-	b2 := bytes.NewBuffer([]byte{})
-	tr := io.TeeReader(fixtures[fname], b1)
-
-	defer func() { fixtures[fname] = io.NopCloser(b1) }()
-	io.Copy(b2, tr)
-	out.ReadFrom(b2)
-
-	return io.NopCloser(out)
+func fixture(name string) io.ReadCloser {
+	data, ok := fixtures[name]
+	if !ok {
+		panic(fmt.Sprintf("Fixture not found: %s", name))
+	}
+	return io.NopCloser(bytes.NewReader(data))
 }
 
 type MockTransport struct {
@@ -63,10 +62,6 @@ type MockTransport struct {
 	ResponseIdx int
 	RoundTripFn func(req *http.Request) (*http.Response, error)
 }
-
-//func (t *MockTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-//	return t.RoundTripFn(req)
-//}
 
 func (t *MockTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	response := t.Responses[t.ResponseIdx]
@@ -91,7 +86,10 @@ func CreateMockClient(fixtureFiles []string, statusCode int) (*elasticsearch.Cli
 
 	var responses []*http.Response
 	for _, fix := range fixtureFiles {
-		body := fixture(fmt.Sprintf("%s.json", fix))
+		if !strings.Contains(fix, ".json") {
+			fix = fmt.Sprintf("%s.json", fix)
+		}
+		body := fixture(fix)
 		response := &http.Response{
 			StatusCode: mockCode,
 			Body:       body,

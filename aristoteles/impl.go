@@ -8,6 +8,7 @@ import (
 	"github.com/odysseia-greek/agora/aristoteles/models"
 	"log"
 	"net/http"
+	"os"
 	"time"
 )
 
@@ -147,6 +148,21 @@ func NewMockClient(fixtureFiles interface{}, statusCode int) (Client, error) {
 		files = []string{t}
 	case []string:
 		files = t
+	case [][]byte:
+		for _, data := range t {
+
+			tempFile, err := os.CreateTemp("", "mockclient-*.json")
+			if err != nil {
+				return nil, err
+			}
+			defer tempFile.Close()
+
+			if _, err := tempFile.Write(data); err != nil {
+				return nil, err
+			}
+			AddRawFixture(tempFile.Name(), data)
+			files = append(files, tempFile.Name())
+		}
 	default:
 		return nil, errors.New("unsupported fixtureFiles type")
 	}

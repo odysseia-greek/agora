@@ -3,7 +3,6 @@ package aristoteles
 import (
 	"fmt"
 	"github.com/odysseia-greek/agora/aristoteles/models"
-	"log"
 	"os"
 	"path/filepath"
 	"time"
@@ -36,10 +35,8 @@ func ElasticService(tls bool) string {
 	elasticService := os.Getenv(EnvElasticService)
 	if elasticService == "" {
 		if tls {
-			log.Printf("setting %s to default: %s", EnvElasticService, elasticServiceDefaultTlS)
 			elasticService = elasticServiceDefaultTlS
 		} else {
-			log.Printf("setting %s to default: %s", EnvElasticService, elasticServiceDefault)
 			elasticService = elasticServiceDefault
 		}
 	}
@@ -49,12 +46,10 @@ func ElasticService(tls bool) string {
 func ElasticConfig(env string, testOverwrite, tls bool) models.Config {
 	elasticUser := os.Getenv(EnvElasticUser)
 	if elasticUser == "" {
-		log.Printf("setting %s to default: %s", EnvElasticUser, elasticUsernameDefault)
 		elasticUser = elasticUsernameDefault
 	}
 	elasticPassword := os.Getenv(EnvElasticPassword)
 	if elasticPassword == "" {
-		log.Printf("setting %s to default: %s", EnvElasticPassword, elasticPasswordDefault)
 		elasticPassword = elasticPasswordDefault
 	}
 
@@ -77,20 +72,8 @@ func ElasticConfig(env string, testOverwrite, tls bool) models.Config {
 
 func GetCert(env string, testOverWrite bool) []byte {
 	var cert []byte
-	if env == "LOCAL" {
-		homeDir, err := os.UserHomeDir()
-		if err != nil {
-			return nil
-		}
-		certPath := filepath.Join(homeDir, ".odysseia", "current", "elastic-certificate.pem")
-
-		cert, _ = os.ReadFile(certPath)
-
-		return cert
-	}
 
 	if testOverWrite {
-		log.Print("trying to read cert file from file")
 		certPath := filepath.Join("eratosthenes", "elastic-test-cert.pem")
 
 		cert, _ = os.ReadFile(certPath)
@@ -98,7 +81,6 @@ func GetCert(env string, testOverWrite bool) []byte {
 		return cert
 	}
 
-	log.Print("trying to read cert file from pod")
 	cert, _ = os.ReadFile(certPathInPod)
 
 	return cert
