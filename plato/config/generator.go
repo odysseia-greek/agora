@@ -7,8 +7,6 @@ import (
 	"github.com/odysseia-greek/agora/plato/helpers"
 	"github.com/odysseia-greek/agora/plato/randomizer"
 	"github.com/odysseia-greek/agora/plato/service"
-	"io/ioutil"
-	"log"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -16,118 +14,70 @@ import (
 )
 
 func CreateOdysseiaClient() (service.OdysseiaClient, error) {
-	solonUrl := StringFromEnv(EnvSolonService, DefaultServiceAddress)
-	herodotosUrl := StringFromEnv(EnvHerodotosService, DefaultServiceAddress)
-	alexandrosUrl := StringFromEnv(EnvAlexandrosService, DefaultServiceAddress)
-	dionysiosUrl := StringFromEnv(EnvDionysiosService, DefaultServiceAddress)
-	sokratesUrl := StringFromEnv(EnvSokratesService, DefaultServiceAddress)
-	tlsEnabled := BoolFromEnv(EnvTlSKey)
+	serviceNames := []string{EnvSolonService, EnvHerodotosService, EnvAlexandrosService, EnvDionysiosService, EnvSokratesService}
+	serviceURLs := make(map[string]*url.URL)
 
-	solonParsed, err := url.Parse(solonUrl)
-	if err != nil {
-		return nil, err
-	}
-
-	herodotosParsed, err := url.Parse(herodotosUrl)
-	if err != nil {
-		return nil, err
-	}
-	alexandrosParsed, err := url.Parse(alexandrosUrl)
-	if err != nil {
-		return nil, err
-	}
-	dionysiosParsed, err := url.Parse(dionysiosUrl)
-	if err != nil {
-		return nil, err
-	}
-	sokratesParsed, err := url.Parse(sokratesUrl)
-	if err != nil {
-		return nil, err
-	}
-
-	config := service.ClientConfig{
-		Ca: nil,
-		Solon: service.OdysseiaApi{
-			Url:    solonParsed.Host,
-			Scheme: solonParsed.Scheme,
-			Cert:   nil,
-		},
-		Herodotos: service.OdysseiaApi{
-			Url:    herodotosParsed.Host,
-			Scheme: herodotosParsed.Scheme,
-			Cert:   nil,
-		},
-		Dionysios: service.OdysseiaApi{
-			Url:    dionysiosParsed.Host,
-			Scheme: dionysiosParsed.Scheme,
-			Cert:   nil,
-		},
-		Alexandros: service.OdysseiaApi{
-			Url:    alexandrosParsed.Host,
-			Scheme: alexandrosParsed.Scheme,
-			Cert:   nil,
-		},
-		Sokrates: service.OdysseiaApi{
-			Url:    sokratesParsed.Host,
-			Scheme: sokratesParsed.Scheme,
-			Cert:   nil,
-		},
-	}
-
-	if tlsEnabled {
-		rootPath := os.Getenv("CERT_ROOT")
-		dirs, err := os.ReadDir(rootPath)
+	for _, serviceName := range serviceNames {
+		serviceURL := StringFromEnv(serviceName, DefaultServiceAddress)
+		parsedURL, err := url.Parse(serviceURL)
 		if err != nil {
 			return nil, err
 		}
+		serviceURLs[serviceName] = parsedURL
+	}
 
-		for _, dir := range dirs {
-			if dir.IsDir() {
-				dirPath := filepath.Join(rootPath, dir.Name())
-				log.Printf("found directory: %s", dirPath)
+	config := service.ClientConfig{}
 
-				certPath := filepath.Join(dirPath, "tls.crt")
-				keyPath := filepath.Join(dirPath, "tls.key")
+	rootPath := os.Getenv("CERT_ROOT")
+	for serviceName, parsedURL := range serviceURLs {
+		apiConfig := service.OdysseiaApi{
+			Url:    parsedURL.Host,
+			Scheme: parsedURL.Scheme,
+			Cert:   nil,
+		}
 
-				if _, err := os.Stat(certPath); errors.Is(err, os.ErrNotExist) {
-					continue
-				}
+		if parsedURL.Scheme == "https" {
+			certPath, keyPath, caPath := getCertPaths(rootPath, serviceName)
 
-				if _, err := os.Stat(keyPath); errors.Is(err, os.ErrNotExist) {
-					continue
-				}
-
-				loadedCerts, err := tls.LoadX509KeyPair(certPath, keyPath)
-				if err != nil {
-					return nil, err
-				}
-
-				if config.Ca == nil {
-					caPath := filepath.Join(rootPath, dir.Name(), "tls.pem")
-					if _, err := os.Stat(caPath); errors.Is(err, os.ErrNotExist) {
-						continue
+			if _, err := os.Stat(certPath); !errors.Is(err, os.ErrNotExist) {
+				if _, err := os.Stat(keyPath); !errors.Is(err, os.ErrNotExist) {
+					loadedCerts, err := tls.LoadX509KeyPair(certPath, keyPath)
+					if err != nil {
+						return nil, err
 					}
-					config.Ca, _ = ioutil.ReadFile(caPath)
-					log.Printf("writing CA for path %s", caPath)
-				}
 
-				switch dir.Name() {
-				case "solon":
-					config.Solon.Cert = []tls.Certificate{loadedCerts}
-				case "dionysios":
-					config.Dionysios.Cert = []tls.Certificate{loadedCerts}
-				case "herodotos":
-					config.Herodotos.Cert = []tls.Certificate{loadedCerts}
-				case "alexandros":
-					config.Alexandros.Cert = []tls.Certificate{loadedCerts}
-				case "sokrates":
-					config.Sokrates.Cert = []tls.Certificate{loadedCerts}
+					apiConfig.Cert = []tls.Certificate{loadedCerts}
 				}
 			}
+
+			if config.Ca == nil {
+				if _, err := os.Stat(caPath); !errors.Is(err, os.ErrNotExist) {
+					config.Ca, _ = os.ReadFile(caPath)
+				}
+			}
+		}
+
+		// Set the API configuration for each service
+		switch serviceName {
+		case EnvSolonService:
+			config.Solon = apiConfig
+		case EnvHerodotosService:
+			config.Herodotos = apiConfig
+		case EnvAlexandrosService:
+			config.Alexandros = apiConfig
+		case EnvDionysiosService:
+			config.Dionysios = apiConfig
+		case EnvSokratesService:
+			config.Sokrates = apiConfig
 		}
 	}
 
 	return service.NewClient(config)
+}
+
+func getCertPaths(rootPath, serviceName string) (certPath, keyPath, caPath string) {
+	dirPath := filepath.Join(rootPath, serviceName)
+	return filepath.Join(dirPath, "tls.crt"), filepath.Join(dirPath, "tls.key"), filepath.Join(rootPath, serviceName, "tls.pem")
 }
 
 func RetrieveCertPathLocally(testOverwrite bool, service string) (cert string, key string) {

@@ -54,6 +54,8 @@ const (
 	EnvTestOverWrite         = "TEST_OVERWRITE"
 	EnvChannel               = "EUPALINOS_CHANNEL"
 	EnvEupalinosService      = "EUPALINOS_SERVICE"
+	EnvAggregatorAddress     = "ARISTARCHOS_SERVICE"
+	DefaultAggregatorAddress = "aristarchos:50053"
 	DefaultEupalinosService  = "eupalinos:50051"
 	DefaultParmenidesChannel = "parmenides"
 	DefaultDutchChannel      = "mouseion"
