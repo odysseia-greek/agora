@@ -33,6 +33,7 @@ type Herodotos interface {
 	GetAuthors(uuid string) (*http.Response, error)
 	GetBooks(authorId, uuid string) (*http.Response, error)
 	CreateQuestion(author, book, uuid string) (*http.Response, error)
+	AnalyseText(rootword string, uuid string) (*http.Response, error)
 	CheckSentence(checkSentenceRequest models.CheckSentenceRequest, uuid string) (*http.Response, error)
 }
 

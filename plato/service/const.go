@@ -17,6 +17,7 @@ const (
 	books            string = "books"
 	question         string = "createQuestion"
 	sentence         string = "checkSentence"
+	text             string = "texts"
 
 	dionysiosService string = "dionysios"
 	grammar          string = "checkGrammar"

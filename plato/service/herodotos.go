@@ -63,6 +63,27 @@ func (h *HerodotosImpl) GetBooks(authorId string, uuid string) (*http.Response, 
 	return response, nil
 }
 
+func (h *HerodotosImpl) AnalyseText(rootword string, uuid string) (*http.Response, error) {
+	query := fmt.Sprintf("author=%s", rootword)
+	textPath := url.URL{
+		Scheme:   h.Scheme,
+		Host:     h.BaseUrl,
+		Path:     fmt.Sprintf("%s/%s/%s", herodotosService, version, text),
+		RawQuery: query,
+	}
+
+	response, err := h.Client.Get(&textPath, uuid)
+	if err != nil {
+		return nil, err
+	}
+
+	if response.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("expected %v but got %v while calling %v endpoint", http.StatusOK, response.StatusCode, textPath)
+	}
+
+	return response, nil
+}
+
 func (h *HerodotosImpl) CreateQuestion(author, book, uuid string) (*http.Response, error) {
 	query := fmt.Sprintf("author=%s&book=%s", author, book)
 	questionPath := url.URL{
@@ -82,7 +103,6 @@ func (h *HerodotosImpl) CreateQuestion(author, book, uuid string) (*http.Respons
 	}
 
 	return response, nil
-
 }
 
 func (h *HerodotosImpl) CheckSentence(checkSentenceRequest models.CheckSentenceRequest, uuid string) (*http.Response, error) {
