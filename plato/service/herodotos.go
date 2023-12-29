@@ -64,7 +64,7 @@ func (h *HerodotosImpl) GetBooks(authorId string, uuid string) (*http.Response, 
 }
 
 func (h *HerodotosImpl) AnalyseText(rootword string, uuid string) (*http.Response, error) {
-	query := fmt.Sprintf("author=%s", rootword)
+	query := fmt.Sprintf("rootword=%s", rootword)
 	textPath := url.URL{
 		Scheme:   h.Scheme,
 		Host:     h.BaseUrl,
