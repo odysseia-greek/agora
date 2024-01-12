@@ -70,3 +70,79 @@ type CheckAnswerResponse struct {
 	QuizWord      string `json:"quizWord"`
 	Possibilities []Word `json:"possibilities"`
 }
+
+type MultiChoiceQuiz struct {
+	QuizMetadata struct {
+		Language string `json:"language"`
+	} `json:"quizMetadata"`
+	QuizType string         `json:"quizType"`
+	Theme    string         `json:"theme,omitempty"`
+	Set      int            `json:"set,omitempty"`
+	Content  []MultiContent `json:"content"`
+	Progress struct {
+		TimesCorrect    int     `json:"timesCorrect"`
+		TimesIncorrect  int     `json:"timesIncorrect"`
+		AverageAccuracy float64 `json:"averageAccuracy"`
+	} `json:"progress,omitempty"`
+}
+
+type MultiContent struct {
+	Translation     string  `json:"translation"`
+	TimesCorrect    int     `json:"timesCorrect,omitempty"`
+	TimesIncorrect  int     `json:"timesIncorrect,omitempty"`
+	AverageAccuracy float64 `json:"averageAccuracy,omitempty"`
+	Greek           string  `json:"greek,omitempty"`
+}
+
+type InteractiveContent struct {
+	Translation string `json:"translation"`
+	Greek       string `json:"greek,omitempty"`
+	ImageURL    string `json:"imageURL,omitempty"`
+	AudioFile   string `json:"audioFile,omitempty"`
+}
+
+type DialogueContent struct {
+	Translation string `json:"translation"`
+	Greek       string `json:"greek,omitempty"`
+	Place       int    `json:"place,omitempty"`
+	Speaker     string `json:"speaker,omitempty"`
+}
+
+type InteractiveQuiz struct {
+	QuizMetadata struct {
+		Language string `json:"language"`
+	} `json:"quizMetadata"`
+	QuizType string               `json:"quizType"`
+	Set      int                  `json:"set,omitempty"`
+	Content  []InteractiveContent `json:"content"`
+}
+
+type DialogueQuiz struct {
+	QuizMetadata struct {
+		Language string `json:"language"`
+	} `json:"quizMetadata"`
+	Theme    string            `json:"theme,omitempty"`
+	QuizType string            `json:"quizType"`
+	Set      int               `json:"set,omitempty"`
+	Dialogue Dialogue          `json:"dialogue,omitempty"`
+	Content  []DialogueContent `json:"content"`
+}
+
+type Dialogue struct {
+	Introduction string `json:"introduction"`
+	Speakers     []struct {
+		Name        string `json:"name"`
+		Shorthand   string `json:"shorthand"`
+		Translation string `json:"translation"`
+	} `json:"speakers"`
+	Section       string `json:"section"`
+	LinkToPerseus string `json:"linkToPerseus"`
+}
+
+func (r *InteractiveQuiz) Marshal() ([]byte, error) {
+	return json.Marshal(r)
+}
+
+func (r *MultiChoiceQuiz) Marshal() ([]byte, error) {
+	return json.Marshal(r)
+}
