@@ -193,39 +193,23 @@ func (b *BuilderImpl) QuizIndex(policyName string) map[string]interface{} {
 	return map[string]interface{}{
 		"settings": map[string]interface{}{
 			"index": map[string]interface{}{
-				"number_of_shards":   2, // Adjust as needed based on cluster size
+				"number_of_shards":   2,
 				"number_of_replicas": 1,
-				"lifecycle.name":     policyName, // Add this line to associate the policy
+				"lifecycle.name":     policyName,
 			},
 		},
 		"mappings": map[string]interface{}{
 			"properties": map[string]interface{}{
-				"method": map[string]interface{}{
+				"quizType": map[string]interface{}{
 					"type": "keyword",
 				},
-				"category": map[string]interface{}{
+				"theme": map[string]interface{}{
 					"type": "keyword",
 				},
-				"greek": map[string]interface{}{
-					"type": "text",
-					"fields": map[string]interface{}{
-						"keyword": map[string]interface{}{
-							"type": "keyword",
-						},
-					},
-				},
-				"translation": map[string]interface{}{
-					"type": "text",
-					"fields": map[string]interface{}{
-						"keyword": map[string]interface{}{
-							"type": "keyword",
-						},
-					},
-				},
-				"chapter": map[string]interface{}{
+				"set": map[string]interface{}{
 					"type": "integer",
 				},
-				// Add additional fields here if needed
+				// 'content' field is not defined here as it won't be queried
 			},
 		},
 	}
