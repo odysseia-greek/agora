@@ -68,6 +68,7 @@ type AuthorAggregations struct {
 	AuthorAggregation   Aggregation `json:"authors"`
 	BookAggregation     Aggregation `json:"books"`
 	CategoryAggregation Aggregation `json:"categories"`
+	ThemeAggregation    Aggregation `json:"theme"`
 }
 
 type Aggregation struct {
