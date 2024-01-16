@@ -1,76 +1,5 @@
 package models
 
-import "encoding/json"
-
-// swagger:model
-type Methods struct {
-	Method []Method `json:"methods"`
-}
-
-// swagger:model
-type Method struct {
-	// example: aristophanes
-	// required: true
-	Method string `json:"method"`
-}
-
-// swagger:model
-type Categories struct {
-	Category []Category `json:"categories"`
-}
-
-// swagger:model
-type Category struct {
-	// example: frogs
-	// required: true
-	Category string `json:"category"`
-}
-
-// swagger:model
-type LastChapterResponse struct {
-	// example: 119
-	// required: true
-	LastChapter int64 `json:"lastChapter"`
-}
-
-// swagger:model
-type QuizResponse struct {
-	// example: ὄνος
-	// required: true
-	Question string `json:"question"`
-	// example: donkey
-	// required: true
-	Answer string `json:"answer"`
-	// example: ["donkey", "anotheranswer"]
-	// required: true
-	QuizQuestions []string `json:"quiz"`
-}
-
-func (r *CheckAnswerRequest) Marshal() ([]byte, error) {
-	return json.Marshal(r)
-}
-
-// swagger:model
-type CheckAnswerRequest struct {
-	// example: ὄνος
-	// required: true
-	QuizWord string `json:"quizWord"`
-	// example: horse
-	// required: true
-	AnswerProvided string `json:"answerProvided"`
-}
-
-// swagger:model
-type CheckAnswerResponse struct {
-	// example: false
-	// required: true
-	Correct bool `json:"correct"`
-	// example: ὄνος
-	// required: true
-	QuizWord      string `json:"quizWord"`
-	Possibilities []Word `json:"possibilities"`
-}
-
 type AuthorBasedQuiz struct {
 	QuizMetadata struct {
 		Language string `json:"language"`
@@ -137,4 +66,73 @@ type Dialogue struct {
 	} `json:"speakers"`
 	Section       string `json:"section"`
 	LinkToPerseus string `json:"linkToPerseus"`
+}
+
+type AggregateResult struct {
+	Aggregates []Aggregate `json:"aggregates"`
+}
+
+type Aggregate struct {
+	HighestSet string `json:"highestSet"`
+	Name       string `json:"name"`
+}
+
+type CreationRequest struct {
+	Theme    string `json:"theme"`
+	Set      string `json:"set"`
+	QuizType string `json:"quizType"`
+}
+
+type AnswerRequest struct {
+	Theme         string            `json:"theme"`
+	Set           string            `json:"set"`
+	QuizType      string            `json:"quizType"`
+	Comprehensive bool              `json:"comprehensive,omitempty"`
+	Answer        string            `json:"answer"`
+	Dialogue      []DialogueContent `json:"dialogue,omitempty"`
+	QuizWord      string            `json:"quizWord"`
+}
+
+type QuizResponse struct {
+	QuizItem string    `json:"quizItem"`
+	Options  []Options `json:"options,omitempty"`
+}
+
+type Options struct {
+	Option   string `json:"quizWord"`
+	AudioUrl string `json:"audioUrl,omitempty"`
+	ImageUrl string `json:"imageUrl,omitempty"`
+}
+
+type ComprehensiveResponse struct {
+	Correct      bool    `json:"correct"`
+	QuizWord     string  `json:"quizWord"`
+	FoundInText  Rhema   `json:"foundInText,omitempty"`
+	SimilarWords []Meros `json:"similarWords,omitempty"`
+	Progress     struct {
+		TimesCorrect    int     `json:"timesCorrect"`
+		TimesIncorrect  int     `json:"timesIncorrect"`
+		AverageAccuracy float64 `json:"averageAccuracy"`
+	} `json:"progress,omitempty"`
+}
+
+type DialogueAnswer struct {
+	Percentage   float64              `json:"percentage"`
+	Input        []DialogueContent    `json:"input"`
+	Answer       []DialogueContent    `json:"answer"`
+	InWrongPlace []DialogueCorrection `json:"wronglyPlaced"`
+}
+
+type DialogueCorrection struct {
+	Translation  string `json:"translation"`
+	Greek        string `json:"greek,omitempty"`
+	Place        int    `json:"place,omitempty"`
+	Speaker      string `json:"speaker,omitempty"`
+	CorrectPlace int    `json:"correctPlace,omitempty"`
+}
+
+type QuizAttempt struct {
+	Correct bool
+	Set     string
+	Theme   string
 }
