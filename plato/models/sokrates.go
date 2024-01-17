@@ -1,5 +1,11 @@
 package models
 
+const (
+	MEDIA       string = "media"
+	AUTHORBASED string = "authorbased"
+	DIALOGUE    string = "dialogue"
+)
+
 type AuthorBasedQuiz struct {
 	QuizMetadata struct {
 		Language string `json:"language"`
