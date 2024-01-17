@@ -130,8 +130,6 @@ func ResponseWithJson(w http.ResponseWriter, payload interface{}) {
 		code = 200
 	case models.Books:
 		code = 200
-	case models.Categories:
-		code = 200
 	case map[string]interface{}:
 		code = 200
 	case models.ValidationError:
