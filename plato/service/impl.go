@@ -44,11 +44,9 @@ type Alexandros interface {
 
 type Sokrates interface {
 	Health(uuid string) (*http.Response, error)
-	GetMethods(uuid string) (*http.Response, error)
-	GetCategories(method, uuid string) (*http.Response, error)
-	GetChapters(method, category, uuid string) (*http.Response, error)
-	CreateQuestion(method, category, chapter, uuid string) (*http.Response, error)
-	CheckAnswer(body []byte, uuid string) (*http.Response, error)
+	Create(body []byte, uuid string) (*http.Response, error)
+	Check(body []byte, uuid string) (*http.Response, error)
+	Options(quizType string, requestID string) (*http.Response, error)
 }
 
 type Dionysios interface {

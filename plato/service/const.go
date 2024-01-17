@@ -23,10 +23,11 @@ const (
 	grammar          string = "checkGrammar"
 
 	sokratesService string = "sokrates"
-	methods         string = "methods"
-	categories      string = "categories"
-	chapters        string = "chapters"
+	quiz            string = "quiz"
+	create          string = "create"
+	options         string = "options"
 	answer          string = "answer"
+	QuizType        string = "quizType"
 
 	solonService string = "solon"
 	token        string = "token"
