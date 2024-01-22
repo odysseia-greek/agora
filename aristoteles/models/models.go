@@ -73,7 +73,7 @@ type ResultAggregations struct {
 }
 
 type Set struct {
-	Value int `json:"value"`
+	Value float64 `json:"value"`
 }
 
 type Aggregation struct {
