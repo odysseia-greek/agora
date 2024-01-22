@@ -61,14 +61,19 @@ type Aggregations struct {
 	TimedOut     bool               `json:"timed_out"`
 	Shards       Shards             `json:"_shards"`
 	Hits         Hits               `json:"hits"`
-	Aggregations AuthorAggregations `json:"aggregations"`
+	Aggregations ResultAggregations `json:"aggregations"`
 }
 
-type AuthorAggregations struct {
+type ResultAggregations struct {
 	AuthorAggregation   Aggregation `json:"authors"`
 	BookAggregation     Aggregation `json:"books"`
 	CategoryAggregation Aggregation `json:"categories"`
 	ThemeAggregation    Aggregation `json:"theme"`
+	SetAggregation      Set         `json:"set"`
+}
+
+type Set struct {
+	Value int `json:"value"`
 }
 
 type Aggregation struct {
