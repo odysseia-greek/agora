@@ -11,6 +11,7 @@ const (
 	searchWord        string = "word"
 	searchLanguage    string = "lang"
 	searchMode        string = "mode"
+	searchInText      string = "searchInText"
 
 	herodotosService string = "herodotos"
 	authors          string = "authors"

@@ -26,7 +26,15 @@ type Biblos struct {
 	Biblos []Meros `json:"biblos"`
 }
 
-// swagger:model
+type ExtendedResponse struct {
+	Hits []Hit `json:"hits,omitempty"`
+}
+
+type Hit struct {
+	Hit         Meros  `json:"hit"`
+	FoundInText *Rhema `json:"foundInText,omitempty"`
+}
+
 type Meros struct {
 	// example: ὄνος
 	// required: true

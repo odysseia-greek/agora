@@ -39,7 +39,7 @@ type Herodotos interface {
 
 type Alexandros interface {
 	Health(uuid string) (*http.Response, error)
-	Search(word, language, mode, uuid string) (*http.Response, error)
+	Search(word, language, mode, textSearch, uuid string) (*http.Response, error)
 }
 
 type Sokrates interface {

@@ -22,7 +22,7 @@ func NewFakeAlexandrosConfig(scheme, baseUrl string, client HttpClient) (*Alexan
 	return &AlexandrosImpl{Scheme: scheme, BaseUrl: baseUrl, Client: client}, nil
 }
 
-func (a *AlexandrosImpl) Search(word, language, mode, uuid string) (*http.Response, error) {
+func (a *AlexandrosImpl) Search(word, language, mode, textSearch, uuid string) (*http.Response, error) {
 	values := url.Values{}
 	values.Set(searchWord, word)
 	if language != "" {
@@ -30,6 +30,10 @@ func (a *AlexandrosImpl) Search(word, language, mode, uuid string) (*http.Respon
 	}
 	if mode != "" {
 		values.Set(searchMode, mode)
+	}
+
+	if textSearch != "" {
+		values.Set(searchInText, textSearch)
 	}
 
 	query := values.Encode()
