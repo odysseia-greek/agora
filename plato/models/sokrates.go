@@ -49,6 +49,7 @@ type MediaQuiz struct {
 	} `json:"quizMetadata"`
 	QuizType string         `json:"quizType"`
 	Set      int            `json:"set,omitempty"`
+	Theme    string         `json:"theme,omitempty"`
 	Content  []MediaContent `json:"content"`
 }
 
