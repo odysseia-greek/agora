@@ -31,6 +31,8 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/testing"
 	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/metrics/pkg/client/clientset/versioned"
+	fakemetrics "k8s.io/metrics/pkg/client/clientset/versioned/fake"
 )
 
 type KubeClient struct {
@@ -46,6 +48,7 @@ type KubeClient struct {
 	apiextensionsV1         apiextensionsv1.ApiextensionsV1Interface
 	certificatesV1          certificatesv1.CertificatesV1Interface
 	admissionregistrationv1 admissionregistrationv1.AdmissionregistrationV1Interface
+	metricsClient           versioned.Interface
 
 	dynamic dynamic.Interface
 }
@@ -71,6 +74,8 @@ func NewFakeKubeClient() *KubeClient {
 
 	fake.AddReactor("*", "*", testing.ObjectReaction(tracker))
 
+	fakeMetricsClientset := &fakemetrics.Clientset{}
+
 	return &KubeClient{
 		fake:                    true,
 		coreV1:                  &fakecorev1.FakeCoreV1{Fake: &fake},
@@ -82,6 +87,7 @@ func NewFakeKubeClient() *KubeClient {
 		apiextensionsV1:         &fakeapiextensionsv1.FakeApiextensionsV1{Fake: &fake},
 		certificatesV1:          &fakecertificatesv1.FakeCertificatesV1{Fake: &fake},
 		admissionregistrationv1: &fakeadmissionregistrationv1.FakeAdmissionregistrationV1{Fake: &fake},
+		metricsClient:           fakeMetricsClientset,
 	}
 }
 
@@ -141,6 +147,11 @@ func NewKubeClient(c *rest.Config) (*KubeClient, error) {
 	}
 
 	kc.admissionregistrationv1, err = admissionregistrationv1.NewForConfigAndClient(c, httpClient)
+	if err != nil {
+		return nil, err
+	}
+
+	kc.metricsClient, err = versioned.NewForConfig(c)
 	if err != nil {
 		return nil, err
 	}
@@ -207,6 +218,10 @@ func (c *KubeClient) RestConfig() *rest.Config {
 
 func (c *KubeClient) Cert() corev1.CoreV1Interface {
 	return c.coreV1
+}
+
+func (c *KubeClient) MetricsClient() versioned.Interface {
+	return c.metricsClient
 }
 
 func (c *KubeClient) KubeCliConfig(namespace string) (*genericclioptions.ConfigFlags, error) {
