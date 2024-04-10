@@ -43,6 +43,9 @@ const (
 	EnvCrdName               = "CRD_NAME"
 	EnvTLSFiles              = "TLS_FILES"
 	EnvRootTlSDir            = "CERT_ROOT"
+	EnvWaitTime              = "WAIT_TIME"
+	EnvMetricsGathering      = "GATHER_METRICS"
+	EnvMaxAge                = "MAX_AGE"
 	AuthMethodKube           = "kubernetes"
 	AuthMethodToken          = "token"
 	baseDir                  = "base"
@@ -60,6 +63,7 @@ const (
 	DefaultParmenidesChannel = "parmenides"
 	DefaultDutchChannel      = "mouseion"
 	DefaultTracingName       = "agreus"
+	DefaultMetricsName       = "eumetros"
 	HeaderKey                = "aischylos"
 	CreatorElasticRole       = "creator"
 	SeederElasticRole        = "seeder"
@@ -67,6 +71,7 @@ const (
 	ApiElasticRole           = "api"
 	AliasElasticRole         = "alias"
 	TracingElasticIndex      = "tracing"
+	MetricsElasticIndex      = "metrics"
 )
 
 var serviceMapping = map[string]string{

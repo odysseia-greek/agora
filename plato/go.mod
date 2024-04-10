@@ -1,9 +1,9 @@
 module github.com/odysseia-greek/agora/plato
 
-go 1.21
+go 1.22
 
 require (
-	github.com/stretchr/testify v1.8.4
+	github.com/stretchr/testify v1.9.0
 	golang.org/x/text v0.14.0
 )
 
