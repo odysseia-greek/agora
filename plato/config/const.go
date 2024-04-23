@@ -58,7 +58,7 @@ const (
 	EnvChannel               = "EUPALINOS_CHANNEL"
 	EnvEupalinosService      = "EUPALINOS_SERVICE"
 	EnvAggregatorAddress     = "ARISTARCHOS_SERVICE"
-	DefaultAggregatorAddress = "aristarchos:50053"
+	DefaultAggregatorAddress = "aristarchos:50060"
 	DefaultEupalinosService  = "eupalinos:50051"
 	DefaultParmenidesChannel = "parmenides"
 	DefaultDutchChannel      = "mouseion"
