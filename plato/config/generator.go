@@ -95,7 +95,7 @@ func getCertPaths(rootPath, serviceName string) (certPath, keyPath, caPath strin
 	for _, dir := range dirs {
 		if dir.IsDir() {
 			dirName := strings.ToLower(dir.Name())
-			if strings.Contains(dirName, lowerServiceName) {
+			if strings.Contains(lowerServiceName, dirName) {
 				dirPath := filepath.Join(rootPath, dir.Name())
 				certPath := filepath.Join(dirPath, "tls.crt")
 				keyPath := filepath.Join(dirPath, "tls.key")
