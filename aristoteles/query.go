@@ -18,6 +18,33 @@ func NewQueryImpl(suppliedClient *elasticsearch.Client) (*QueryImpl, error) {
 	return &QueryImpl{es: suppliedClient}, nil
 }
 
+func (q *QueryImpl) MatchRaw(index string, request map[string]interface{}) ([]byte, error) {
+	query, err := toBuffer(request)
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := q.es.Search(
+		q.es.Search.WithContext(context.Background()),
+		q.es.Search.WithIndex(index),
+		q.es.Search.WithBody(&query),
+		q.es.Search.WithTrackTotalHits(true),
+		q.es.Search.WithPretty(),
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer res.Body.Close()
+
+	if res.IsError() {
+		return nil, fmt.Errorf("%s: %s", errorMessage, res.Status())
+	}
+
+	return io.ReadAll(res.Body)
+}
+
 func (q *QueryImpl) Match(index string, request map[string]interface{}) (*models.Response, error) {
 	query, err := toBuffer(request)
 	if err != nil {
