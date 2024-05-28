@@ -26,7 +26,7 @@ func (h *HerodotosImpl) Options(uuid string) (*http.Response, error) {
 	optionsPath := url.URL{
 		Scheme: h.Scheme,
 		Host:   h.BaseUrl,
-		Path:   fmt.Sprintf("%s/%s/%s", herodotosService, version, texts, options),
+		Path:   fmt.Sprintf("%s/%s/%s/%s", herodotosService, version, texts, options),
 	}
 
 	response, err := h.Client.Get(&optionsPath, uuid)
