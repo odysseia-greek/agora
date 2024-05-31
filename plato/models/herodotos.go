@@ -56,7 +56,16 @@ type AnalyzeTextResponse struct {
 type AnalyzeResult struct {
 	// example: text/author=herodotos&book=histories&reference=1.1
 	ReferenceLink string `json:"referenceLink"`
-	Text          Rhema  `json:"text"`
+	// example: Herodotos
+	// required: true
+	Author string `json:"author"`
+	// example: Histories
+	// required: true
+	Book string `json:"book"`
+	// example: 1.1
+	// required: true
+	Reference string `json:"reference"`
+	Text      Rhema  `json:"text"`
 }
 
 type CreateTextRequest struct {
