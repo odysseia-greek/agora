@@ -31,8 +31,8 @@ type ExtendedResponse struct {
 }
 
 type Hit struct {
-	Hit         Meros  `json:"hit"`
-	FoundInText *Rhema `json:"foundInText,omitempty"`
+	Hit         Meros                `json:"hit"`
+	FoundInText *AnalyzeTextResponse `json:"foundInText,omitempty"`
 }
 
 type Meros struct {

@@ -112,10 +112,10 @@ type Options struct {
 }
 
 type ComprehensiveResponse struct {
-	Correct      bool    `json:"correct"`
-	QuizWord     string  `json:"quizWord"`
-	FoundInText  Rhema   `json:"foundInText,omitempty"`
-	SimilarWords []Meros `json:"similarWords,omitempty"`
+	Correct      bool                `json:"correct"`
+	QuizWord     string              `json:"quizWord"`
+	FoundInText  AnalyzeTextResponse `json:"foundInText,omitempty"`
+	SimilarWords []Meros             `json:"similarWords,omitempty"`
 	Progress     struct {
 		TimesCorrect    int     `json:"timesCorrect"`
 		TimesIncorrect  int     `json:"timesIncorrect"`
