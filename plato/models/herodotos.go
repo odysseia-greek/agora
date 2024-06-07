@@ -49,8 +49,14 @@ type AnalyzeTextResponse struct {
 	Rootword string `json:"rootword"`
 	// example: ["Ἀθηναῖος"]
 	// required: true
-	Conjugations []string        `json:"conjugations"`
+	PartOfSpeech string          `json:"partOfSpeech;omitempty"`
+	Conjugations []Conjugations  `json:"conjugations"`
 	Results      []AnalyzeResult `json:"texts"`
+}
+
+type Conjugations struct {
+	Word string `json:"word"`
+	Rule string `json:"rule"`
 }
 
 type AnalyzeResult struct {
