@@ -27,6 +27,7 @@ type Query interface {
 	MatchWithSort(index, mode, sort string, size int, request map[string]interface{}) (*models.Response, error)
 	MatchWithScroll(index string, request map[string]interface{}) (*models.Response, error)
 	MatchAggregate(index string, request map[string]interface{}) (*models.Aggregations, error)
+	MatchRaw(index string, request map[string]interface{}) ([]byte, error)
 }
 
 type Document interface {

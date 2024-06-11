@@ -14,11 +14,10 @@ const (
 	searchInText      string = "searchInText"
 
 	herodotosService string = "herodotos"
-	authors          string = "authors"
-	books            string = "books"
-	question         string = "createQuestion"
-	sentence         string = "checkSentence"
-	text             string = "texts"
+	checkVerb        string = "_check"
+	analyzeVerb      string = "_analyze"
+	createVerb       string = "_create"
+	texts            string = "texts"
 
 	dionysiosService string = "dionysios"
 	grammar          string = "checkGrammar"

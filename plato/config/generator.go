@@ -3,14 +3,16 @@ package config
 import (
 	"crypto/tls"
 	"errors"
+	"fmt"
 	"github.com/odysseia-greek/agora/plato/certificates"
-	"github.com/odysseia-greek/agora/plato/helpers"
+	"github.com/odysseia-greek/agora/plato/logging"
 	"github.com/odysseia-greek/agora/plato/randomizer"
 	"github.com/odysseia-greek/agora/plato/service"
 	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 )
 
 func CreateOdysseiaClient() (service.OdysseiaClient, error) {
@@ -18,7 +20,10 @@ func CreateOdysseiaClient() (service.OdysseiaClient, error) {
 	serviceURLs := make(map[string]*url.URL)
 
 	for _, serviceName := range serviceNames {
-		serviceURL := StringFromEnv(serviceName, DefaultServiceAddress)
+		serviceURL := os.Getenv(serviceName)
+		if serviceURL == "" {
+			continue
+		}
 		parsedURL, err := url.Parse(serviceURL)
 		if err != nil {
 			return nil, err
@@ -37,7 +42,11 @@ func CreateOdysseiaClient() (service.OdysseiaClient, error) {
 		}
 
 		if parsedURL.Scheme == "https" {
-			certPath, keyPath, caPath := getCertPaths(rootPath, serviceName)
+			certPath, keyPath, caPath, err := getCertPaths(rootPath, serviceName)
+			if err != nil {
+				logging.Error(err.Error())
+				continue
+			}
 
 			if _, err := os.Stat(certPath); !errors.Is(err, os.ErrNotExist) {
 				if _, err := os.Stat(keyPath); !errors.Is(err, os.ErrNotExist) {
@@ -75,32 +84,28 @@ func CreateOdysseiaClient() (service.OdysseiaClient, error) {
 	return service.NewClient(config)
 }
 
-func getCertPaths(rootPath, serviceName string) (certPath, keyPath, caPath string) {
-	dirPath := filepath.Join(rootPath, serviceName)
-	return filepath.Join(dirPath, "tls.crt"), filepath.Join(dirPath, "tls.key"), filepath.Join(rootPath, serviceName, "tls.pem")
-}
+func getCertPaths(rootPath, serviceName string) (certPath, keyPath, caPath string, err error) {
+	lowerServiceName := strings.ToLower(serviceName)
 
-func RetrieveCertPathLocally(testOverwrite bool, service string) (cert string, key string) {
-	keyName := "tls.key"
-	certName := "tls.crt"
-
-	if testOverwrite {
-		rootPath := helpers.OdysseiaRootPath()
-		if service == "" {
-			service = "solon"
-		}
-		cert = filepath.Join(rootPath, "eratosthenes", "fixture", service, certName)
-		key = filepath.Join(rootPath, "eratosthenes", "fixture", service, keyName)
-
-		return
-	} else {
-		rootPath := os.Getenv("CERT_ROOT")
-		cert = filepath.Join(rootPath, service, certName)
-		key = filepath.Join(rootPath, service, keyName)
-
+	dirs, err := os.ReadDir(rootPath)
+	if err != nil {
+		return "", "", "", fmt.Errorf("failed to read the directory %s: %w", rootPath, err)
 	}
 
-	return
+	for _, dir := range dirs {
+		if dir.IsDir() {
+			dirName := strings.ToLower(dir.Name())
+			if strings.Contains(lowerServiceName, dirName) {
+				dirPath := filepath.Join(rootPath, dir.Name())
+				certPath := filepath.Join(dirPath, "tls.crt")
+				keyPath := filepath.Join(dirPath, "tls.key")
+				caPath := filepath.Join(dirPath, "tls.pem")
+				return certPath, keyPath, caPath, nil
+			}
+		}
+	}
+
+	return "", "", "", errors.New("no matching service directory found")
 }
 
 func CreateNewRandomizer() (randomizer.Random, error) {
@@ -113,10 +118,6 @@ func CreateCertClient(org []string) (certificates.CertClient, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	//org := []string{
-	//	"odysseia",
-	//}
 
 	certClient, err := certificates.NewCertGeneratorClient(org, caValidity)
 	if err != nil {

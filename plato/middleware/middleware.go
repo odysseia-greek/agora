@@ -114,12 +114,6 @@ func ResponseWithJson(w http.ResponseWriter, payload interface{}) {
 		code = 200
 	case models.Word:
 		code = 200
-	case models.Authors:
-		code = 200
-	case models.CreateSentenceResponse:
-		code = 200
-	case models.CheckSentenceResponse:
-		code = 200
 	case []models.Meros:
 		code = 200
 	case models.Health:
@@ -127,8 +121,6 @@ func ResponseWithJson(w http.ResponseWriter, payload interface{}) {
 	case models.DeclensionTranslationResults:
 		code = 200
 	case models.TokenResponse:
-		code = 200
-	case models.Books:
 		code = 200
 	case map[string]interface{}:
 		code = 200

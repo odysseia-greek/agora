@@ -30,11 +30,10 @@ type Solon interface {
 
 type Herodotos interface {
 	Health(uuid string) (*http.Response, error)
-	GetAuthors(uuid string) (*http.Response, error)
-	GetBooks(authorId, uuid string) (*http.Response, error)
-	CreateQuestion(author, book, uuid string) (*http.Response, error)
-	AnalyseText(rootword string, uuid string) (*http.Response, error)
-	CheckSentence(checkSentenceRequest models.CheckSentenceRequest, uuid string) (*http.Response, error)
+	Create(body []byte, uuid string) (*http.Response, error)
+	Analyze(body []byte, uuid string) (*http.Response, error)
+	Check(body []byte, uuid string) (*http.Response, error)
+	Options(uuid string) (*http.Response, error)
 }
 
 type Alexandros interface {
