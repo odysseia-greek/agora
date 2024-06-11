@@ -49,7 +49,7 @@ type AnalyzeTextResponse struct {
 	Rootword string `json:"rootword"`
 	// example: ["Ἀθηναῖος"]
 	// required: true
-	PartOfSpeech string          `json:"partOfSpeech;omitempty"`
+	PartOfSpeech string          `json:"partOfSpeech"`
 	Conjugations []Conjugations  `json:"conjugations"`
 	Results      []AnalyzeResult `json:"texts"`
 }
