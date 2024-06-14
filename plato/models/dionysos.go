@@ -24,6 +24,7 @@ type FoundRules struct {
 type Rule struct {
 	Rule        string   `json:"rule,omitempty"`
 	SearchTerms []string `json:"searchTerm,omitempty"`
+	Type        string   `json:"type,omitempty"`
 }
 
 type DeclensionTranslationResults struct {
