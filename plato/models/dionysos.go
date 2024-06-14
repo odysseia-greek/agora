@@ -1,19 +1,7 @@
 package models
 
-import "encoding/json"
-
 type DeclensionConfig struct {
 	Declensions []Declension
-}
-
-func UnmarshalDeclension(data []byte) (Declension, error) {
-	var r Declension
-	err := json.Unmarshal(data, &r)
-	return r, err
-}
-
-func (r *Declension) Marshal() ([]byte, error) {
-	return json.Marshal(r)
 }
 
 type Declension struct {
@@ -29,16 +17,6 @@ type DeclensionElement struct {
 	SearchTerm []string `json:"searchTerm"`
 }
 
-func UnmarshalFoundRules(data []byte) (FoundRules, error) {
-	var r FoundRules
-	err := json.Unmarshal(data, &r)
-	return r, err
-}
-
-func (r *FoundRules) Marshal() ([]byte, error) {
-	return json.Marshal(r)
-}
-
 type FoundRules struct {
 	Rules []Rule `json:"rules"`
 }
@@ -48,22 +26,10 @@ type Rule struct {
 	SearchTerms []string `json:"searchTerm,omitempty"`
 }
 
-func UnmarshalDeclensionTranslationResults(data []byte) (DeclensionTranslationResults, error) {
-	var r DeclensionTranslationResults
-	err := json.Unmarshal(data, &r)
-	return r, err
-}
-
-func (r *DeclensionTranslationResults) Marshal() ([]byte, error) {
-	return json.Marshal(r)
-}
-
-// swagger:model
 type DeclensionTranslationResults struct {
 	Results []Result `json:"results"`
 }
 
-// swagger:model
 type Result struct {
 	// example: ἔβαλλε
 	// required: true
@@ -74,9 +40,9 @@ type Result struct {
 	// example: βαλλω
 	// required: true
 	RootWord string `json:"rootWord"`
-	// example: throw
+	// example: [throw, to throw]
 	// required: true
-	Translation string `json:"translation"`
+	Translation []string `json:"translations"`
 }
 
 func (r *DeclensionTranslationResults) RemoveIndex(index int) {
