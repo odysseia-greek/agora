@@ -153,6 +153,12 @@ type ComprehensiveResponse struct {
 	} `json:"progress,omitempty"`
 }
 
+type AuthorBasedResponse struct {
+	Correct     bool     `json:"correct"`
+	QuizWord    string   `json:"quizWord"`
+	WordsInText []string `json:"wordsInText,omitempty"`
+}
+
 type DialogueAnswer struct {
 	Percentage   float64              `json:"percentage"`
 	Input        []DialogueContent    `json:"input"`
