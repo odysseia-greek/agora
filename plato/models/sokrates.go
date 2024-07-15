@@ -10,7 +10,8 @@ const (
 type AuthorbasedQuiz struct {
 	QuizType     string               `json:"quizType"`
 	Theme        string               `json:"theme"`
-	Set          string               `json:"set"`
+	Set          int                  `json:"set"`
+	Reference    string               `json:"reference"`
 	FullSentence string               `json:"fullSentence"`
 	Translation  string               `json:"translation"`
 	Content      []AuthorBasedContent `json:"content"`
@@ -125,6 +126,7 @@ type AnswerRequest struct {
 type AuthorbasedQuizResponse struct {
 	FullSentence string       `json:"fullSentence"`
 	Translation  string       `json:"translation"`
+	Reference    string       `json:"reference"`
 	Quiz         QuizResponse `json:"quiz"`
 }
 
