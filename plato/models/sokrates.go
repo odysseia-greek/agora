@@ -3,17 +3,33 @@ package models
 const (
 	MEDIA       string = "media"
 	AUTHORBASED string = "authorbased"
+	MULTICHOICE string = "multiplechoice"
 	DIALOGUE    string = "dialogue"
 )
 
-type AuthorBasedQuiz struct {
+type AuthorbasedQuiz struct {
+	QuizType     string               `json:"quizType"`
+	Theme        string               `json:"theme"`
+	Set          string               `json:"set"`
+	FullSentence string               `json:"fullSentence"`
+	Translation  string               `json:"translation"`
+	Content      []AuthorBasedContent `json:"content"`
+}
+
+type AuthorBasedContent struct {
+	Greek       string   `json:"greek"`
+	Translation string   `json:"translation"`
+	WordsInText []string `json:"wordsInText"`
+}
+
+type MultipleChoiceQuiz struct {
 	QuizMetadata struct {
 		Language string `json:"language"`
 	} `json:"quizMetadata"`
-	QuizType string               `json:"quizType"`
-	Theme    string               `json:"theme,omitempty"`
-	Set      int                  `json:"set,omitempty"`
-	Content  []AuthorBasedContent `json:"content"`
+	QuizType string                  `json:"quizType"`
+	Theme    string                  `json:"theme,omitempty"`
+	Set      int                     `json:"set,omitempty"`
+	Content  []MultipleChoiceContent `json:"content"`
 	Progress struct {
 		TimesCorrect    int     `json:"timesCorrect"`
 		TimesIncorrect  int     `json:"timesIncorrect"`
@@ -21,7 +37,7 @@ type AuthorBasedQuiz struct {
 	} `json:"progress,omitempty"`
 }
 
-type AuthorBasedContent struct {
+type MultipleChoiceContent struct {
 	Translation     string  `json:"translation"`
 	TimesCorrect    int     `json:"timesCorrect,omitempty"`
 	TimesIncorrect  int     `json:"timesIncorrect,omitempty"`
