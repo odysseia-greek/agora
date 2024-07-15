@@ -101,9 +101,10 @@ type Aggregate struct {
 }
 
 type CreationRequest struct {
-	Theme    string `json:"theme"`
-	Set      string `json:"set"`
-	QuizType string `json:"quizType"`
+	Theme        string   `json:"theme"`
+	Set          string   `json:"set"`
+	QuizType     string   `json:"quizType"`
+	ExcludeWords []string `json:"excludeWords"`
 }
 
 type AnswerRequest struct {
