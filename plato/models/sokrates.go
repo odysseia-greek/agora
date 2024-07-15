@@ -67,6 +67,11 @@ type MediaQuiz struct {
 	Set      int            `json:"set,omitempty"`
 	Theme    string         `json:"theme,omitempty"`
 	Content  []MediaContent `json:"content"`
+	Progress struct {
+		TimesCorrect    int     `json:"timesCorrect"`
+		TimesIncorrect  int     `json:"timesIncorrect"`
+		AverageAccuracy float64 `json:"averageAccuracy"`
+	} `json:"progress,omitempty"`
 }
 
 type DialogueQuiz struct {
@@ -115,6 +120,12 @@ type AnswerRequest struct {
 	Answer        string            `json:"answer"`
 	Dialogue      []DialogueContent `json:"dialogue,omitempty"`
 	QuizWord      string            `json:"quizWord"`
+}
+
+type AuthorbasedQuizResponse struct {
+	FullSentence string       `json:"fullSentence"`
+	Translation  string       `json:"translation"`
+	Quiz         QuizResponse `json:"quiz"`
 }
 
 type QuizResponse struct {
