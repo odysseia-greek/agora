@@ -176,7 +176,8 @@ type DialogueCorrection struct {
 }
 
 type QuizAttempt struct {
-	Correct bool
-	Set     string
-	Theme   string
+	Correct  bool
+	Set      string
+	Theme    string
+	QuizType string
 }
