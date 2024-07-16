@@ -110,6 +110,7 @@ type CreationRequest struct {
 	Theme        string   `json:"theme"`
 	Set          string   `json:"set"`
 	QuizType     string   `json:"quizType"`
+	Order        string   `json:"order"`
 	ExcludeWords []string `json:"excludeWords"`
 }
 
