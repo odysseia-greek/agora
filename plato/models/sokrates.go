@@ -132,8 +132,9 @@ type AuthorbasedQuizResponse struct {
 }
 
 type QuizResponse struct {
-	QuizItem string    `json:"quizItem"`
-	Options  []Options `json:"options,omitempty"`
+	QuizItem      string    `json:"quizItem"`
+	NumberOfItems int       `json:"numberOfItems"`
+	Options       []Options `json:"options,omitempty"`
 }
 
 type Options struct {
