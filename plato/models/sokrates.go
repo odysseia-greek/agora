@@ -127,6 +127,7 @@ type AggregatedOptions struct {
 type CreationRequest struct {
 	Theme        string   `json:"theme"`
 	Set          string   `json:"set"`
+	Segment      string   `json:"segment,omitempty"`
 	QuizType     string   `json:"quizType"`
 	Order        string   `json:"order"`
 	ExcludeWords []string `json:"excludeWords"`
