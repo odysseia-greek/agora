@@ -11,6 +11,7 @@ type AuthorbasedQuiz struct {
 	QuizType     string               `json:"quizType"`
 	Theme        string               `json:"theme"`
 	Set          int                  `json:"set"`
+	Segment      string               `json:"segment,omitempty"`
 	Reference    string               `json:"reference"`
 	FullSentence string               `json:"fullSentence"`
 	Translation  string               `json:"translation"`
@@ -67,6 +68,7 @@ type MediaQuiz struct {
 	QuizType string         `json:"quizType"`
 	Set      int            `json:"set,omitempty"`
 	Theme    string         `json:"theme,omitempty"`
+	Segment  string         `json:"segment,omitempty"`
 	Content  []MediaContent `json:"content"`
 	Progress struct {
 		TimesCorrect    int     `json:"timesCorrect"`
@@ -79,11 +81,13 @@ type DialogueQuiz struct {
 	QuizMetadata struct {
 		Language string `json:"language"`
 	} `json:"quizMetadata"`
-	Theme    string            `json:"theme,omitempty"`
-	QuizType string            `json:"quizType"`
-	Set      int               `json:"set,omitempty"`
-	Dialogue Dialogue          `json:"dialogue,omitempty"`
-	Content  []DialogueContent `json:"content"`
+	Theme     string            `json:"theme,omitempty"`
+	QuizType  string            `json:"quizType"`
+	Set       int               `json:"set,omitempty"`
+	Segment   string            `json:"segment,omitempty"`
+	Reference string            `json:"reference,omitempty"`
+	Dialogue  Dialogue          `json:"dialogue,omitempty"`
+	Content   []DialogueContent `json:"content"`
 }
 
 type Dialogue struct {
