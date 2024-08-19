@@ -110,6 +110,20 @@ type Aggregate struct {
 	Name       string `json:"name"`
 }
 
+type Segment struct {
+	Name   string  `json:"name"`
+	MaxSet float64 `json:"maxSet"`
+}
+
+type Theme struct {
+	Name     string    `json:"name"`
+	Segments []Segment `json:"segments"`
+}
+
+type AggregatedOptions struct {
+	Themes []Theme `json:"themes"`
+}
+
 type CreationRequest struct {
 	Theme        string   `json:"theme"`
 	Set          string   `json:"set"`
