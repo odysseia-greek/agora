@@ -137,6 +137,7 @@ type AnswerRequest struct {
 	Theme         string            `json:"theme"`
 	Set           string            `json:"set"`
 	QuizType      string            `json:"quizType"`
+	Segment       string            `json:"segment,omitempty"`
 	Comprehensive bool              `json:"comprehensive,omitempty"`
 	Answer        string            `json:"answer"`
 	Dialogue      []DialogueContent `json:"dialogue,omitempty"`
