@@ -7,6 +7,19 @@ import (
 	"testing"
 )
 
+func TestRandomizerOutput(t *testing.T) {
+	randomizer, err := NewRandomizerClient()
+	assert.Nil(t, err)
+	var numbers []int
+	for _ = range 100 {
+		randomNumber := randomizer.RandomNumberBaseZero(20)
+		numbers = append(numbers, randomNumber)
+	}
+
+	sort.Ints(numbers)
+	fmt.Println(numbers)
+}
+
 func TestRandomizer(t *testing.T) {
 	t.Run("Creation", func(t *testing.T) {
 		r, err := NewRandomizerClient()

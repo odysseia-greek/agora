@@ -12,17 +12,16 @@ func (r *Health) Marshal() ([]byte, error) {
 	return json.Marshal(r)
 }
 
-// swagger:model
 type Health struct {
 	// example: true
 	Healthy bool `json:"healthy"`
 	// example: 2023-06-07 15:02:11.678766777 +0000 UTC m=+5090.268683461
 	Time     string         `json:"time"`
+	Version  string         `json:"version,omitempty"`
 	Database DatabaseHealth `json:"databaseHealth,omitempty"`
 	Memory   Memory         `json:"memory,omitempty"`
 }
 
-// swagger:model
 type DatabaseHealth struct {
 	// example: true
 	Healthy bool `json:"healthy"`
@@ -34,7 +33,6 @@ type DatabaseHealth struct {
 	ServerVersion string `json:"serverVersion,omitempty"`
 }
 
-// swagger:model
 type Memory struct {
 	Free       uint64 `json:"free,omitempty"`
 	Alloc      uint64 `json:"alloc,omitempty"`

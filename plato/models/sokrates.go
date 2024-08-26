@@ -3,17 +3,35 @@ package models
 const (
 	MEDIA       string = "media"
 	AUTHORBASED string = "authorbased"
+	MULTICHOICE string = "multiplechoice"
 	DIALOGUE    string = "dialogue"
 )
 
-type AuthorBasedQuiz struct {
+type AuthorbasedQuiz struct {
+	QuizType     string               `json:"quizType"`
+	Theme        string               `json:"theme"`
+	Set          int                  `json:"set"`
+	Segment      string               `json:"segment,omitempty"`
+	Reference    string               `json:"reference"`
+	FullSentence string               `json:"fullSentence"`
+	Translation  string               `json:"translation"`
+	Content      []AuthorBasedContent `json:"content"`
+}
+
+type AuthorBasedContent struct {
+	Greek       string   `json:"greek"`
+	Translation string   `json:"translation"`
+	WordsInText []string `json:"wordsInText"`
+}
+
+type MultipleChoiceQuiz struct {
 	QuizMetadata struct {
 		Language string `json:"language"`
 	} `json:"quizMetadata"`
-	QuizType string               `json:"quizType"`
-	Theme    string               `json:"theme,omitempty"`
-	Set      int                  `json:"set,omitempty"`
-	Content  []AuthorBasedContent `json:"content"`
+	QuizType string                  `json:"quizType"`
+	Theme    string                  `json:"theme,omitempty"`
+	Set      int                     `json:"set,omitempty"`
+	Content  []MultipleChoiceContent `json:"content"`
 	Progress struct {
 		TimesCorrect    int     `json:"timesCorrect"`
 		TimesIncorrect  int     `json:"timesIncorrect"`
@@ -21,7 +39,7 @@ type AuthorBasedQuiz struct {
 	} `json:"progress,omitempty"`
 }
 
-type AuthorBasedContent struct {
+type MultipleChoiceContent struct {
 	Translation     string  `json:"translation"`
 	TimesCorrect    int     `json:"timesCorrect,omitempty"`
 	TimesIncorrect  int     `json:"timesIncorrect,omitempty"`
@@ -50,18 +68,26 @@ type MediaQuiz struct {
 	QuizType string         `json:"quizType"`
 	Set      int            `json:"set,omitempty"`
 	Theme    string         `json:"theme,omitempty"`
+	Segment  string         `json:"segment,omitempty"`
 	Content  []MediaContent `json:"content"`
+	Progress struct {
+		TimesCorrect    int     `json:"timesCorrect"`
+		TimesIncorrect  int     `json:"timesIncorrect"`
+		AverageAccuracy float64 `json:"averageAccuracy"`
+	} `json:"progress,omitempty"`
 }
 
 type DialogueQuiz struct {
 	QuizMetadata struct {
 		Language string `json:"language"`
 	} `json:"quizMetadata"`
-	Theme    string            `json:"theme,omitempty"`
-	QuizType string            `json:"quizType"`
-	Set      int               `json:"set,omitempty"`
-	Dialogue Dialogue          `json:"dialogue,omitempty"`
-	Content  []DialogueContent `json:"content"`
+	Theme     string            `json:"theme,omitempty"`
+	QuizType  string            `json:"quizType"`
+	Set       int               `json:"set,omitempty"`
+	Segment   string            `json:"segment,omitempty"`
+	Reference string            `json:"reference,omitempty"`
+	Dialogue  Dialogue          `json:"dialogue,omitempty"`
+	Content   []DialogueContent `json:"content"`
 }
 
 type Dialogue struct {
@@ -84,25 +110,51 @@ type Aggregate struct {
 	Name       string `json:"name"`
 }
 
+type Segment struct {
+	Name   string  `json:"name"`
+	MaxSet float64 `json:"maxSet"`
+}
+
+type Theme struct {
+	Name     string    `json:"name"`
+	Segments []Segment `json:"segments"`
+}
+
+type AggregatedOptions struct {
+	Themes []Theme `json:"themes"`
+}
+
 type CreationRequest struct {
-	Theme    string `json:"theme"`
-	Set      string `json:"set"`
-	QuizType string `json:"quizType"`
+	Theme        string   `json:"theme"`
+	Set          string   `json:"set"`
+	Segment      string   `json:"segment,omitempty"`
+	QuizType     string   `json:"quizType"`
+	Order        string   `json:"order"`
+	ExcludeWords []string `json:"excludeWords"`
 }
 
 type AnswerRequest struct {
 	Theme         string            `json:"theme"`
 	Set           string            `json:"set"`
 	QuizType      string            `json:"quizType"`
+	Segment       string            `json:"segment,omitempty"`
 	Comprehensive bool              `json:"comprehensive,omitempty"`
 	Answer        string            `json:"answer"`
 	Dialogue      []DialogueContent `json:"dialogue,omitempty"`
 	QuizWord      string            `json:"quizWord"`
 }
 
+type AuthorbasedQuizResponse struct {
+	FullSentence string       `json:"fullSentence"`
+	Translation  string       `json:"translation"`
+	Reference    string       `json:"reference"`
+	Quiz         QuizResponse `json:"quiz"`
+}
+
 type QuizResponse struct {
-	QuizItem string    `json:"quizItem"`
-	Options  []Options `json:"options,omitempty"`
+	QuizItem      string    `json:"quizItem"`
+	NumberOfItems int       `json:"numberOfItems"`
+	Options       []Options `json:"options,omitempty"`
 }
 
 type Options struct {
@@ -123,6 +175,12 @@ type ComprehensiveResponse struct {
 	} `json:"progress,omitempty"`
 }
 
+type AuthorBasedResponse struct {
+	Correct     bool     `json:"correct"`
+	QuizWord    string   `json:"quizWord"`
+	WordsInText []string `json:"wordsInText,omitempty"`
+}
+
 type DialogueAnswer struct {
 	Percentage   float64              `json:"percentage"`
 	Input        []DialogueContent    `json:"input"`
@@ -139,7 +197,8 @@ type DialogueCorrection struct {
 }
 
 type QuizAttempt struct {
-	Correct bool
-	Set     string
-	Theme   string
+	Correct  bool
+	Set      string
+	Theme    string
+	QuizType string
 }
