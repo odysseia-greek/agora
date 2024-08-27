@@ -16,7 +16,7 @@ import (
 )
 
 func CreateOdysseiaClient() (service.OdysseiaClient, error) {
-	serviceNames := []string{EnvSolonService, EnvHerodotosService, EnvAlexandrosService, EnvDionysiosService, EnvSokratesService}
+	serviceNames := []string{EnvSolonService, EnvHerodotosService, EnvAlexandrosService, EnvDionysiosService, EnvSokratesService, EnvDiogenesService}
 	serviceURLs := make(map[string]*url.URL)
 
 	for _, serviceName := range serviceNames {
@@ -78,6 +78,8 @@ func CreateOdysseiaClient() (service.OdysseiaClient, error) {
 			config.Dionysios = apiConfig
 		case EnvSokratesService:
 			config.Sokrates = apiConfig
+		case EnvDiogenesService:
+			config.Diogenes = apiConfig
 		}
 	}
 

@@ -25,6 +25,7 @@ const (
 	EnvAlexandrosService     = "ALEXANDROS_SERVICE"
 	EnvSokratesService       = "SOKRATES_SERVICE"
 	EnvDionysiosService      = "DIONYSIOS_SERVICE"
+	EnvDiogenesService       = "DIOGENES_SERVICE"
 	EnvRunOnce               = "RUN_ONCE"
 	EnvTlSKey                = "TLS_ENABLED"
 	EnvKey                   = "ENV"
