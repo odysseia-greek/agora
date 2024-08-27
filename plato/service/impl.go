@@ -12,6 +12,7 @@ type OdysseiaClient interface {
 	Alexandros() Alexandros
 	Sokrates() Sokrates
 	Dionysios() Dionysios
+	Diogenes() Diogenes
 }
 
 type Odysseia struct {
@@ -20,6 +21,7 @@ type Odysseia struct {
 	alexandros *AlexandrosImpl
 	sokrates   *SokratesImpl
 	dionysios  *DionysiosImpl
+	diogenes   *DiogenesImpl
 }
 
 type Solon interface {
@@ -53,6 +55,11 @@ type Dionysios interface {
 	Grammar(word string, uuid string) (*http.Response, error)
 }
 
+type Diogenes interface {
+	Health(uuid string) (*http.Response, error)
+	Convert(body []byte, uuid string) (*http.Response, error)
+}
+
 type ClientConfig struct {
 	Ca         []byte
 	Solon      OdysseiaApi
@@ -61,6 +68,7 @@ type ClientConfig struct {
 	Dionysios  OdysseiaApi
 	Alexandros OdysseiaApi
 	Sokrates   OdysseiaApi
+	Diogenes   OdysseiaApi
 }
 
 type OdysseiaApi struct {
@@ -95,12 +103,18 @@ func NewClient(config ClientConfig) (OdysseiaClient, error) {
 		return nil, err
 	}
 
+	diogenesImpl, err := NewDiogenesConfig(config.Diogenes, config.Ca)
+	if err != nil {
+		return nil, err
+	}
+
 	return &Odysseia{
 		solon:      solonImpl,
 		herodotos:  herodotosImpl,
 		alexandros: alexandrosImpl,
 		sokrates:   sokratesImpl,
 		dionysios:  dionysiosImpl,
+		diogenes:   diogenesImpl,
 	}, nil
 }
 
@@ -132,12 +146,18 @@ func NewFakeClient(config ClientConfig, codes []int, responses []string) (Odysse
 		return nil, err
 	}
 
+	diogenesImpl, err := NewFakeDiogenesConfig(config.Diogenes.Scheme, config.Diogenes.Url, client)
+	if err != nil {
+		return nil, err
+	}
+
 	return &Odysseia{
 		solon:      solonImpl,
 		herodotos:  herodotosImpl,
 		alexandros: alexandrosImpl,
 		sokrates:   sokratesImpl,
 		dionysios:  dionysiosImpl,
+		diogenes:   diogenesImpl,
 	}, nil
 }
 
@@ -173,4 +193,11 @@ func (o *Odysseia) Dionysios() Dionysios {
 		return nil
 	}
 	return o.dionysios
+}
+
+func (o *Odysseia) Diogenes() Diogenes {
+	if o == nil {
+		return nil
+	}
+	return o.diogenes
 }

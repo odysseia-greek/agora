@@ -32,4 +32,8 @@ const (
 	solonService string = "solon"
 	token        string = "token"
 	register     string = "register"
+
+	diogenesService string = "diogenes"
+	convert         string = "_convert"
+	words           string = "words"
 )
