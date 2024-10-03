@@ -28,8 +28,10 @@ type AuthorBasedContent struct {
 }
 
 type GrammarQuestion struct {
-	CorrectAnswer string `json:"correctAnswer"`
-	TypeOfWord    string `json:"typeOfWord"`
+	CorrectAnswer    string `json:"correctAnswer"`
+	TypeOfWord       string `json:"typeOfWord"`
+	WordInText       string `json:"wordInText"`
+	ExtraInformation string `json:"extraInformation"`
 }
 
 type GrammarQuestionOptions struct {
