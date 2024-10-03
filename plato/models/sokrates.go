@@ -8,20 +8,34 @@ const (
 )
 
 type AuthorbasedQuiz struct {
-	QuizType     string               `json:"quizType"`
-	Theme        string               `json:"theme"`
-	Set          int                  `json:"set"`
-	Segment      string               `json:"segment,omitempty"`
-	Reference    string               `json:"reference"`
-	FullSentence string               `json:"fullSentence"`
-	Translation  string               `json:"translation"`
-	Content      []AuthorBasedContent `json:"content"`
+	QuizType               string                 `json:"quizType"`
+	Theme                  string                 `json:"theme"`
+	Set                    int                    `json:"set"`
+	Segment                string                 `json:"segment,omitempty"`
+	Reference              string                 `json:"reference"`
+	FullSentence           string                 `json:"fullSentence"`
+	Translation            string                 `json:"translation"`
+	GrammarQuestionOptions GrammarQuestionOptions `json:"grammarQuestionOptions"`
+	Content                []AuthorBasedContent   `json:"content"`
 }
 
 type AuthorBasedContent struct {
-	Greek       string   `json:"greek"`
-	Translation string   `json:"translation"`
-	WordsInText []string `json:"wordsInText"`
+	Greek               string            `json:"greek"`
+	Translation         string            `json:"translation"`
+	WordsInText         []string          `json:"wordsInText"`
+	HasGrammarQuestions bool              `json:"hasGrammarQuestions"`
+	GrammarQuestions    []GrammarQuestion `json:"grammarQuestions"`
+}
+
+type GrammarQuestion struct {
+	CorrectAnswer string `json:"correctAnswer"`
+	TypeOfWord    string `json:"typeOfWord"`
+}
+
+type GrammarQuestionOptions struct {
+	Nouns []string `json:"nouns"`
+	Verbs []string `json:"verbs"`
+	Misc  []string `json:"misc"`
 }
 
 type MultipleChoiceQuiz struct {
