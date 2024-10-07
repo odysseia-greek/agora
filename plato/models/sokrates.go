@@ -168,10 +168,11 @@ type AnswerRequest struct {
 }
 
 type AuthorbasedQuizResponse struct {
-	FullSentence string       `json:"fullSentence"`
-	Translation  string       `json:"translation"`
-	Reference    string       `json:"reference"`
-	Quiz         QuizResponse `json:"quiz"`
+	FullSentence string             `json:"fullSentence"`
+	Translation  string             `json:"translation"`
+	Reference    string             `json:"reference"`
+	Quiz         QuizResponse       `json:"quiz"`
+	GrammarQuiz  []GrammarQuizAdded `json:"grammarQuiz,omitempty"`
 }
 
 type QuizResponse struct {
@@ -199,10 +200,9 @@ type ComprehensiveResponse struct {
 }
 
 type AuthorBasedResponse struct {
-	Correct     bool               `json:"correct"`
-	QuizWord    string             `json:"quizWord"`
-	WordsInText []string           `json:"wordsInText,omitempty"`
-	GrammarQuiz []GrammarQuizAdded `json:"grammarQuiz,omitempty"`
+	Correct     bool     `json:"correct"`
+	QuizWord    string   `json:"quizWord"`
+	WordsInText []string `json:"wordsInText,omitempty"`
 }
 
 type DialogueAnswer struct {
