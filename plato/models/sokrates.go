@@ -24,7 +24,7 @@ type AuthorBasedContent struct {
 	Translation         string            `json:"translation"`
 	WordsInText         []string          `json:"wordsInText"`
 	HasGrammarQuestions bool              `json:"hasGrammarQuestions"`
-	GrammarQuestions    []GrammarQuestion `json:"grammarQuestions"`
+	GrammarQuestions    []GrammarQuestion `json:"grammarQuestions,omitempty"`
 }
 
 type GrammarQuestion struct {
@@ -32,6 +32,13 @@ type GrammarQuestion struct {
 	TypeOfWord       string `json:"typeOfWord"`
 	WordInText       string `json:"wordInText"`
 	ExtraInformation string `json:"extraInformation"`
+}
+
+type GrammarQuizAdded struct {
+	CorrectAnswer    string    `json:"correctAnswer"`
+	WordInText       string    `json:"wordInText"`
+	ExtraInformation string    `json:"extraInformation"`
+	Options          []Options `json:"options,omitempty"`
 }
 
 type GrammarQuestionOptions struct {
@@ -192,9 +199,10 @@ type ComprehensiveResponse struct {
 }
 
 type AuthorBasedResponse struct {
-	Correct     bool     `json:"correct"`
-	QuizWord    string   `json:"quizWord"`
-	WordsInText []string `json:"wordsInText,omitempty"`
+	Correct     bool               `json:"correct"`
+	QuizWord    string             `json:"quizWord"`
+	WordsInText []string           `json:"wordsInText,omitempty"`
+	GrammarQuiz []GrammarQuizAdded `json:"grammarQuiz,omitempty"`
 }
 
 type DialogueAnswer struct {
