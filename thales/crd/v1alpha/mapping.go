@@ -22,37 +22,31 @@ type MappingList struct {
 type Mapping struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	APIVersion        string `json:"apiVersion"`
-	Kind              string `json:"kind"`
+	APIVersion        string `json:"apiVersion,omitempty"`
+	Kind              string `json:"kind,omitempty"`
 	Spec              Spec   `json:"spec"`
 }
 
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +k8s:deepcopy-gen=true
 type Spec struct {
-	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Services          []Service `json:"services"`
+	Services []Service `json:"services"`
 }
 
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +k8s:deepcopy-gen=true
 type Service struct {
-	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Name              string   `json:"name"`
-	KubeType          string   `json:"kubeType"`
-	SecretName        string   `json:"secretName"`
-	Namespace         string   `json:"namespace"`
-	Active            bool     `json:"active"`
-	Created           string   `json:"created"`
-	Validity          int      `json:"validity"`
-	Clients           []Client `json:"clients"`
+	Name       string   `json:"name"`
+	KubeType   string   `json:"kubeType"`
+	SecretName string   `json:"secretName"`
+	Namespace  string   `json:"namespace"`
+	Active     bool     `json:"active"`
+	Created    string   `json:"created"`
+	Validity   int      `json:"validity"`
+	Clients    []Client `json:"clients"`
 }
 
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +k8s:deepcopy-gen=true
 type Client struct {
-	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Namespace         string `json:"namespace"`
-	Name              string `json:"name"`
-	KubeType          string `json:"kubeType"`
+	Namespace string `json:"namespace"`
+	Name      string `json:"name"`
+	KubeType  string `json:"kubeType"`
 }
