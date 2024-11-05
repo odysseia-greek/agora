@@ -8,20 +8,43 @@ const (
 )
 
 type AuthorbasedQuiz struct {
-	QuizType     string               `json:"quizType"`
-	Theme        string               `json:"theme"`
-	Set          int                  `json:"set"`
-	Segment      string               `json:"segment,omitempty"`
-	Reference    string               `json:"reference"`
-	FullSentence string               `json:"fullSentence"`
-	Translation  string               `json:"translation"`
-	Content      []AuthorBasedContent `json:"content"`
+	QuizType               string                 `json:"quizType"`
+	Theme                  string                 `json:"theme"`
+	Set                    int                    `json:"set"`
+	Segment                string                 `json:"segment,omitempty"`
+	Reference              string                 `json:"reference"`
+	FullSentence           string                 `json:"fullSentence"`
+	Translation            string                 `json:"translation"`
+	GrammarQuestionOptions GrammarQuestionOptions `json:"grammarQuestionOptions"`
+	Content                []AuthorBasedContent   `json:"content"`
 }
 
 type AuthorBasedContent struct {
-	Greek       string   `json:"greek"`
-	Translation string   `json:"translation"`
-	WordsInText []string `json:"wordsInText"`
+	Greek               string            `json:"greek"`
+	Translation         string            `json:"translation"`
+	WordsInText         []string          `json:"wordsInText"`
+	HasGrammarQuestions bool              `json:"hasGrammarQuestions"`
+	GrammarQuestions    []GrammarQuestion `json:"grammarQuestions,omitempty"`
+}
+
+type GrammarQuestion struct {
+	CorrectAnswer    string `json:"correctAnswer"`
+	TypeOfWord       string `json:"typeOfWord"`
+	WordInText       string `json:"wordInText"`
+	ExtraInformation string `json:"extraInformation"`
+}
+
+type GrammarQuizAdded struct {
+	CorrectAnswer    string    `json:"correctAnswer"`
+	WordInText       string    `json:"wordInText"`
+	ExtraInformation string    `json:"extraInformation"`
+	Options          []Options `json:"options,omitempty"`
+}
+
+type GrammarQuestionOptions struct {
+	Nouns []string `json:"nouns"`
+	Verbs []string `json:"verbs"`
+	Misc  []string `json:"misc"`
 }
 
 type MultipleChoiceQuiz struct {
@@ -145,10 +168,11 @@ type AnswerRequest struct {
 }
 
 type AuthorbasedQuizResponse struct {
-	FullSentence string       `json:"fullSentence"`
-	Translation  string       `json:"translation"`
-	Reference    string       `json:"reference"`
-	Quiz         QuizResponse `json:"quiz"`
+	FullSentence string             `json:"fullSentence"`
+	Translation  string             `json:"translation"`
+	Reference    string             `json:"reference"`
+	Quiz         QuizResponse       `json:"quiz"`
+	GrammarQuiz  []GrammarQuizAdded `json:"grammarQuiz,omitempty"`
 }
 
 type QuizResponse struct {
