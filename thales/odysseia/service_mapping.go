@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/odysseia-greek/agora/thales/crd/v1alpha"
-	"io/ioutil"
+	"io"
 	appsv1 "k8s.io/api/apps/v1"
 	apiextensionv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
@@ -90,12 +90,8 @@ func NewFakeServiceMappingImpl() (ServiceMapping, error) {
 				APIVersion: fmt.Sprintf("%s/%s", v1alpha.GroupName, v1alpha.Version),
 				Kind:       v1alpha.Kind,
 				Spec: v1alpha.Spec{
-					TypeMeta:   metav1.TypeMeta{},
-					ObjectMeta: metav1.ObjectMeta{},
 					Services: []v1alpha.Service{
 						{
-							TypeMeta:   metav1.TypeMeta{},
-							ObjectMeta: metav1.ObjectMeta{},
 							Name:       serviceName,
 							KubeType:   kubeType,
 							SecretName: "",
@@ -105,11 +101,9 @@ func NewFakeServiceMappingImpl() (ServiceMapping, error) {
 							Validity:   validity,
 							Clients: []v1alpha.Client{
 								{
-									TypeMeta:   metav1.TypeMeta{},
-									ObjectMeta: metav1.ObjectMeta{},
-									Namespace:  ns,
-									Name:       clientName,
-									KubeType:   kubeType,
+									Namespace: ns,
+									Name:      clientName,
+									KubeType:  kubeType,
 								},
 							},
 						},
@@ -123,7 +117,7 @@ func NewFakeServiceMappingImpl() (ServiceMapping, error) {
 				if updatedMapping.APIVersion != "" {
 					byteResponse, _ = updatedMapping.Marshal()
 				}
-				return &http.Response{StatusCode: http.StatusOK, Header: header, Body: ioutil.NopCloser(bytes.NewReader(byteResponse))}, nil
+				return &http.Response{StatusCode: http.StatusOK, Header: header, Body: io.NopCloser(bytes.NewReader(byteResponse))}, nil
 			case "PUT":
 				var v1map v1alpha.Mapping
 				err := json.NewDecoder(req.Body).Decode(&v1map)
@@ -131,9 +125,9 @@ func NewFakeServiceMappingImpl() (ServiceMapping, error) {
 					updatedMapping = v1map
 				}
 				byteResponse, _ := updatedMapping.Marshal()
-				return &http.Response{StatusCode: http.StatusOK, Header: header, Body: ioutil.NopCloser(bytes.NewReader(byteResponse))}, nil
+				return &http.Response{StatusCode: http.StatusOK, Header: header, Body: io.NopCloser(bytes.NewReader(byteResponse))}, nil
 			case "POST":
-				return &http.Response{StatusCode: http.StatusOK, Header: header, Body: ioutil.NopCloser(req.Body)}, nil
+				return &http.Response{StatusCode: http.StatusOK, Header: header, Body: io.NopCloser(req.Body)}, nil
 			default:
 				fmt.Errorf("unexpected request: %#v\n%#v", req.URL, req)
 				return nil, nil
@@ -150,7 +144,7 @@ func NewFakeServiceMappingImpl() (ServiceMapping, error) {
 	restClient, _ := rest.RESTClientFor(clientConfig)
 	restClient.Client = fakeClient.Client
 
-	extensionClient := fakeclientset.NewSimpleClientset()
+	extensionClient := fakeclientset.NewClientset()
 
 	return &ServiceMappingsImpl{
 		ExtensionClient: extensionClient,
@@ -174,9 +168,7 @@ func (s *ServiceMappingsImpl) Parse(services []v1alpha.Service, name, ns string)
 		APIVersion: apiVersion,
 		Kind:       v1alpha.Kind,
 		Spec: v1alpha.Spec{
-			TypeMeta:   metav1.TypeMeta{},
-			ObjectMeta: metav1.ObjectMeta{},
-			Services:   services,
+			Services: services,
 		},
 	}
 

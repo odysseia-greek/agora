@@ -82,6 +82,5 @@ func CreateServiceMapping() *apiextensionv1.CustomResourceDefinition {
 			},
 		},
 	}
-
 	return crd
 }
