@@ -12,6 +12,7 @@ import (
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
+	fakedyn "k8s.io/client-go/dynamic/fake"
 	admissionregistrationv1 "k8s.io/client-go/kubernetes/typed/admissionregistration/v1"
 	fakeadmissionregistrationv1 "k8s.io/client-go/kubernetes/typed/admissionregistration/v1/fake"
 	appsv1 "k8s.io/client-go/kubernetes/typed/apps/v1"
@@ -75,9 +76,11 @@ func NewFakeKubeClient() *KubeClient {
 	fake.AddReactor("*", "*", testing.ObjectReaction(tracker))
 
 	fakeMetricsClientset := &fakemetrics.Clientset{}
+	dynamicClient := fakedyn.NewSimpleDynamicClient(scheme)
 
 	return &KubeClient{
 		fake:                    true,
+		dynamic:                 dynamicClient,
 		coreV1:                  &fakecorev1.FakeCoreV1{Fake: &fake},
 		appsV1:                  &fakeappsv1.FakeAppsV1{Fake: &fake},
 		rbacV1:                  &fakerbacv1.FakeRbacV1{Fake: &fake},
