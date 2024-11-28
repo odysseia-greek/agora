@@ -103,12 +103,12 @@ func CreateVaultClientKubernetes(address, vaultRole, jwt string, tlsConfig *api.
 	return &Vault{Connection: client, SecretPath: defaultPath}, nil
 }
 
-func CreateTLSConfig(insecure bool, ca, cert, key, caPath string) *api.TLSConfig {
+func CreateTLSConfig(ca, cert, key, caPath string) *api.TLSConfig {
 	return &api.TLSConfig{
 		CAPath:     caPath,
 		CACert:     ca,
 		ClientCert: cert,
 		ClientKey:  key,
-		Insecure:   insecure,
+		Insecure:   false,
 	}
 }

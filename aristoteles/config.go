@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/odysseia-greek/agora/aristoteles/models"
 	"os"
-	"path/filepath"
 	"time"
 )
 
@@ -43,7 +42,7 @@ func ElasticService(tls bool) string {
 	return elasticService
 }
 
-func ElasticConfig(env string, testOverwrite, tls bool) models.Config {
+func ElasticConfig(tls bool) (models.Config, error) {
 	elasticUser := os.Getenv(EnvElasticUser)
 	if elasticUser == "" {
 		elasticUser = elasticUsernameDefault
@@ -55,7 +54,11 @@ func ElasticConfig(env string, testOverwrite, tls bool) models.Config {
 
 	var elasticCert string
 	if tls {
-		elasticCert = string(GetCert(env, testOverwrite))
+		cert, err := GetCert()
+		if err != nil {
+			return models.Config{}, err
+		}
+		elasticCert = string(cert)
 	}
 
 	elasticService := ElasticService(tls)
@@ -67,21 +70,14 @@ func ElasticConfig(env string, testOverwrite, tls bool) models.Config {
 		ElasticCERT: elasticCert,
 	}
 
-	return esConf
+	return esConf, nil
 }
 
-func GetCert(env string, testOverWrite bool) []byte {
-	var cert []byte
-
-	if testOverWrite {
-		certPath := filepath.Join("eratosthenes", "elastic-test-cert.pem")
-
-		cert, _ = os.ReadFile(certPath)
-
-		return cert
+func GetCert() ([]byte, error) {
+	cert, err := os.ReadFile(certPathInPod)
+	if err != nil {
+		return nil, err
 	}
 
-	cert, _ = os.ReadFile(certPathInPod)
-
-	return cert
+	return cert, nil
 }

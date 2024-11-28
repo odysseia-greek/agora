@@ -46,7 +46,7 @@ func getBoolFromEnv(envName string) bool {
 	return value
 }
 
-func CreateVaultClient(env string, healthCheck, debugMode bool) (Client, error) {
+func CreateVaultClient(healthCheck bool) (Client, error) {
 	var vaultClient Client
 
 	vaultAuthMethod := getStringFromEnv(EnvAuthMethod, AuthMethodToken)
@@ -65,12 +65,6 @@ func CreateVaultClient(env string, healthCheck, debugMode bool) (Client, error) 
 	var tlsConfig *api.TLSConfig
 
 	if tlsEnabled {
-		insecure := false
-		if env == "LOCAL" || env == "TEST" {
-			insecure = !insecure
-			secretPath = "/tmp"
-		}
-
 		ca := fmt.Sprintf("%s/vault.ca", secretPath)
 		cert := fmt.Sprintf("%s/vault.crt", secretPath)
 		key := fmt.Sprintf("%s/vault.key", secretPath)
@@ -81,7 +75,7 @@ func CreateVaultClient(env string, healthCheck, debugMode bool) (Client, error) 
 			log.Print(key)
 		}
 
-		tlsConfig = CreateTLSConfig(insecure, ca, cert, key, secretPath)
+		tlsConfig = CreateTLSConfig(ca, cert, key, secretPath)
 	}
 
 	if vaultAuthMethod == AuthMethodKube {
