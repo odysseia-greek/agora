@@ -56,24 +56,12 @@ func CreateVaultClient(healthCheck bool) (Client, error) {
 	rootPath := getStringFromEnv(EnvRootTlSDir, defaultTLSFileLocation)
 	secretPath := filepath.Join(rootPath, VAULT)
 
-	if debugMode {
-		log.Printf("vaultAuthMethod set to %s", vaultAuthMethod)
-		log.Printf("secretPath set to %s", secretPath)
-		log.Printf("tlsEnabled set to %v", tlsEnabled)
-	}
-
 	var tlsConfig *api.TLSConfig
 
 	if tlsEnabled {
 		ca := fmt.Sprintf("%s/vault.ca", secretPath)
 		cert := fmt.Sprintf("%s/vault.crt", secretPath)
 		key := fmt.Sprintf("%s/vault.key", secretPath)
-
-		if debugMode {
-			log.Print(ca)
-			log.Print(cert)
-			log.Print(key)
-		}
 
 		tlsConfig = CreateTLSConfig(ca, cert, key, secretPath)
 	}
