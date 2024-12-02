@@ -160,6 +160,11 @@ func (tm *TLSManager) removeOldCertificate(oldCert tls.Certificate) {
 		}
 	}
 
+	if remainingCertificates == nil {
+		logging.Debug("No old certificates found, probably a first startup")
+		return
+	}
+
 	tm.currentTLSConfig = &tls.Config{
 		Certificates: remainingCertificates,
 		GetCertificate: func(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
