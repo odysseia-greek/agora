@@ -3,6 +3,7 @@ package tlsmanager
 import (
 	"crypto/sha256"
 	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"github.com/odysseia-greek/agora/plato/logging"
 	"io"
@@ -18,9 +19,12 @@ type TLSManager struct {
 	certPath         string
 	keyPath          string
 	caPath           string
+	caPool           *x509.CertPool
 	gracePeriod      time.Duration
 	lastCertHash     string
 	lastKeyHash      string
+	cipherSuites     []uint16
+	curvePreferences []tls.CurveID
 }
 
 func NewTLSManager(hostName, rootPath string, gracePeriod time.Duration) *TLSManager {
@@ -31,11 +35,39 @@ func NewTLSManager(hostName, rootPath string, gracePeriod time.Duration) *TLSMan
 	keyPath := filepath.Join(rootPath, hostName, "tls.key")
 	caPath := filepath.Join(rootPath, hostName, "tls.pem")
 
+	// Load CA certificate
+	caPool := x509.NewCertPool()
+	caFromFile, err := os.ReadFile(caPath)
+	if err != nil {
+		logging.Error(fmt.Sprintf("Failed to read CA certificate: %v", err))
+		return nil
+	}
+	if !caPool.AppendCertsFromPEM(caFromFile) {
+		logging.Error("Failed to append CA certificate")
+		return nil
+	}
+
+	// Define cipher suites and curve preferences
+	cipherSuites := []uint16{
+		tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+		tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
+		tls.TLS_RSA_WITH_AES_256_GCM_SHA384,
+		tls.TLS_RSA_WITH_AES_256_CBC_SHA,
+	}
+	curvePreferences := []tls.CurveID{
+		tls.CurveP521,
+		tls.CurveP384,
+		tls.CurveP256,
+	}
+
 	return &TLSManager{
-		certPath:    certPath,
-		keyPath:     keyPath,
-		caPath:      caPath,
-		gracePeriod: gracePeriod,
+		certPath:         certPath,
+		keyPath:          keyPath,
+		caPath:           caPath,
+		caPool:           caPool,
+		gracePeriod:      gracePeriod,
+		cipherSuites:     cipherSuites,
+		curvePreferences: curvePreferences,
 	}
 }
 
@@ -46,6 +78,7 @@ func (tm *TLSManager) GetTLSConfig() *tls.Config {
 
 // LoadCertificates loads and updates the TLS configuration.
 func (tm *TLSManager) LoadCertificates() error {
+	// Load the new certificate
 	cert, err := tls.LoadX509KeyPair(tm.certPath, tm.keyPath)
 	if err != nil {
 		return fmt.Errorf("failed to load certificate: %w", err)
@@ -54,7 +87,11 @@ func (tm *TLSManager) LoadCertificates() error {
 	// Initialize the TLS configuration if it's the first run
 	if tm.currentTLSConfig == nil {
 		tm.currentTLSConfig = &tls.Config{
-			Certificates: []tls.Certificate{cert},
+			Certificates:     []tls.Certificate{cert},
+			ClientCAs:        tm.caPool,
+			MinVersion:       tls.VersionTLS12,
+			CipherSuites:     tm.cipherSuites,
+			CurvePreferences: tm.curvePreferences,
 			GetCertificate: func(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
 				for _, cert := range tm.currentTLSConfig.Certificates {
 					return &cert, nil
@@ -66,13 +103,17 @@ func (tm *TLSManager) LoadCertificates() error {
 		return nil
 	}
 
-	// Clone the existing config and add the new certificate
+	// Clone the existing configuration
 	oldTLSConfig := tm.currentTLSConfig
 	newCertificates := append(oldTLSConfig.Certificates, cert)
 
-	// Create the new config with both old and new certificates
+	// Update the current TLS configuration
 	tm.currentTLSConfig = &tls.Config{
-		Certificates: newCertificates,
+		Certificates:     newCertificates,
+		ClientCAs:        tm.caPool,
+		MinVersion:       tls.VersionTLS12,
+		CipherSuites:     tm.cipherSuites,
+		CurvePreferences: tm.curvePreferences,
 		GetCertificate: func(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
 			for _, cert := range newCertificates {
 				return &cert, nil
