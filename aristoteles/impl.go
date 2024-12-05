@@ -44,6 +44,7 @@ type Index interface {
 	Create(index string, request map[string]interface{}) (*models.IndexCreateResult, error)
 	CreateWithAlias(indexName string, request map[string]interface{}) (*models.IndexCreateResult, error)
 	Delete(index string) (bool, error)
+	IndexExists(index string) (bool, *models.IndexInfo, error)
 }
 
 type Policy interface {
