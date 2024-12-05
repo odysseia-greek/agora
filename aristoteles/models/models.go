@@ -213,3 +213,11 @@ func UnmarshalIndexError(data []byte) (IndexError, error) {
 	err := json.Unmarshal(data, &r)
 	return r, err
 }
+
+type IndexInfo struct {
+	IndexName      string                 `json:"index_name"`
+	Settings       map[string]interface{} `json:"settings,omitempty"`
+	Mappings       map[string]interface{} `json:"mappings,omitempty"`
+	TotalDocuments int64                  `json:"total_documents,omitempty"`
+	SizeInBytes    int64                  `json:"size_in_bytes,omitempty"`
+}

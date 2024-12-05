@@ -183,3 +183,69 @@ func (i *IndexImpl) Delete(index string) (bool, error) {
 
 	return r["acknowledged"].(bool), nil
 }
+
+func (i *IndexImpl) IndexExists(index string) (bool, *models.IndexInfo, error) {
+	// Send a request to check the index
+	getRequest := esapi.IndicesGetRequest{
+		Index: []string{index},
+	}
+
+	res, err := getRequest.Do(context.Background(), i.es)
+	if err != nil {
+		return false, nil, err
+	}
+	defer res.Body.Close()
+
+	// If the index does not exist
+	if res.StatusCode == 404 {
+		return false, nil, nil
+	}
+
+	if res.IsError() {
+		return false, nil, fmt.Errorf("error checking index existence: %s", res.Status())
+	}
+
+	// Parse the response body
+	var indexInfo map[string]interface{}
+	if err := json.NewDecoder(res.Body).Decode(&indexInfo); err != nil {
+		return false, nil, err
+	}
+
+	// Extract relevant data about the index
+	if data, exists := indexInfo[index]; exists {
+		indexData := data.(map[string]interface{})
+
+		// Prepare the struct
+		info := &models.IndexInfo{
+			IndexName: index,
+		}
+
+		// Extract settings
+		if settings, ok := indexData["settings"].(map[string]interface{}); ok {
+			info.Settings = settings
+		}
+
+		// Extract mappings
+		if mappings, ok := indexData["mappings"].(map[string]interface{}); ok {
+			info.Mappings = mappings
+		}
+
+		// Extract stats
+		if total, ok := indexData["total"].(map[string]interface{}); ok {
+			if docs, ok := total["docs"].(map[string]interface{}); ok {
+				if count, ok := docs["count"].(float64); ok {
+					info.TotalDocuments = int64(count)
+				}
+			}
+			if store, ok := total["store"].(map[string]interface{}); ok {
+				if size, ok := store["size_in_bytes"].(float64); ok {
+					info.SizeInBytes = int64(size)
+				}
+			}
+		}
+
+		return true, info, nil
+	}
+
+	return true, nil, fmt.Errorf("unexpected response format while checking index existence")
+}
