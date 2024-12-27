@@ -36,7 +36,7 @@ func (s *SolonImpl) OneTimeToken(uuid string) (*http.Response, error) {
 	}
 
 	if response.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("expected %v but got %v while calling token endpoint", http.StatusOK, response.StatusCode)
+		return response, fmt.Errorf("expected %v but got %v while calling token endpoint", http.StatusOK, response.StatusCode)
 	}
 
 	return response, nil
@@ -60,7 +60,7 @@ func (s *SolonImpl) Register(requestBody models.SolonCreationRequest, uuid strin
 	}
 
 	if response.StatusCode != http.StatusOK && response.StatusCode != http.StatusCreated {
-		return nil, fmt.Errorf("expected %v but got %v while calling token endpoint", http.StatusOK, response.StatusCode)
+		return response, fmt.Errorf("expected %v but got %v while calling register endpoint", http.StatusOK, response.StatusCode)
 	}
 
 	return response, nil

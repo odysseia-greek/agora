@@ -13,7 +13,7 @@ func Health(path url.URL, client HttpClient, uuid string) (*http.Response, error
 	}
 
 	if response.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("expected %v but got %v while calling token endpoint", http.StatusOK, response.StatusCode)
+		return response, fmt.Errorf("expected %v but got %v while calling token endpoint", http.StatusOK, response.StatusCode)
 	}
 
 	return response, nil

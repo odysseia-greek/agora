@@ -44,7 +44,7 @@ func (s *SokratesImpl) Create(body []byte, requestID string) (*http.Response, er
 	}
 
 	if response.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("expected %v but got %v while calling %v endpoint", http.StatusOK, response.StatusCode, createPath)
+		return response, fmt.Errorf("expected %v but got %v while calling %v endpoint", http.StatusOK, response.StatusCode, createPath)
 	}
 
 	return response, nil
@@ -63,7 +63,7 @@ func (s *SokratesImpl) Check(body []byte, requestID string) (*http.Response, err
 	}
 
 	if response.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("expected %v but got %v while calling %v endpoint", http.StatusOK, response.StatusCode, answerPath)
+		return response, fmt.Errorf("expected %v but got %v while calling %v endpoint", http.StatusOK, response.StatusCode, answerPath)
 	}
 
 	return response, nil
@@ -85,7 +85,7 @@ func (s *SokratesImpl) Options(quizType string, requestID string) (*http.Respons
 	}
 
 	if response.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("expected %v but got %v while calling %v endpoint", http.StatusOK, response.StatusCode, answerPath)
+		return response, fmt.Errorf("expected %v but got %v while calling %v endpoint", http.StatusOK, response.StatusCode, answerPath)
 	}
 
 	return response, nil

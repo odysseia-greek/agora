@@ -51,7 +51,7 @@ func (a *AlexandrosImpl) Search(word, language, mode, textSearch, uuid string) (
 	}
 
 	if response.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("expected %v but got %v while calling %v endpoint", http.StatusOK, response.StatusCode, urlPath)
+		return response, fmt.Errorf("expected %v but got %v while calling %v endpoint", http.StatusOK, response.StatusCode, urlPath)
 	}
 
 	return response, nil
