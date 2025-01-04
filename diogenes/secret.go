@@ -31,7 +31,8 @@ func (v *Vault) GetSecret(name string) (*api.Secret, error) {
 }
 
 func (v *Vault) ListSecrets() ([]string, error) {
-	secret, err := v.Connection.Logical().List(v.SecretPath)
+	vaultPath := fmt.Sprintf("secret/%s", v.SecretPath)
+	secret, err := v.Connection.Logical().List(vaultPath)
 	if err != nil {
 		return nil, fmt.Errorf("unable to list secrets in vault: %w", err)
 	}
