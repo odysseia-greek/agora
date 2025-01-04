@@ -34,13 +34,15 @@ type Client interface {
 }
 
 type Vault struct {
-	SecretPath string
-	Connection *api.Client
+	SecretPath   string
+	KVSecretPath string
+	Connection   *api.Client
 }
 
 const (
-	defaultPath       string = "configs/data"
-	fixtureSecretName string = "isitsecretisitsafe"
+	defaultKVSecretPath string = "configs"
+	defaultKVSecretData string = "configs/data"
+	fixtureSecretName   string = "isitsecretisitsafe"
 )
 
 func NewVaultClient(address, token string, tlsConfig *api.TLSConfig) (Client, error) {
@@ -66,7 +68,7 @@ func NewVaultClient(address, token string, tlsConfig *api.TLSConfig) (Client, er
 		client.SetToken(token)
 	}
 
-	return &Vault{Connection: client, SecretPath: defaultPath}, nil
+	return &Vault{Connection: client, SecretPath: defaultKVSecretData, KVSecretPath: defaultKVSecretPath}, nil
 }
 
 func CreateVaultClientKubernetes(address, vaultRole, jwt string, tlsConfig *api.TLSConfig) (Client, error) {
@@ -102,7 +104,7 @@ func CreateVaultClientKubernetes(address, vaultRole, jwt string, tlsConfig *api.
 
 	client.SetToken(resp.Auth.ClientToken)
 
-	return &Vault{Connection: client, SecretPath: defaultPath}, nil
+	return &Vault{Connection: client, SecretPath: defaultKVSecretData, KVSecretPath: defaultKVSecretPath}, nil
 }
 
 func CreateTLSConfig(ca, cert, key, caPath string) *api.TLSConfig {

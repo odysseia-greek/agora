@@ -109,5 +109,5 @@ func CreateMockVaultClient(fixtureFiles []string, statusCode int) (Client, error
 		return nil, err
 	}
 
-	return &Vault{Connection: client, SecretPath: defaultPath}, nil
+	return &Vault{Connection: client, SecretPath: defaultKVSecretData}, nil
 }

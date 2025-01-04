@@ -31,7 +31,10 @@ func (v *Vault) GetSecret(name string) (*api.Secret, error) {
 }
 
 func (v *Vault) ListSecrets() ([]string, error) {
-	vaultPath := fmt.Sprintf("secret/%s", v.SecretPath)
+	//curl -k -H "X-Vault-Token: $token" \
+	//--request LIST \
+	//https://vault:8200/v1/configs/metadata
+	vaultPath := fmt.Sprintf("%s/metadata", v.KVSecretPath)
 	secret, err := v.Connection.Logical().List(vaultPath)
 	if err != nil {
 		return nil, fmt.Errorf("unable to list secrets in vault: %w", err)
