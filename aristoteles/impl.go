@@ -79,6 +79,8 @@ type Health interface {
 type Access interface {
 	CreateRole(name string, roleRequest models.CreateRoleRequest) (bool, error)
 	CreateUser(name string, userCreation models.CreateUserRequest) (bool, error)
+	ListUsers() ([]string, error)
+	DeleteUser(name string) (bool, error)
 }
 
 type Elastic struct {
