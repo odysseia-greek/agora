@@ -15,6 +15,8 @@ type Client interface {
 	CreateOneTimeToken(policy []string) (string, error)
 	CreateNewSecret(name string, payload []byte) (bool, error)
 	GetSecret(name string) (*api.Secret, error)
+	DeleteSecret(name string) error
+	ListSecrets() ([]string, error)
 	SetOnetimeToken(token string)
 	LoginWithRootToken(rootToken string) error
 	GetCurrentToken() string

@@ -30,6 +30,46 @@ func (v *Vault) GetSecret(name string) (*api.Secret, error) {
 	return secret, nil
 }
 
+func (v *Vault) ListSecrets() ([]string, error) {
+	secret, err := v.Connection.Logical().List(v.SecretPath)
+	if err != nil {
+		return nil, fmt.Errorf("unable to list secrets in vault: %w", err)
+	}
+
+	// Ensure the returned secret contains data
+	if secret == nil || secret.Data == nil {
+		return nil, nil // No secrets found
+	}
+
+	// Extract the keys from the data
+	keys, ok := secret.Data["keys"].([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("unexpected data format when listing secrets")
+	}
+
+	// Convert keys to a slice of strings
+	result := make([]string, len(keys))
+	for i, key := range keys {
+		result[i], ok = key.(string)
+		if !ok {
+			return nil, fmt.Errorf("failed to convert key to string")
+		}
+	}
+
+	return result, nil
+}
+
+func (v *Vault) DeleteSecret(name string) error {
+	vaultPath := fmt.Sprintf("%s/%s", v.SecretPath, name)
+
+	_, err := v.Connection.Logical().Delete(vaultPath)
+	if err != nil {
+		return fmt.Errorf("unable to delete secret in vault: %w", err)
+	}
+
+	return nil
+}
+
 // EnableKVSecretsEngine enables the Key-Value (KV) secrets engine in HashiCorp Vault.
 //
 // Parameters:
