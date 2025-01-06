@@ -2,6 +2,7 @@ package diogenes
 
 import (
 	"fmt"
+	"github.com/hashicorp/vault/api"
 	"log"
 )
 
@@ -32,17 +33,22 @@ func (v *Vault) WritePolicy(policyName string, policyContent []byte) error {
 	return nil
 }
 
+func (v *Vault) DeletePolicy(policyName string) (*api.Secret, error) {
+	path := fmt.Sprintf("sys/policies/acl/%s", policyName)
+	return v.Connection.Logical().Delete(path)
+}
+
 func (v *Vault) ReadPolicy(policyName string) (string, error) {
 	path := fmt.Sprintf("sys/policies/acl/%s", policyName)
 
-	secret, err := v.Connection.Logical().Read(path)
+	policy, err := v.Connection.Logical().Read(path)
 	if err != nil {
 		return "", fmt.Errorf("failed to read Vault policy: %w", err)
 	}
 
-	if secret == nil || secret.Data == nil {
+	if policy == nil || policy.Data == nil {
 		return "", fmt.Errorf("policy not found")
 	}
 
-	return secret.Data["policy"].(string), nil
+	return policy.Data["policy"].(string), nil
 }
