@@ -29,6 +29,7 @@ type Client interface {
 	WritePolicy(policyName string, policyContent []byte) error
 	DeletePolicy(policyName string) (*api.Secret, error)
 	ReadPolicy(policyName string) (string, error)
+	ListPolicies() ([]string, error)
 	KubernetesAuthMethod(role, serviceAccountName, namespace, kubeHost string) error
 	RaftJoin(leaderAddress string, cert, key, ca []byte) (*api.RaftJoinResponse, error)
 	Leader() (*api.LeaderResponse, error)

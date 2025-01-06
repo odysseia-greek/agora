@@ -38,6 +38,38 @@ func (v *Vault) DeletePolicy(policyName string) (*api.Secret, error) {
 	return v.Connection.Logical().Delete(path)
 }
 
+func (v *Vault) ListPolicies() ([]string, error) {
+	path := "sys/policies/acl"
+
+	// Call the List API
+	secret, err := v.Connection.Logical().List(path)
+	if err != nil {
+		return nil, fmt.Errorf("unable to list policies in Vault: %w", err)
+	}
+
+	// Ensure the returned secret contains data
+	if secret == nil || secret.Data == nil {
+		return nil, nil // No policies found
+	}
+
+	// Extract the keys (policy names) from the data
+	keys, ok := secret.Data["keys"].([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("unexpected data format when listing policies")
+	}
+
+	// Convert keys to a slice of strings
+	policies := make([]string, len(keys))
+	for i, key := range keys {
+		policies[i], ok = key.(string)
+		if !ok {
+			return nil, fmt.Errorf("failed to convert key to string")
+		}
+	}
+
+	return policies, nil
+}
+
 func (v *Vault) ReadPolicy(policyName string) (string, error) {
 	path := fmt.Sprintf("sys/policies/acl/%s", policyName)
 
