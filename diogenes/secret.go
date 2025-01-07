@@ -40,7 +40,6 @@ func (v *Vault) ListSecrets() ([]string, error) {
 		return nil, fmt.Errorf("unable to list secrets in vault: %w", err)
 	}
 
-	// Ensure the returned secret contains data
 	if secret == nil || secret.Data == nil {
 		return nil, nil // No secrets found
 	}
@@ -63,6 +62,19 @@ func (v *Vault) ListSecrets() ([]string, error) {
 	return result, nil
 }
 
+func (v *Vault) RemoveSecret(name string) error {
+	//	curl -k -H "X-Vault-Token: $token" \
+	//	--request DELETE \
+	//https://vault:8200/v1/configs/metadata/$secretName
+	vaultPath := fmt.Sprintf("%s/metadata/%s", v.KVSecretPath, name)
+
+	_, err := v.Connection.Logical().Delete(vaultPath)
+	if err != nil {
+		return fmt.Errorf("unable to delete secret in vault: %w", err)
+	}
+
+	return nil
+}
 func (v *Vault) DeleteSecret(name string) error {
 	vaultPath := fmt.Sprintf("%s/%s", v.SecretPath, name)
 

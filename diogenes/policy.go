@@ -41,7 +41,6 @@ func (v *Vault) DeletePolicy(policyName string) (*api.Secret, error) {
 func (v *Vault) ListPolicies() ([]string, error) {
 	path := "sys/policies/acl"
 
-	// Call the List API
 	secret, err := v.Connection.Logical().List(path)
 	if err != nil {
 		return nil, fmt.Errorf("unable to list policies in Vault: %w", err)
@@ -52,7 +51,6 @@ func (v *Vault) ListPolicies() ([]string, error) {
 		return nil, nil // No policies found
 	}
 
-	// Extract the keys (policy names) from the data
 	keys, ok := secret.Data["keys"].([]interface{})
 	if !ok {
 		return nil, fmt.Errorf("unexpected data format when listing policies")
