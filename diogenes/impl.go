@@ -13,6 +13,7 @@ type Client interface {
 	CheckHealthyStatus(ticks, tick time.Duration) bool
 	Health() (bool, error)
 	CreateOneTimeToken(policy []string) (string, error)
+	ValidateToken(oneTimeToken string) (map[string]interface{}, error)
 	CreateNewSecret(name string, payload []byte) (bool, error)
 	GetSecret(name string) (*api.Secret, error)
 	RemoveSecret(name string) error

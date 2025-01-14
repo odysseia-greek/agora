@@ -1,11 +1,24 @@
 package diogenes
 
 import (
+	"fmt"
 	vault "github.com/hashicorp/vault/api"
 )
 
 func (v *Vault) SetOnetimeToken(token string) {
 	v.Connection.SetToken(token)
+}
+
+func (v *Vault) ValidateToken(oneTimeToken string) (map[string]interface{}, error) {
+	data := map[string]interface{}{
+		"token": oneTimeToken,
+	}
+	secret, err := v.Connection.Logical().Write("auth/token/lookup", data)
+	if err != nil {
+		return nil, fmt.Errorf("failed to validate token: %w", err)
+	}
+
+	return secret.Data, nil
 }
 
 func (v *Vault) LoginWithRootToken(rootToken string) error {
