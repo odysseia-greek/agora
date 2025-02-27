@@ -21,13 +21,7 @@ const (
 
 	dionysiosService string = "dionysios"
 	grammar          string = "checkGrammar"
-
-	sokratesService string = "sokrates"
-	quiz            string = "quiz"
-	create          string = "create"
-	options         string = "options"
-	answer          string = "answer"
-	QuizType        string = "quizType"
+	options          string = "options"
 
 	solonService string = "solon"
 	token        string = "token"

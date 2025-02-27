@@ -10,7 +10,6 @@ type OdysseiaClient interface {
 	Solon() Solon
 	Herodotos() Herodotos
 	Alexandros() Alexandros
-	Sokrates() Sokrates
 	Dionysios() Dionysios
 }
 
@@ -18,7 +17,6 @@ type Odysseia struct {
 	solon      *SolonImpl
 	herodotos  *HerodotosImpl
 	alexandros *AlexandrosImpl
-	sokrates   *SokratesImpl
 	dionysios  *DionysiosImpl
 }
 
@@ -41,13 +39,6 @@ type Alexandros interface {
 	Search(word, language, mode, textSearch, uuid string) (*http.Response, error)
 }
 
-type Sokrates interface {
-	Health(uuid string) (*http.Response, error)
-	Create(body []byte, uuid string) (*http.Response, error)
-	Check(body []byte, uuid string) (*http.Response, error)
-	Options(quizType string, requestID string) (*http.Response, error)
-}
-
 type Dionysios interface {
 	Health(uuid string) (*http.Response, error)
 	Grammar(word string, uuid string) (*http.Response, error)
@@ -60,7 +51,6 @@ type ClientConfig struct {
 	Herodotos  OdysseiaApi
 	Dionysios  OdysseiaApi
 	Alexandros OdysseiaApi
-	Sokrates   OdysseiaApi
 }
 
 type OdysseiaApi struct {
@@ -85,11 +75,6 @@ func NewClient(config ClientConfig) (OdysseiaClient, error) {
 		return nil, err
 	}
 
-	sokratesImpl, err := NewSokratesConfig(config.Sokrates, config.Ca)
-	if err != nil {
-		return nil, err
-	}
-
 	dionysiosImpl, err := NewDionysiosConfig(config.Dionysios, config.Ca)
 	if err != nil {
 		return nil, err
@@ -99,7 +84,6 @@ func NewClient(config ClientConfig) (OdysseiaClient, error) {
 		solon:      solonImpl,
 		herodotos:  herodotosImpl,
 		alexandros: alexandrosImpl,
-		sokrates:   sokratesImpl,
 		dionysios:  dionysiosImpl,
 	}, nil
 }
@@ -122,12 +106,7 @@ func NewFakeClient(config ClientConfig, codes []int, responses []string) (Odysse
 		return nil, err
 	}
 
-	sokratesImpl, err := NewFakeSokratesConfig(config.Sokrates.Scheme, config.Sokrates.Url, client)
-	if err != nil {
-		return nil, err
-	}
-
-	dionysiosImpl, err := NewFakeDionysiosConfig(config.Dionysios.Scheme, config.Sokrates.Url, client)
+	dionysiosImpl, err := NewFakeDionysiosConfig(config.Dionysios.Scheme, config.Dionysios.Url, client)
 	if err != nil {
 		return nil, err
 	}
@@ -136,7 +115,6 @@ func NewFakeClient(config ClientConfig, codes []int, responses []string) (Odysse
 		solon:      solonImpl,
 		herodotos:  herodotosImpl,
 		alexandros: alexandrosImpl,
-		sokrates:   sokratesImpl,
 		dionysios:  dionysiosImpl,
 	}, nil
 }
@@ -162,12 +140,6 @@ func (o *Odysseia) Alexandros() Alexandros {
 	return o.alexandros
 }
 
-func (o *Odysseia) Sokrates() Sokrates {
-	if o == nil {
-		return nil
-	}
-	return o.sokrates
-}
 func (o *Odysseia) Dionysios() Dionysios {
 	if o == nil {
 		return nil
