@@ -182,7 +182,7 @@ type QuizResponse struct {
 }
 
 type Options struct {
-	Option   string `json:"quizWord"`
+	Option   string `json:"option"`
 	AudioUrl string `json:"audioUrl,omitempty"`
 	ImageUrl string `json:"imageUrl,omitempty"`
 }
