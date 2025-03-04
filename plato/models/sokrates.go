@@ -55,11 +55,6 @@ type MultipleChoiceQuiz struct {
 	Theme    string                  `json:"theme,omitempty"`
 	Set      int                     `json:"set,omitempty"`
 	Content  []MultipleChoiceContent `json:"content"`
-	Progress struct {
-		TimesCorrect    int     `json:"timesCorrect"`
-		TimesIncorrect  int     `json:"timesIncorrect"`
-		AverageAccuracy float64 `json:"averageAccuracy"`
-	} `json:"progress,omitempty"`
 }
 
 type MultipleChoiceContent struct {
@@ -93,11 +88,6 @@ type MediaQuiz struct {
 	Theme    string         `json:"theme,omitempty"`
 	Segment  string         `json:"segment,omitempty"`
 	Content  []MediaContent `json:"content"`
-	Progress struct {
-		TimesCorrect    int     `json:"timesCorrect"`
-		TimesIncorrect  int     `json:"timesIncorrect"`
-		AverageAccuracy float64 `json:"averageAccuracy"`
-	} `json:"progress,omitempty"`
 }
 
 type DialogueQuiz struct {
@@ -192,11 +182,6 @@ type ComprehensiveResponse struct {
 	QuizWord     string              `json:"quizWord"`
 	FoundInText  AnalyzeTextResponse `json:"foundInText,omitempty"`
 	SimilarWords []Meros             `json:"similarWords,omitempty"`
-	Progress     struct {
-		TimesCorrect    int     `json:"timesCorrect"`
-		TimesIncorrect  int     `json:"timesIncorrect"`
-		AverageAccuracy float64 `json:"averageAccuracy"`
-	} `json:"progress,omitempty"`
 }
 
 type AuthorBasedResponse struct {
