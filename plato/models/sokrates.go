@@ -58,11 +58,8 @@ type MultipleChoiceQuiz struct {
 }
 
 type MultipleChoiceContent struct {
-	Translation     string  `json:"translation"`
-	TimesCorrect    int     `json:"timesCorrect,omitempty"`
-	TimesIncorrect  int     `json:"timesIncorrect,omitempty"`
-	AverageAccuracy float64 `json:"averageAccuracy,omitempty"`
-	Greek           string  `json:"greek,omitempty"`
+	Translation string `json:"translation"`
+	Greek       string `json:"greek,omitempty"`
 }
 
 type MediaContent struct {
