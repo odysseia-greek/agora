@@ -8,7 +8,6 @@ const (
 )
 
 type AuthorbasedQuiz struct {
-	QuizType               string                 `json:"quizType"`
 	Theme                  string                 `json:"theme"`
 	Set                    int                    `json:"set"`
 	Segment                string                 `json:"segment,omitempty"`
@@ -51,10 +50,9 @@ type MultipleChoiceQuiz struct {
 	QuizMetadata struct {
 		Language string `json:"language"`
 	} `json:"quizMetadata"`
-	QuizType string                  `json:"quizType"`
-	Theme    string                  `json:"theme,omitempty"`
-	Set      int                     `json:"set,omitempty"`
-	Content  []MultipleChoiceContent `json:"content"`
+	Theme   string                  `json:"theme,omitempty"`
+	Set     int                     `json:"set,omitempty"`
+	Content []MultipleChoiceContent `json:"content"`
 }
 
 type MultipleChoiceContent struct {
@@ -199,8 +197,7 @@ type DialogueCorrection struct {
 }
 
 type QuizAttempt struct {
-	Correct  bool
-	Set      string
-	Theme    string
-	QuizType string
+	Correct bool
+	Set     string
+	Theme   string
 }
