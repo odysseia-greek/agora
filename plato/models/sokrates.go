@@ -80,11 +80,10 @@ type MediaQuiz struct {
 	QuizMetadata struct {
 		Language string `json:"language"`
 	} `json:"quizMetadata"`
-	QuizType string         `json:"quizType"`
-	Set      int            `json:"set,omitempty"`
-	Theme    string         `json:"theme,omitempty"`
-	Segment  string         `json:"segment,omitempty"`
-	Content  []MediaContent `json:"content"`
+	Set     int            `json:"set,omitempty"`
+	Theme   string         `json:"theme,omitempty"`
+	Segment string         `json:"segment,omitempty"`
+	Content []MediaContent `json:"content"`
 }
 
 type DialogueQuiz struct {
@@ -92,7 +91,6 @@ type DialogueQuiz struct {
 		Language string `json:"language"`
 	} `json:"quizMetadata"`
 	Theme     string            `json:"theme,omitempty"`
-	QuizType  string            `json:"quizType"`
 	Set       int               `json:"set,omitempty"`
 	Segment   string            `json:"segment,omitempty"`
 	Reference string            `json:"reference,omitempty"`
@@ -138,7 +136,6 @@ type CreationRequest struct {
 	Theme        string   `json:"theme"`
 	Set          string   `json:"set"`
 	Segment      string   `json:"segment,omitempty"`
-	QuizType     string   `json:"quizType"`
 	Order        string   `json:"order"`
 	ExcludeWords []string `json:"excludeWords"`
 }
@@ -146,7 +143,6 @@ type CreationRequest struct {
 type AnswerRequest struct {
 	Theme         string            `json:"theme"`
 	Set           string            `json:"set"`
-	QuizType      string            `json:"quizType"`
 	Segment       string            `json:"segment,omitempty"`
 	Comprehensive bool              `json:"comprehensive,omitempty"`
 	Answer        string            `json:"answer"`
