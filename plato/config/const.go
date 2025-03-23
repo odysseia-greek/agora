@@ -76,6 +76,7 @@ const (
 	DefaultTracingName         = "agreus"
 	DefaultMetricsName         = "eumetros"
 	HeaderKey                  = "aischylos"
+	SessionIdKey               = "boule"
 	CreatorElasticRole         = "creator"
 	SeederElasticRole          = "seeder"
 	HybridElasticRole          = "hybrid"
