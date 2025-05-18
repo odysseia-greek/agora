@@ -8,7 +8,6 @@ const (
 )
 
 type AuthorbasedQuiz struct {
-	QuizType               string                 `json:"quizType"`
 	Theme                  string                 `json:"theme"`
 	Set                    int                    `json:"set"`
 	Segment                string                 `json:"segment,omitempty"`
@@ -51,23 +50,14 @@ type MultipleChoiceQuiz struct {
 	QuizMetadata struct {
 		Language string `json:"language"`
 	} `json:"quizMetadata"`
-	QuizType string                  `json:"quizType"`
-	Theme    string                  `json:"theme,omitempty"`
-	Set      int                     `json:"set,omitempty"`
-	Content  []MultipleChoiceContent `json:"content"`
-	Progress struct {
-		TimesCorrect    int     `json:"timesCorrect"`
-		TimesIncorrect  int     `json:"timesIncorrect"`
-		AverageAccuracy float64 `json:"averageAccuracy"`
-	} `json:"progress,omitempty"`
+	Theme   string                  `json:"theme,omitempty"`
+	Set     int                     `json:"set,omitempty"`
+	Content []MultipleChoiceContent `json:"content"`
 }
 
 type MultipleChoiceContent struct {
-	Translation     string  `json:"translation"`
-	TimesCorrect    int     `json:"timesCorrect,omitempty"`
-	TimesIncorrect  int     `json:"timesIncorrect,omitempty"`
-	AverageAccuracy float64 `json:"averageAccuracy,omitempty"`
-	Greek           string  `json:"greek,omitempty"`
+	Translation string `json:"translation"`
+	Greek       string `json:"greek,omitempty"`
 }
 
 type MediaContent struct {
@@ -88,16 +78,10 @@ type MediaQuiz struct {
 	QuizMetadata struct {
 		Language string `json:"language"`
 	} `json:"quizMetadata"`
-	QuizType string         `json:"quizType"`
-	Set      int            `json:"set,omitempty"`
-	Theme    string         `json:"theme,omitempty"`
-	Segment  string         `json:"segment,omitempty"`
-	Content  []MediaContent `json:"content"`
-	Progress struct {
-		TimesCorrect    int     `json:"timesCorrect"`
-		TimesIncorrect  int     `json:"timesIncorrect"`
-		AverageAccuracy float64 `json:"averageAccuracy"`
-	} `json:"progress,omitempty"`
+	Set     int            `json:"set,omitempty"`
+	Theme   string         `json:"theme,omitempty"`
+	Segment string         `json:"segment,omitempty"`
+	Content []MediaContent `json:"content"`
 }
 
 type DialogueQuiz struct {
@@ -105,7 +89,6 @@ type DialogueQuiz struct {
 		Language string `json:"language"`
 	} `json:"quizMetadata"`
 	Theme     string            `json:"theme,omitempty"`
-	QuizType  string            `json:"quizType"`
 	Set       int               `json:"set,omitempty"`
 	Segment   string            `json:"segment,omitempty"`
 	Reference string            `json:"reference,omitempty"`
@@ -151,7 +134,6 @@ type CreationRequest struct {
 	Theme        string   `json:"theme"`
 	Set          string   `json:"set"`
 	Segment      string   `json:"segment,omitempty"`
-	QuizType     string   `json:"quizType"`
 	Order        string   `json:"order"`
 	ExcludeWords []string `json:"excludeWords"`
 }
@@ -159,7 +141,6 @@ type CreationRequest struct {
 type AnswerRequest struct {
 	Theme         string            `json:"theme"`
 	Set           string            `json:"set"`
-	QuizType      string            `json:"quizType"`
 	Segment       string            `json:"segment,omitempty"`
 	Comprehensive bool              `json:"comprehensive,omitempty"`
 	Answer        string            `json:"answer"`
@@ -182,7 +163,7 @@ type QuizResponse struct {
 }
 
 type Options struct {
-	Option   string `json:"quizWord"`
+	Option   string `json:"option"`
 	AudioUrl string `json:"audioUrl,omitempty"`
 	ImageUrl string `json:"imageUrl,omitempty"`
 }
@@ -192,11 +173,6 @@ type ComprehensiveResponse struct {
 	QuizWord     string              `json:"quizWord"`
 	FoundInText  AnalyzeTextResponse `json:"foundInText,omitempty"`
 	SimilarWords []Meros             `json:"similarWords,omitempty"`
-	Progress     struct {
-		TimesCorrect    int     `json:"timesCorrect"`
-		TimesIncorrect  int     `json:"timesIncorrect"`
-		AverageAccuracy float64 `json:"averageAccuracy"`
-	} `json:"progress,omitempty"`
 }
 
 type AuthorBasedResponse struct {
@@ -221,8 +197,7 @@ type DialogueCorrection struct {
 }
 
 type QuizAttempt struct {
-	Correct  bool
-	Set      string
-	Theme    string
-	QuizType string
+	Correct bool
+	Set     string
+	Theme   string
 }
