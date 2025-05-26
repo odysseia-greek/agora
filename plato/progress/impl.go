@@ -183,7 +183,7 @@ func (p *ProgressTracker) ResetSegment(sessionId, segmentKey string) {
 	session.PreviousRuns[segmentKey] = append(session.PreviousRuns[segmentKey], archived)
 
 	// Now reset
-	session.Progress[segmentKey] = make(map[string]*WordProgress)
+	p.fillAfterResets(session, segmentKey)
 }
 
 func (p *ProgressTracker) ClearSegment(sessionId, segmentKey string) {
@@ -195,7 +195,14 @@ func (p *ProgressTracker) ClearSegment(sessionId, segmentKey string) {
 		return
 	}
 
-	session.Progress[segmentKey] = make(map[string]*WordProgress)
+	p.fillAfterResets(session, segmentKey)
+}
+
+func (p *ProgressTracker) fillAfterResets(session *SessionProgress, segmentKey string) {
+	wordMap := session.Progress[segmentKey]
+	for greek, word := range wordMap {
+		session.Progress[segmentKey][greek] = &WordProgress{PlayCount: 0, CorrectCount: 0, IncorrectCount: 0, Translation: word.Translation}
+	}
 }
 
 func (p *ProgressTracker) GetProgressForSegment(sessionId, segmentKey string, doneAfter int) (map[string]*WordProgress, bool) {
