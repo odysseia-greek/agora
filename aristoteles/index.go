@@ -177,8 +177,8 @@ func (i *IndexImpl) Delete(index string) (bool, error) {
 	}
 
 	if res.IsError() {
-		l, _ := json.Marshal(r)
-		return false, fmt.Errorf(string(l))
+		errorData, _ := json.MarshalIndent(r, "", "  ") // Pretty-print the JSON
+		return false, fmt.Errorf("%s: %s\nResponse details: %s", errorMessage, res.Status(), errorData)
 	}
 
 	return r["acknowledged"].(bool), nil

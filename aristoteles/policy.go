@@ -18,12 +18,6 @@ func NewPolicyImpl(suppliedClient *elasticsearch.Client) (*PolicyImpl, error) {
 	return &PolicyImpl{es: suppliedClient}, nil
 }
 
-const (
-	HOT  = "hot"
-	WARM = "warm"
-	COLD = "cold"
-)
-
 func (p *PolicyImpl) CreatePolicyWithRollOver(name, maxAge, phase string) (*models.IndexCreateResult, error) {
 	policyDefinition := fmt.Sprintf(`{
 		"policy": {
@@ -42,7 +36,7 @@ func (p *PolicyImpl) CreatePolicyWithRollOver(name, maxAge, phase string) (*mode
 	return p.create(name, policyDefinition)
 }
 
-func (p *PolicyImpl) CreateHotPolicy(name string) (*models.IndexCreateResult, error) {
+func (p *PolicyImpl) CreatePolicy(name, phase string) (*models.IndexCreateResult, error) {
 	policyDefinition := fmt.Sprintf(`{
 	"policy": {
 		"phases": {
@@ -51,35 +45,7 @@ func (p *PolicyImpl) CreateHotPolicy(name string) (*models.IndexCreateResult, er
 			}
 		}
 	}
-}`, HOT)
-
-	return p.create(name, policyDefinition)
-}
-
-func (p *PolicyImpl) CreateWarmPolicy(name string) (*models.IndexCreateResult, error) {
-	policyDefinition := fmt.Sprintf(`{
-	"policy": {
-		"phases": {
-			"%s": {
-				"actions": {}
-			}
-		}
-	}
-}`, WARM)
-
-	return p.create(name, policyDefinition)
-}
-
-func (p *PolicyImpl) CreateColdPolicy(name string) (*models.IndexCreateResult, error) {
-	policyDefinition := fmt.Sprintf(`{
-	"policy": {
-		"phases": {
-			"%s": {
-				"actions": {}
-			}
-		}
-	}
-}`, COLD)
+}`, phase)
 
 	return p.create(name, policyDefinition)
 }
