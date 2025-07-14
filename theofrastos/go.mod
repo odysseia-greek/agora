@@ -3,7 +3,7 @@ module github.com/odysseia-greek/agora/theofrastos
 go 1.24.0
 
 require (
-	github.com/odysseia-greek/agora/aristoteles v0.1.13
+	github.com/odysseia-greek/agora/aristoteles v0.1.14
 	github.com/odysseia-greek/agora/plato v0.2.9
 	github.com/odysseia-greek/agora/thales v0.1.11
 	gopkg.in/yaml.v3 v3.0.1
@@ -15,8 +15,8 @@ require (
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
-	github.com/elastic/elastic-transport-go/v8 v8.6.0 // indirect
-	github.com/elastic/go-elasticsearch/v8 v8.14.0 // indirect
+	github.com/elastic/elastic-transport-go/v8 v8.7.0 // indirect
+	github.com/elastic/go-elasticsearch/v8 v8.18.1 // indirect
 	github.com/emicklei/go-restful/v3 v3.11.0 // indirect
 	github.com/fxamacker/cbor/v2 v2.7.0 // indirect
 	github.com/go-errors/errors v1.4.2 // indirect

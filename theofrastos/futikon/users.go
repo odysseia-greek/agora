@@ -21,7 +21,7 @@ func (t *TheofratosHandler) createElasticUser(user UserMapping, username string)
 		return err
 	}
 
-	secretName := fmt.Sprintf("%s-elastic", user)
+	secretName := fmt.Sprintf("%s-elastic", username)
 	secretData := map[string][]byte{
 		"user":     []byte(username),
 		"password": []byte(password),

@@ -15,7 +15,7 @@ func (t *TheofratosHandler) createILMPolicy(policy, phase, rollOver string) erro
 	if rollOver != "" {
 		policyCreated, err = t.Elastic.Policy().CreatePolicyWithRollOver(policy, rollOver, phase)
 	} else {
-		policyCreated, err = t.Elastic.Policy().CreateHotPolicy(policy)
+		policyCreated, err = t.Elastic.Policy().CreatePolicy(policy, phase)
 	}
 
 	if err != nil {

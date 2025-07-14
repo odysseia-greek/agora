@@ -15,12 +15,6 @@ type TheofratosHandler struct {
 	Kube          *thales.KubeClient
 }
 
-func (t *TheofratosHandler) Create() {
-	health := t.Elastic.Health().Info()
-	logging.Info(fmt.Sprintf("status: %v", health.Healthy))
-
-}
-
 func (t *TheofratosHandler) handle(configMap map[string]string) error {
 	var config Config
 
@@ -62,10 +56,27 @@ func (t *TheofratosHandler) handle(configMap map[string]string) error {
 	}
 
 	// Create users
-	for userName, user := range config.Users {
-		if err := t.createElasticUser(user, userName); err != nil {
-			return fmt.Errorf("failed to create user %s: %v", userName, err)
+	existingUsers, err := t.Elastic.Access().ListUsers()
+	if err != nil {
+		return fmt.Errorf("failed to list existing users: %w", err)
+	}
+
+	userSet := make(map[string]struct{}, len(existingUsers))
+	for _, username := range existingUsers {
+		userSet[username] = struct{}{}
+	}
+
+	for name, user := range config.Users {
+		if _, exists := userSet[name]; exists {
+			logging.Debug(fmt.Sprintf("user: %s already exists — skipping", name))
+			continue
 		}
+
+		if err := t.createElasticUser(user, name); err != nil {
+			return fmt.Errorf("failed to create user %s: %w", name, err)
+		}
+
+		logging.Info(fmt.Sprintf("user: %s created", name))
 	}
 
 	// Create policies

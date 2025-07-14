@@ -8,7 +8,6 @@ import (
 	"github.com/elastic/go-elasticsearch/v8/esapi"
 	"github.com/odysseia-greek/agora/aristoteles/models"
 	"io"
-	"log"
 	"strings"
 	"time"
 )
@@ -164,24 +163,47 @@ func (i *IndexImpl) Update(index string, request map[string]interface{}) (*model
 }
 
 func (i *IndexImpl) Delete(index string) (bool, error) {
-	log.Printf("deleting index: %s", index)
-
 	res, err := i.es.Indices.Delete([]string{index})
 	if err != nil {
 		return false, err
 	}
+	defer res.Body.Close()
 
+	// Check for API errors first before trying to parse JSON
+	if res.IsError() {
+		// Read the raw body for error details
+		bodyBytes, err := io.ReadAll(res.Body)
+		if err != nil {
+			return false, fmt.Errorf("error reading error response: %v", err)
+		}
+
+		// Try to parse as JSON if possible for structured error
+		var errorResponse map[string]interface{}
+		if json.Unmarshal(bodyBytes, &errorResponse) == nil {
+			// Successfully parsed JSON error
+			errorJSON, _ := json.Marshal(errorResponse)
+			return false, fmt.Errorf("%s", string(errorJSON))
+		}
+
+		// Couldn't parse as JSON, return raw error
+		return false, fmt.Errorf("elasticsearch error: %s", string(bodyBytes))
+	}
+
+	// Only try to parse JSON for successful responses
 	var r map[string]interface{}
 	if err := json.NewDecoder(res.Body).Decode(&r); err != nil {
-		return false, err
+		bodyBytes, _ := io.ReadAll(res.Body)
+		return false, fmt.Errorf("error parsing successful response: %v, body: %s", err, string(bodyBytes))
 	}
 
-	if res.IsError() {
-		errorData, _ := json.MarshalIndent(r, "", "  ") // Pretty-print the JSON
-		return false, fmt.Errorf("%s: %s\nResponse details: %s", errorMessage, res.Status(), errorData)
+	// Handle case where acknowledged might not be present
+	acknowledged, ok := r["acknowledged"].(bool)
+	if !ok {
+		return false, fmt.Errorf("'acknowledged' field missing or not boolean in response: %v", r)
 	}
 
-	return r["acknowledged"].(bool), nil
+	return acknowledged, nil
+
 }
 
 func (i *IndexImpl) IndexExists(index string) (bool, *models.IndexInfo, error) {
