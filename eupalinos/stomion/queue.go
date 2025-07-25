@@ -1,93 +1,37 @@
-package app
+package stomion
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/odysseia-greek/agora/eupalinos/config"
+	"github.com/odysseia-greek/agora/plato/logging"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/metadata"
-	"io/ioutil"
+	"google.golang.org/grpc/credentials/insecure"
 	"log"
 	"os"
 	"path/filepath"
-	"sync"
 	"time"
 
 	"github.com/google/uuid"
 	pb "github.com/odysseia-greek/agora/eupalinos/proto"
 )
 
-// Diexodos represents a task queue
-type Diexodos struct {
-	LastMessageReceived time.Time
-	Name                string
-	InternalID          string
-	MessageQueue        map[string]pb.InternalEpistello
-	MessageUpdateCh     chan pb.MessageUpdate // Channel for task updates to be broadcasted
-}
-
-// EupalinosHandler is the gRPC server handling task queue operations
-type EupalinosHandler struct {
-	DiexodosMap []*Diexodos // Slice of Diexodos representing different queues
-	Config      *config.Config
-	pb.UnimplementedEupalinosServer
-	mu sync.Mutex // Mutex to protect the task queue
-}
-
 const saveInterval = 5 * time.Minute // Set the interval for saving the state to disk
 
-// StartBroadcasting starts a goroutine to handle broadcasting of task updates to replicas
-func (s *EupalinosHandler) StartBroadcasting() {
-	go func() {
-		for {
-			for _, channel := range s.DiexodosMap {
-				select {
-				case updatedTask := <-channel.MessageUpdateCh:
-					// Broadcast the task update to all replicas (excluding the sender)
-					for _, address := range s.Config.Addresses {
-						conn, err := grpc.Dial(address, grpc.WithInsecure())
-						if err != nil {
-							log.Printf("error connecting to replica %s: %v", address, err)
-							continue
-						}
-						defer conn.Close()
-
-						client := pb.NewEupalinosClient(conn)
-						stream, err := client.StreamQueueUpdates(context.Background())
-						if err != nil {
-							log.Printf("error creating stream to replica %s: %v", address, err)
-							continue
-						}
-						if err := stream.Send(&updatedTask); err != nil {
-							log.Printf("error sending task update to replica %s: %v", address, err)
-						}
-					}
-				}
-			}
-		}
-	}()
+func (q *QueueServiceImpl) Health(context.Context, *pb.HealthRequest) (*pb.HealthResponse, error) {
+	return &pb.HealthResponse{
+		Healthy: true,
+		Time:    time.Now().String(),
+		Version: q.Version,
+	}, nil
 }
 
 // EnqueueMessage handles message enqueueing
-func (s *EupalinosHandler) EnqueueMessage(ctx context.Context, message *pb.Epistello) (*pb.EnqueueResponse, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+func (q *QueueServiceImpl) EnqueueMessage(ctx context.Context, message *pb.Epistello) (*pb.EnqueueResponse, error) {
+	q.mu.Lock()
+	defer q.mu.Unlock()
 
-	md, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		return nil, fmt.Errorf("failed to get metadata from context")
-	}
-
-	var traceID string
-	headerValue := md.Get(config.TRACING_KEY)
-	if len(headerValue) > 0 {
-		traceID = headerValue[0]
-	}
-
-	log.Printf("recieved enqueue: %v with traceId: %s", message, traceID)
-	// Find or create the Diexodos with the matching channel name
-	diexodos := s.findOrCreateDiexodos(message.Channel)
+	diexodos := q.findOrCreateDiexodos(message.Channel)
 
 	// Generate a unique ID for the message
 	messageID := uuid.New().String()
@@ -97,12 +41,15 @@ func (s *EupalinosHandler) EnqueueMessage(ctx context.Context, message *pb.Epist
 		Id:      messageID,
 		Channel: message.Channel,
 		Data:    message.Data,
-		Traceid: traceID,
 	}
 
 	// Process the received message (e.g., enqueue)
 	diexodos.MessageQueue[internalMessage.Id] = *internalMessage
 	diexodos.LastMessageReceived = time.Now() // Update LastMessageReceived
+
+	// Update statistics
+	diexodos.MessagesProcessed.Add(1)
+	diexodos.MessagesEnqueued.Add(1)
 
 	// Add the task update to the channel
 	update := pb.MessageUpdate{
@@ -110,7 +57,7 @@ func (s *EupalinosHandler) EnqueueMessage(ctx context.Context, message *pb.Epist
 		Message:   internalMessage,
 	}
 
-	if s.Config.Streaming {
+	if q.Streaming {
 		diexodos.MessageUpdateCh <- update
 	}
 
@@ -121,12 +68,12 @@ func (s *EupalinosHandler) EnqueueMessage(ctx context.Context, message *pb.Epist
 }
 
 // DequeueMessage handles message dequeueing from the specified channel
-func (s *EupalinosHandler) DequeueMessage(ctx context.Context, channelInfo *pb.ChannelInfo) (*pb.Epistello, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+func (q *QueueServiceImpl) DequeueMessage(ctx context.Context, channelInfo *pb.ChannelInfo) (*pb.Epistello, error) {
+	q.mu.Lock()
+	defer q.mu.Unlock()
 
 	// Find the Diexodos with the specified channel name
-	diexodos := s.findDiexodosByChannel(channelInfo.Name)
+	diexodos := q.findDiexodosByChannel(channelInfo.Name)
 
 	if diexodos == nil {
 		return nil, fmt.Errorf("channel not found")
@@ -148,13 +95,17 @@ func (s *EupalinosHandler) DequeueMessage(ctx context.Context, channelInfo *pb.C
 	// Remove the dequeued message from the message queue
 	delete(diexodos.MessageQueue, internalMessage.Id)
 
+	// Update statistics
+	diexodos.MessagesProcessed.Add(1)
+	diexodos.MessagesDequeued.Add(1)
+
 	// Add the task update to the channel
 	update := pb.MessageUpdate{
 		Operation: pb.Operation_DEQUEUE,
 		Message:   internalMessage,
 	}
 
-	if s.Config.Streaming {
+	if q.Streaming {
 		diexodos.MessageUpdateCh <- update
 	}
 	message := &pb.Epistello{
@@ -163,14 +114,11 @@ func (s *EupalinosHandler) DequeueMessage(ctx context.Context, channelInfo *pb.C
 		Data:    internalMessage.Data,
 	}
 
-	// Embed the trace ID into the metadata of the response
-	responseMd := metadata.New(map[string]string{config.TRACING_KEY: internalMessage.Traceid})
-	grpc.SendHeader(ctx, responseMd)
 	return message, nil
 }
 
 // StreamQueueUpdates handles bidirectional streaming for task updates between Eupalinos pods
-func (s *EupalinosHandler) StreamQueueUpdates(stream pb.Eupalinos_StreamQueueUpdatesServer) error {
+func (q *QueueServiceImpl) StreamQueueUpdates(stream pb.Eupalinos_StreamQueueUpdatesServer) error {
 	// Receive task update requests from other replicas
 	for {
 		updatedMessage, err := stream.Recv()
@@ -178,14 +126,14 @@ func (s *EupalinosHandler) StreamQueueUpdates(stream pb.Eupalinos_StreamQueueUpd
 			return err
 		}
 
-		log.Printf("recieved message: %v", updatedMessage.Message)
+		logging.Info(fmt.Sprintf("recieved message: %v", updatedMessage.Message))
 
 		// Process the received task update
 		// Update the task queue based on the task operation received from other replicas
-		s.mu.Lock()
-		diexodos := s.findOrCreateDiexodos(updatedMessage.Message.Channel)
+		q.mu.Lock()
+		defer q.mu.Unlock()
+		diexodos := q.findOrCreateDiexodos(updatedMessage.Message.Channel)
 		if diexodos == nil {
-			s.mu.Unlock()
 			return fmt.Errorf("channel not found: %s", updatedMessage.Message.Channel)
 		}
 
@@ -199,22 +147,21 @@ func (s *EupalinosHandler) StreamQueueUpdates(stream pb.Eupalinos_StreamQueueUpd
 		diexodos.LastMessageReceived = time.Now()
 
 		// Broadcast the task update to all replicas (excluding the sender)
-		for _, replica := range s.DiexodosMap {
+		for _, replica := range q.DiexodosMap {
 			if replica.Name != diexodos.Name {
 				replica.MessageUpdateCh <- *updatedMessage
 			}
 		}
-		s.mu.Unlock()
 	}
 }
 
 // GetQueueLength returns the length of the queue for the specified channel
-func (s *EupalinosHandler) GetQueueLength(ctx context.Context, channelInfo *pb.ChannelInfo) (*pb.QueueLength, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+func (q *QueueServiceImpl) GetQueueLength(ctx context.Context, channelInfo *pb.ChannelInfo) (*pb.QueueLength, error) {
+	q.mu.Lock()
+	defer q.mu.Unlock()
 
 	// Find the Diexodos with the specified channel name
-	diexodos := s.findDiexodosByChannel(channelInfo.Name)
+	diexodos := q.findDiexodosByChannel(channelInfo.Name)
 
 	if diexodos == nil {
 		return nil, fmt.Errorf("channel not found")
@@ -223,37 +170,45 @@ func (s *EupalinosHandler) GetQueueLength(ctx context.Context, channelInfo *pb.C
 	// Get the length of the message queue
 	length := int32(len(diexodos.MessageQueue))
 
-	log.Printf("length of queue: %d", length)
+	logging.Info(fmt.Sprintf("length of queue: %d", length))
 
 	return &pb.QueueLength{Length: length}, nil
 }
 
 // findOrCreateDiexodos finds the Diexodos with the matching channel name or creates a new one
-func (s *EupalinosHandler) findOrCreateDiexodos(channelName string) *Diexodos {
-	for _, d := range s.DiexodosMap {
+func (q *QueueServiceImpl) findOrCreateDiexodos(channelName string) *Diexodos {
+	for _, d := range q.DiexodosMap {
 		if d.Name == channelName {
 			return d
 		}
 	}
 
 	// If Diexodos with the given channel name does not exist, create a new one
+	now := time.Now()
 	d := &Diexodos{
 		Name:                channelName,
 		InternalID:          uuid.New().String(),
 		MessageQueue:        make(map[string]pb.InternalEpistello),
 		MessageUpdateCh:     make(chan pb.MessageUpdate),
-		LastMessageReceived: time.Now(),
+		LastMessageReceived: now,
+		LastStatsResetTime:  now,
 	}
-	s.DiexodosMap = append(s.DiexodosMap, d)
 
-	log.Printf("created channel: %s", channelName)
+	// Initialize atomic counters
+	d.MessagesProcessed.Store(0)
+	d.MessagesEnqueued.Store(0)
+	d.MessagesDequeued.Store(0)
+
+	q.DiexodosMap = append(q.DiexodosMap, d)
+
+	logging.Info(fmt.Sprintf("created channel: %s", channelName))
 
 	return d
 }
 
 // findDiexodosByChannel finds the Diexodos with the specified channel name
-func (s *EupalinosHandler) findDiexodosByChannel(channelName string) *Diexodos {
-	for _, d := range s.DiexodosMap {
+func (q *QueueServiceImpl) findDiexodosByChannel(channelName string) *Diexodos {
+	for _, d := range q.DiexodosMap {
 		if d.Name == channelName {
 			return d
 		}
@@ -262,25 +217,25 @@ func (s *EupalinosHandler) findDiexodosByChannel(channelName string) *Diexodos {
 }
 
 // StartAutoSave starts a goroutine to periodically save the state of the message queues to disk
-func (s *EupalinosHandler) StartAutoSave() {
+func (q *QueueServiceImpl) StartAutoSave() {
 	go func() {
 		for {
-			s.SaveStateToDisk()
+			q.SaveStateToDisk()
 			time.Sleep(saveInterval)
 		}
 	}()
 }
 
 // SaveStateToDisk saves the state of the message queues to disk
-func (s *EupalinosHandler) SaveStateToDisk() {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+func (q *QueueServiceImpl) SaveStateToDisk() {
+	q.mu.Lock()
+	defer q.mu.Unlock()
 
 	// Create a map to store the serialized message queues
 	state := make(map[string]map[string]pb.InternalEpistello)
 
 	// Convert the message queues to a map
-	for _, diexodos := range s.DiexodosMap {
+	for _, diexodos := range q.DiexodosMap {
 		state[diexodos.Name] = diexodos.MessageQueue
 	}
 
@@ -292,7 +247,7 @@ func (s *EupalinosHandler) SaveStateToDisk() {
 	}
 
 	// Create the directory if it doesn't exist
-	dir := filepath.Dir(s.Config.SavePath)
+	dir := filepath.Dir(q.SavePath)
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		err = os.MkdirAll(dir, 0755)
 		if err != nil {
@@ -302,28 +257,28 @@ func (s *EupalinosHandler) SaveStateToDisk() {
 	}
 
 	// Write the data to the file
-	err = ioutil.WriteFile(s.Config.SavePath, data, 0644)
+	err = os.WriteFile(q.SavePath, data, 0644)
 	if err != nil {
 		log.Printf("error writing state to disk: %v", err)
 	}
 }
 
 // LoadStateFromDisk loads the state of the message queues from disk on startup
-func (s *EupalinosHandler) LoadStateFromDisk() {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+func (q *QueueServiceImpl) LoadStateFromDisk() {
+	q.mu.Lock()
+	defer q.mu.Unlock()
 
 	// Check if the file exists
-	if _, err := os.Stat(s.Config.SavePath); os.IsNotExist(err) {
+	if _, err := os.Stat(q.SavePath); os.IsNotExist(err) {
 		// File does not exist, initialize the message queues with empty maps
-		for _, diexodos := range s.DiexodosMap {
+		for _, diexodos := range q.DiexodosMap {
 			diexodos.MessageQueue = make(map[string]pb.InternalEpistello)
 		}
 		return
 	}
 
 	// Read the data from the file
-	data, err := ioutil.ReadFile(s.Config.SavePath)
+	data, err := os.ReadFile(q.SavePath)
 	if err != nil {
 		log.Printf("error reading state from disk: %v", err)
 		return
@@ -338,7 +293,7 @@ func (s *EupalinosHandler) LoadStateFromDisk() {
 	}
 
 	// Convert the map to message queues
-	for _, diexodos := range s.DiexodosMap {
+	for _, diexodos := range q.DiexodosMap {
 		queue, ok := state[diexodos.Name]
 		if ok {
 			diexodos.MessageQueue = queue
@@ -346,4 +301,89 @@ func (s *EupalinosHandler) LoadStateFromDisk() {
 			diexodos.MessageQueue = make(map[string]pb.InternalEpistello)
 		}
 	}
+}
+
+func (q *QueueServiceImpl) StartBroadcasting() {
+	go func() {
+		for {
+			for _, channel := range q.DiexodosMap {
+				select {
+				case updatedTask := <-channel.MessageUpdateCh:
+					// Broadcast the task update to all replicas (excluding the sender)
+					for _, address := range q.Addresses {
+						// Use grpc.NewClient instead of the deprecated grpc.Dial
+						conn, err := grpc.NewClient(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+						if err != nil {
+							logging.Error(fmt.Sprintf("error connecting to replica %s: %v", address, err))
+							continue
+						}
+
+						// Create a client and stream
+						client := pb.NewEupalinosClient(conn)
+						stream, err := client.StreamQueueUpdates(context.Background())
+						if err != nil {
+							logging.Error(fmt.Sprintf("error creating stream to replica %s: %v", address, err))
+							conn.Close() // Close connection on error
+							continue
+						}
+
+						// Send the update
+						if err := stream.Send(&updatedTask); err != nil {
+							logging.Error(fmt.Sprintf("error sending task update to replica %s: %v", address, err))
+						}
+
+						// Close the connection after sending
+						conn.Close()
+					}
+				}
+			}
+		}
+	}()
+}
+
+// PeriodStatsPrint periodically prints statistics about all channels
+func (q *QueueServiceImpl) PeriodStatsPrint() {
+	const statsInterval = 1 * time.Minute
+
+	go func() {
+		ticker := time.NewTicker(statsInterval)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ticker.C:
+				q.mu.Lock()
+				totalChannels := len(q.DiexodosMap)
+				totalMessages := 0
+				totalProcessed := int64(0)
+
+				logging.Info("===== Eupalinos Queue Statistics =====")
+				logging.Info(fmt.Sprintf("Total Channels: %d", totalChannels))
+
+				// Individual channel stats
+				for _, channel := range q.DiexodosMap {
+					queueLen := len(channel.MessageQueue)
+					totalMessages += queueLen
+					processed := channel.MessagesProcessed.Load()
+					totalProcessed += processed
+
+					logging.Info(fmt.Sprintf("Channel: %s", channel.Name))
+					logging.Info(fmt.Sprintf("  Queue Length: %d", queueLen))
+					logging.Info(fmt.Sprintf("  Messages Processed: %d", processed))
+					logging.Info(fmt.Sprintf("  Messages Enqueued: %d", channel.MessagesEnqueued.Load()))
+					logging.Info(fmt.Sprintf("  Messages Dequeued: %d", channel.MessagesDequeued.Load()))
+					logging.Info(fmt.Sprintf("  Last Message Time: %s", channel.LastMessageReceived.Format(time.RFC3339)))
+					logging.Info(fmt.Sprintf("  Channel Age: %s", time.Since(channel.LastStatsResetTime).Round(time.Second)))
+				}
+
+				// Summary stats
+				logging.Info("===== Summary =====")
+				logging.Info(fmt.Sprintf("Total Messages in Queue: %d", totalMessages))
+				logging.Info(fmt.Sprintf("Total Messages Processed: %d", totalProcessed))
+				logging.Info("=============================")
+
+				q.mu.Unlock()
+			}
+		}
+	}()
 }

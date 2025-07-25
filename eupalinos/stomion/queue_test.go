@@ -1,12 +1,10 @@
-package app
+package stomion
 
 import (
 	"context"
 	"encoding/json"
-	"github.com/odysseia-greek/agora/eupalinos/config"
 	pb "github.com/odysseia-greek/agora/eupalinos/proto"
 	"github.com/stretchr/testify/assert"
-	"google.golang.org/grpc/metadata"
 	"net/http"
 	"net/http/httptest"
 	"regexp"
@@ -101,15 +99,10 @@ func NewMockEupalinosServer() *httptest.Server {
 
 func TestEnqueueMessage(t *testing.T) {
 	// Create a new EupalinosHandler with the desired configuration
-	handler := &EupalinosHandler{
-		Config: &config.Config{
-			Streaming: false, // Set this to true if you want to test streaming behavior
-		},
+	handler := &QueueServiceImpl{
+		Streaming:   false, // Set this to true if you want to test streaming behavior
 		DiexodosMap: []*Diexodos{},
 	}
-
-	// Create a context with the desired metadata (traceID)
-	ctx := metadata.NewIncomingContext(context.Background(), metadata.New(map[string]string{config.TRACING_KEY: "your-trace-id"}))
 
 	// Create the payload data
 	payload := &pb.Epistello{
@@ -117,6 +110,7 @@ func TestEnqueueMessage(t *testing.T) {
 		Channel: "test-channel",
 	}
 
+	ctx := context.Background()
 	// Call the EnqueueMessage function with the mock request and response writer
 	response, err := handler.EnqueueMessage(ctx, payload)
 
@@ -133,10 +127,8 @@ func TestDequeueMessage(t *testing.T) {
 
 	t.Run("ChannelWithOneMessage", func(t *testing.T) {
 		// Create a new EupalinosHandler with the desired configuration
-		handler := &EupalinosHandler{
-			Config: &config.Config{
-				Streaming: false, // Set this to true if you want to test streaming behavior
-			},
+		handler := &QueueServiceImpl{
+			Streaming: false, // Set this to true if you want to test streaming behavior
 			DiexodosMap: []*Diexodos{
 				{
 					LastMessageReceived: time.Now(),
@@ -172,10 +164,8 @@ func TestDequeueMessage(t *testing.T) {
 
 	t.Run("NoChannel", func(t *testing.T) {
 		// Create a new EupalinosHandler with the desired configuration
-		handler := &EupalinosHandler{
-			Config: &config.Config{
-				Streaming: false, // Set this to true if you want to test streaming behavior
-			},
+		handler := &QueueServiceImpl{
+			Streaming:   false, // Set this to true if you want to test streaming behavior
 			DiexodosMap: []*Diexodos{},
 		}
 
@@ -195,10 +185,8 @@ func TestDequeueMessage(t *testing.T) {
 
 	t.Run("ChannelWithTwoMessagesLengthChanges", func(t *testing.T) {
 		// Create a new EupalinosHandler with the desired configuration
-		handler := &EupalinosHandler{
-			Config: &config.Config{
-				Streaming: false, // Set this to true if you want to test streaming behavior
-			},
+		handler := &QueueServiceImpl{
+			Streaming: false, // Set this to true if you want to test streaming behavior
 			DiexodosMap: []*Diexodos{
 				{
 					LastMessageReceived: time.Now(),

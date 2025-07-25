@@ -1,9 +1,10 @@
 package main
 
 import (
-	"github.com/odysseia-greek/agora/eupalinos/app"
-	"github.com/odysseia-greek/agora/eupalinos/config"
+	"fmt"
 	pb "github.com/odysseia-greek/agora/eupalinos/proto"
+	"github.com/odysseia-greek/agora/eupalinos/stomion"
+	"github.com/odysseia-greek/agora/plato/logging"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"log"
@@ -13,7 +14,7 @@ import (
 	"syscall"
 )
 
-const standardPort = ":50051"
+const standardPort = ":50060"
 
 func main() {
 	port := os.Getenv("PORT")
@@ -21,7 +22,7 @@ func main() {
 		port = standardPort
 	}
 
-	log.Print(`
+	logging.System(`
    ___  __ __  ____   ____  _      ____  ____    ___   _____
   /  _]|  |  ||    \ /    || |    |    ||    \  /   \ / ___/
  /  [_ |  |  ||  o  )  o  || |     |  | |  _  ||     (   \_ 
@@ -31,16 +32,17 @@ func main() {
 |_____| \__,_||__|  |__|__||_____||____||__|__| \___/  \___|
 	`)
 
-	log.Print("ἀρχιτέκτων δὲ τοῦ ὀρύγματος τούτου ἐγένετο Μεγαρεὺς Εὐπαλῖνος Ναυστρόφου")
-	log.Print("The designer of this work was Eupalinus son of Naustrophus, a Megarian")
-	log.Print("Starting up...")
+	logging.System("ἀρχιτέκτων δὲ τοῦ ὀρύγματος τούτου ἐγένετο Μεγαρεὺς Εὐπαλῖνος Ναυστρόφου")
+	logging.System("The designer of this work was Eupalinus son of Naustrophus, a Megarian")
+	logging.System("Starting up...")
 
-	env := os.Getenv("ENV")
+	logging.System("starting up.....")
+	logging.System("starting up and getting env variables")
 
-	// Create the configuration based on the environment
-	eupalinosConf, err := config.CreateNewConfig(env)
+	config, err := stomion.CreateNewConfig()
 	if err != nil {
-		log.Fatalf("error creating config: %v", err)
+		logging.Error(err.Error())
+		log.Fatal("death has found me")
 	}
 
 	listener, err := net.Listen("tcp", port)
@@ -51,36 +53,33 @@ func main() {
 	var server *grpc.Server
 
 	// Check if HTTPS mode is enabled
-	if eupalinosConf.TLSConfig != nil {
-		server = grpc.NewServer(grpc.Creds(credentials.NewTLS(eupalinosConf.TLSConfig)))
+	if config.TLSConfig != nil {
+		server = grpc.NewServer(grpc.Creds(credentials.NewTLS(config.TLSConfig)))
 	} else {
 		server = grpc.NewServer()
 	}
 
-	queueServer := &app.EupalinosHandler{
-		DiexodosMap: make([]*app.Diexodos, 0),
-		Config:      eupalinosConf,
-	}
-
-	queueServer.LoadStateFromDisk()
-	queueServer.StartAutoSave()
+	config.LoadStateFromDisk()
+	config.StartAutoSave()
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
 	go func() {
 		sig := <-sigChan
-		log.Printf("system send a: %s stopping service", sig.String())
-		queueServer.SaveStateToDisk()
+		logging.System(fmt.Sprintf("system send a: %s stopping service", sig.String()))
+		config.SaveStateToDisk()
 		os.Exit(0)
 	}()
 
-	pb.RegisterEupalinosServer(server, queueServer)
+	pb.RegisterEupalinosServer(server, config)
 
-	if queueServer.Config.Streaming {
-		queueServer.StartBroadcasting()
+	if config.Streaming {
+		config.StartBroadcasting()
 	}
 
-	log.Printf("Server listening on %s", port)
+	config.PeriodStatsPrint()
+
+	logging.System(fmt.Sprintf("Server listening on %s", port))
 	if err := server.Serve(listener); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}

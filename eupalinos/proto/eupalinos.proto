@@ -48,8 +48,18 @@ message EnqueueResponse {
   string id = 1;
 }
 
+message HealthRequest {}
+
+// Response message for health check
+message HealthResponse {
+  bool healthy = 1;
+  string time = 2;
+  string version = 3;
+}
 
 service Eupalinos {
+  rpc Health (HealthRequest) returns (HealthResponse) {};
+
   // Bidirectional Streaming for task updates between Eupalinos pods
   rpc StreamQueueUpdates(stream MessageUpdate) returns (stream InternalEpistello);
 

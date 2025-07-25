@@ -1,55 +1,36 @@
-package config
+package stomion
 
 import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"io/ioutil"
-	"log"
+	"github.com/odysseia-greek/agora/plato/config"
+	"github.com/odysseia-greek/agora/plato/logging"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 const (
 	DefaultServiceName string = "eupalinos"
 )
 
-func CreateNewConfig(env string) (*Config, error) {
-	// POD_INDEX for local development only
-	replicasFromEnv := os.Getenv("TOTAL_REPLICAS")
-	rootPath := os.Getenv("CERT_ROOT")
-	podName := os.Getenv("POD_NAME")
-	savePath := os.Getenv("SAVE_PATH")
-	if rootPath == "" {
-		log.Print("rootpath is empty no certs can be loaded")
-	}
+func CreateNewConfig() (*QueueServiceImpl, error) {
 
-	if savePath == "" {
-		savePath = "/tmp"
-	}
+	replicasFromEnv := config.StringFromEnv("TOTAL_REPLICAS", "1")
+	rootPath := config.StringFromEnv(config.EnvRootTlSDir, "")
+	podName := config.StringFromEnv(config.EnvPodName, "eupalinos-0")
+	savePath := config.StringFromEnv("SAVE_PATH", "/tmp")
+	namespace := config.StringFromEnv(config.EnvNamespace, "agora")
+	serviceName := config.StringFromEnv("SERVICE_NAME", DefaultServiceName)
 
-	if podName == "" {
-		podName = "eupalinos-0"
-	}
-
-	// Get the Namespace from the environment
-	namespace := os.Getenv("NAMESPACE")
-	serviceName := os.Getenv("SERVICE_NAME")
-
-	if serviceName == "" {
-		serviceName = DefaultServiceName
-	}
-
-	if replicasFromEnv == "" {
-		replicasFromEnv = "1"
-	}
 	var podNumber string
 	podNumber = strings.Split(podName, "-")[1]
 	podName = strings.Split(podName, "-")[0]
 
-	log.Printf("podNumber: %s", podNumber)
+	logging.Debug(fmt.Sprintf("podNumber: %s", podNumber))
 
 	podID, err := strconv.Atoi(podNumber)
 	if err != nil {
@@ -60,9 +41,9 @@ func CreateNewConfig(env string) (*Config, error) {
 		return nil, err
 	}
 
-	log.Printf("podName: %s", podName)
-	log.Printf("replicas: %d", replicas)
-	log.Printf("podID: %d", podID)
+	logging.Debug(fmt.Sprintf("podName: %s", podName))
+	logging.Debug(fmt.Sprintf("replicas: %d", replicas))
+	logging.Debug(fmt.Sprintf("podID: %d", podID))
 
 	// Calculate the addresses for each replica based on the Pod ID
 	addresses := make([]string, replicas-1)
@@ -71,12 +52,9 @@ func CreateNewConfig(env string) (*Config, error) {
 		for i := 0; i < replicas; i++ {
 			if i == podID {
 				continue
-			} else if env == "LOCAL" {
-				addresses[addrIdx] = fmt.Sprintf("localhost:5005%d", i+1)
-				log.Printf("address added at: %s", addresses[addrIdx])
 			} else {
 				addresses[addrIdx] = fmt.Sprintf("%s-%d.%s.%s.svc.cluster.local:50051", podName, i, serviceName, namespace)
-				log.Printf("address added at: %s", addresses[addrIdx])
+				logging.Debug(fmt.Sprintf("address added at: %s", addresses[addrIdx]))
 			}
 			addrIdx++
 		}
@@ -89,17 +67,21 @@ func CreateNewConfig(env string) (*Config, error) {
 
 	tlsConfig, err := loadTLSConfig(rootPath, serviceName)
 	if err != nil {
-		log.Print(err)
+		logging.Error(err.Error())
 	}
 
 	subPath := fmt.Sprintf("%s%d", podName, podID)
 	backUpPath := filepath.Join(savePath, subPath, "eupalinos_state.json")
+	version := os.Getenv(config.EnvVersion)
 
-	return &Config{
-		Addresses: addresses,
-		Streaming: streaming,
-		TLSConfig: tlsConfig,
-		SavePath:  backUpPath,
+	return &QueueServiceImpl{
+		Version:     version,
+		DiexodosMap: make([]*Diexodos, 0),
+		mu:          sync.Mutex{},
+		Addresses:   addresses,
+		Streaming:   streaming,
+		SavePath:    backUpPath,
+		TLSConfig:   tlsConfig,
 	}, nil
 }
 
@@ -114,7 +96,7 @@ func loadTLSConfig(rootPath, serviceName string) (*tls.Config, error) {
 		return nil, err
 	}
 
-	caCert, err := ioutil.ReadFile(caCertFile)
+	caCert, err := os.ReadFile(caCertFile)
 	if err != nil {
 		return nil, err
 	}
