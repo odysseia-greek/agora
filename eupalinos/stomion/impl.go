@@ -74,3 +74,17 @@ func (q *QueueClient) WaitForHealthyState() bool {
 func (q *QueueClient) Health(ctx context.Context, request *pb.HealthRequest) (*pb.HealthResponse, error) {
 	return q.queue.Health(ctx, request)
 }
+
+func (q *QueueClient) StreamQueueUpdates(ctx context.Context) (pb.Eupalinos_StreamQueueUpdatesClient, error) {
+	return q.queue.StreamQueueUpdates(ctx)
+}
+
+func (q *QueueClient) EnqueueMessage(ctx context.Context, request *pb.Epistello) (*pb.EnqueueResponse, error) {
+	return q.queue.EnqueueMessage(ctx, request)
+}
+func (q *QueueClient) DequeueMessage(ctx context.Context, request *pb.ChannelInfo) (*pb.Epistello, error) {
+	return q.queue.DequeueMessage(ctx, request)
+}
+func (q *QueueClient) GetQueueLength(ctx context.Context, request *pb.ChannelInfo) (*pb.QueueLength, error) {
+	return q.queue.GetQueueLength(ctx, request)
+}
