@@ -49,9 +49,7 @@ type Index interface {
 
 type Policy interface {
 	CreatePolicyWithRollOver(name, maxAge, phase string) (*models.IndexCreateResult, error)
-	CreateHotPolicy(name string) (*models.IndexCreateResult, error)
-	CreateWarmPolicy(name string) (*models.IndexCreateResult, error)
-	CreateColdPolicy(name string) (*models.IndexCreateResult, error)
+	CreatePolicy(name, phase string) (*models.IndexCreateResult, error)
 }
 
 type Builder interface {
