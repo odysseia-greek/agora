@@ -19,7 +19,6 @@ We welcome contributions to the Agora repository. For detailed guidelines on how
 
 Ἀνάγκη γάρ ποτε τῷ ἀκριβεῖ λόγῳ τὰ πολλὰ τῶν ἀνθρώπων ὑποτεταχέναι - For many things among men are necessarily subjected to accurate reason.
 
-<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a4/Archytas_of_Taras.jpg/220px-Archytas_of_Taras.jpg" alt="Aristoteles" width="200"/>
 
 Cache interface
 
@@ -28,15 +27,11 @@ Cache interface
 
 Τριών δει παιδεία: φύσεως, μαθήσεως, ασκήσεως. - Education needs these three: natural endowment, study, practice.
 
-<img src="https://upload.wikimedia.org/wikipedia/commons/9/98/Sanzio_01_Plato_Aristotle.jpg" alt="Aristoteles" width="200"/>
-
 Elasticsearch interface
 
 ### Diogenes - Διογένης
 
 ἄνθρωπον ζητῶ - I am looking for an honest man
-
-<img src="https://upload.wikimedia.org/wikipedia/commons/b/b1/Jean-L%C3%A9on_G%C3%A9r%C3%B4me_-_Diogenes_-_Walters_37131.jpg" alt="Diogenes" width="200"/>
 
 Vault interfaces
 
@@ -44,7 +39,6 @@ Vault interfaces
 
 ἀρχιτέκτων δὲ τοῦ ὀρύγματος τούτου ἐγένετο Μεγαρεὺς Εὐπαλῖνος Ναυστρόφου - The designer of this work was Eupalinus son of Naustrophus, a Megarian
 
-<img src="https://images.squarespace-cdn.com/content/v1/57125c2c2b8dde54a34b537f/1549538816053-4XZ4KPKNX30SRC0HEGE9/a09bb315a34174f55cbe532aa2cbe715.jpg" alt="Eupalinos" width="200"/>
 
 Queue interfaces for odysseia-greek
 
@@ -52,7 +46,6 @@ Queue interfaces for odysseia-greek
 
 χαλεπὰ τὰ καλά - good things are difficult to attain
 
-<img src="https://upload.wikimedia.org/wikipedia/commons/4/4a/Platon.png" alt="Plato" width="200"/>
 
 Common layer for all odysseia-greek apps
 
@@ -61,6 +54,10 @@ Common layer for all odysseia-greek apps
 Μέγιστον τόπος· ἄπαντα γὰρ χωρεῖ. - he greatest is space, for it holds all things
 
 
-<img src="https://upload.wikimedia.org/wikipedia/commons/c/c6/Illustrerad_Verldshistoria_band_I_Ill_107.jpg" alt="Thales" width="200"/>
-
 Kubernetes interface and abstraction. Probably in need of a rework.
+
+### Theofrastos - Θεόφραστος
+
+Εἰ μὲν ἀμαθὴς εἶ, φρονίμως ποιεῖς, εἰ δὲ πεπαίδευσαι, ἀφρόνως. - If you are an ignorant man, you are acting wisely; but if you have had any education, you are behaving like a fool.
+
+Seeder for elasticsearch
