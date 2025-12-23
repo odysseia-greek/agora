@@ -2,16 +2,17 @@ package main
 
 import (
 	"fmt"
-	pb "github.com/odysseia-greek/agora/eupalinos/proto"
-	"github.com/odysseia-greek/agora/eupalinos/stomion"
-	"github.com/odysseia-greek/agora/plato/logging"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 	"log"
 	"net"
 	"os"
 	"os/signal"
 	"syscall"
+
+	pb "github.com/odysseia-greek/agora/eupalinos/proto"
+	"github.com/odysseia-greek/agora/eupalinos/stomion"
+	"github.com/odysseia-greek/agora/plato/logging"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
 
 const standardPort = ":50060"
@@ -54,8 +55,10 @@ func main() {
 
 	// Check if HTTPS mode is enabled
 	if config.TLSConfig != nil {
+		logging.System("starting up in HTTPS mode")
 		server = grpc.NewServer(grpc.Creds(credentials.NewTLS(config.TLSConfig)))
 	} else {
+		logging.System("starting up in HTTP mode")
 		server = grpc.NewServer()
 	}
 

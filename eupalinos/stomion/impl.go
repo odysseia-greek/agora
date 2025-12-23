@@ -4,11 +4,12 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"sync"
+	"time"
+
 	pb "github.com/odysseia-greek/agora/eupalinos/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"sync"
-	"time"
 )
 
 type QueueService interface {
@@ -48,7 +49,7 @@ func NewEupalinosClient(address string) (*QueueClient, error) {
 	}
 	conn, err := grpc.NewClient(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect to tracing service: %w", err)
+		return nil, fmt.Errorf("failed to connect to queue service: %w", err)
 	}
 	client := pb.NewEupalinosClient(conn)
 	return &QueueClient{queue: client}, nil
