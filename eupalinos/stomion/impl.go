@@ -18,6 +18,8 @@ type QueueService interface {
 	EnqueueMessage(ctx context.Context, in *pb.Epistello) (*pb.EnqueueResponse, error)
 	DequeueMessage(ctx context.Context, in *pb.ChannelInfo) (*pb.Epistello, error)
 	GetQueueLength(ctx context.Context, in *pb.ChannelInfo) (*pb.QueueLength, error)
+	EnqueueMessageBytes(ctx context.Context, in *pb.EpistelloBytes) (*pb.EnqueueResponse, error)
+	DequeueMessageBytes(ctx context.Context, in *pb.ChannelInfo) (*pb.EpistelloBytes, error)
 }
 
 const (
@@ -83,9 +85,19 @@ func (q *QueueClient) StreamQueueUpdates(ctx context.Context) (pb.Eupalinos_Stre
 func (q *QueueClient) EnqueueMessage(ctx context.Context, request *pb.Epistello) (*pb.EnqueueResponse, error) {
 	return q.queue.EnqueueMessage(ctx, request)
 }
+
+func (q *QueueClient) EnqueueMessageBytes(ctx context.Context, request *pb.EpistelloBytes) (*pb.EnqueueResponse, error) {
+	return q.queue.EnqueueMessageBytes(ctx, request)
+}
+
 func (q *QueueClient) DequeueMessage(ctx context.Context, request *pb.ChannelInfo) (*pb.Epistello, error) {
 	return q.queue.DequeueMessage(ctx, request)
 }
+
+func (q *QueueClient) DequeueMessageBytes(ctx context.Context, request *pb.ChannelInfo) (*pb.EpistelloBytes, error) {
+	return q.queue.DequeueMessageBytes(ctx, request)
+}
+
 func (q *QueueClient) GetQueueLength(ctx context.Context, request *pb.ChannelInfo) (*pb.QueueLength, error) {
 	return q.queue.GetQueueLength(ctx, request)
 }

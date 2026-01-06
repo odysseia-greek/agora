@@ -4,13 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/odysseia-greek/agora/plato/logging"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 	"log"
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/odysseia-greek/agora/plato/logging"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/google/uuid"
 	pb "github.com/odysseia-greek/agora/eupalinos/proto"
@@ -40,7 +41,9 @@ func (q *QueueServiceImpl) EnqueueMessage(ctx context.Context, message *pb.Epist
 	internalMessage := &pb.InternalEpistello{
 		Id:      messageID,
 		Channel: message.Channel,
-		Data:    message.Data,
+		Payload: &pb.InternalEpistello_Data{
+			Data: message.Data,
+		},
 	}
 
 	// Process the received message (e.g., enqueue)
@@ -67,54 +70,137 @@ func (q *QueueServiceImpl) EnqueueMessage(ctx context.Context, message *pb.Epist
 	return response, nil
 }
 
-// DequeueMessage handles message dequeueing from the specified channel
-func (q *QueueServiceImpl) DequeueMessage(ctx context.Context, channelInfo *pb.ChannelInfo) (*pb.Epistello, error) {
+// EnqueueMessage handles message enqueueing
+func (q *QueueServiceImpl) EnqueueMessageBytes(ctx context.Context, message *pb.EpistelloBytes) (*pb.EnqueueResponse, error) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 
-	// Find the Diexodos with the specified channel name
-	diexodos := q.findDiexodosByChannel(channelInfo.Name)
+	diexodos := q.findOrCreateDiexodos(message.Channel)
 
-	if diexodos == nil {
-		return nil, fmt.Errorf("channel not found")
+	// Generate a unique ID for the message
+	messageID := uuid.New().String()
+
+	// Set the ID field in the message
+	internalMessage := &pb.InternalEpistello{
+		Id: messageID,
+		Payload: &pb.InternalEpistello_BytesData{
+			BytesData: message.Data,
+		},
+		Channel: message.Channel,
+		Traceid: "",
 	}
 
-	// Check if the message queue is empty
-	if len(diexodos.MessageQueue) == 0 {
-		return nil, fmt.Errorf("message queue is empty")
-	}
-
-	// Dequeue the first message from the message queue
-	var internalMessage *pb.InternalEpistello
-
-	for _, msg := range diexodos.MessageQueue {
-		internalMessage = &msg
-		break
-	}
-
-	// Remove the dequeued message from the message queue
-	delete(diexodos.MessageQueue, internalMessage.Id)
+	// Process the received message (e.g., enqueue)
+	diexodos.MessageQueue[internalMessage.Id] = *internalMessage
+	diexodos.LastMessageReceived = time.Now() // Update LastMessageReceived
 
 	// Update statistics
 	diexodos.MessagesProcessed.Add(1)
-	diexodos.MessagesDequeued.Add(1)
+	diexodos.MessagesEnqueued.Add(1)
 
 	// Add the task update to the channel
 	update := pb.MessageUpdate{
-		Operation: pb.Operation_DEQUEUE,
+		Operation: pb.Operation_ENQUEUE,
 		Message:   internalMessage,
 	}
 
 	if q.Streaming {
 		diexodos.MessageUpdateCh <- update
 	}
-	message := &pb.Epistello{
-		Id:      internalMessage.Id,
-		Channel: internalMessage.Channel,
-		Data:    internalMessage.Data,
+
+	// Return the generated ID in the response
+	response := &pb.EnqueueResponse{Id: messageID}
+
+	return response, nil
+}
+
+func (q *QueueServiceImpl) DequeueMessage(ctx context.Context, channelInfo *pb.ChannelInfo) (*pb.Epistello, error) {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+
+	diexodos := q.findDiexodosByChannel(channelInfo.Name)
+	if diexodos == nil {
+		return nil, fmt.Errorf("channel not found")
+	}
+	if len(diexodos.MessageQueue) == 0 {
+		return nil, fmt.Errorf("message queue is empty")
 	}
 
-	return message, nil
+	// dequeue first
+	var internalMessage *pb.InternalEpistello
+	for _, msg := range diexodos.MessageQueue {
+		internalMessage = &msg
+		break
+	}
+	delete(diexodos.MessageQueue, internalMessage.Id)
+
+	// stats + streaming...
+	diexodos.MessagesProcessed.Add(1)
+	diexodos.MessagesDequeued.Add(1)
+
+	if q.Streaming {
+		diexodos.MessageUpdateCh <- pb.MessageUpdate{
+			Operation: pb.Operation_DEQUEUE,
+			Message:   internalMessage,
+		}
+	}
+
+	// must be string payload
+	p, ok := internalMessage.Payload.(*pb.InternalEpistello_Data)
+	if !ok {
+		return nil, fmt.Errorf("message %s is not a string payload (use DequeueBytes)", internalMessage.Id)
+	}
+
+	return &pb.Epistello{
+		Id:      internalMessage.Id,
+		Channel: internalMessage.Channel,
+		Data:    p.Data,
+	}, nil
+}
+
+// DequeueMessageBytes handles message dequeueing from the specified channel
+func (q *QueueServiceImpl) DequeueMessageBytes(ctx context.Context, channelInfo *pb.ChannelInfo) (*pb.EpistelloBytes, error) {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+
+	diexodos := q.findDiexodosByChannel(channelInfo.Name)
+	if diexodos == nil {
+		return nil, fmt.Errorf("channel not found")
+	}
+	if len(diexodos.MessageQueue) == 0 {
+		return nil, fmt.Errorf("message queue is empty")
+	}
+
+	// dequeue first
+	var internalMessage *pb.InternalEpistello
+	for _, msg := range diexodos.MessageQueue {
+		internalMessage = &msg
+		break
+	}
+	delete(diexodos.MessageQueue, internalMessage.Id)
+
+	// stats + streaming...
+	diexodos.MessagesProcessed.Add(1)
+	diexodos.MessagesDequeued.Add(1)
+
+	if q.Streaming {
+		diexodos.MessageUpdateCh <- pb.MessageUpdate{
+			Operation: pb.Operation_DEQUEUE,
+			Message:   internalMessage,
+		}
+	}
+
+	// must be string payload
+	p, ok := internalMessage.Payload.(*pb.InternalEpistello_BytesData)
+	if !ok {
+		return nil, fmt.Errorf("message %s is not a string payload (use DequeueBytes)", internalMessage.Id)
+	}
+
+	return &pb.EpistelloBytes{
+		Id:      internalMessage.Id,
+		Channel: internalMessage.Channel,
+		Data:    p.BytesData,
+	}, nil
 }
 
 // StreamQueueUpdates handles bidirectional streaming for task updates between Eupalinos pods

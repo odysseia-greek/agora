@@ -11,7 +11,12 @@ enum Operation {
 // Internal Epistello message with traceid
 message InternalEpistello {
   string id = 1;
-  string data = 2;
+
+  oneof payload {
+    string data = 2;      // legacy UTF-8 / JSON
+    bytes  bytes_data = 3; // protobuf / binary
+  }
+
   string channel = 4;
   string traceid = 5;
 }
@@ -76,6 +81,8 @@ service Eupalinos {
 
   // Unary RPC for epistello dequeueing
   rpc DequeueMessage(ChannelInfo) returns (Epistello);
+
+  rpc DequeueMessageBytes(ChannelInfo) returns (EpistelloBytes);
 
   // Unary RPC for getting the length of the queue
   rpc GetQueueLength(ChannelInfo) returns (QueueLength);
