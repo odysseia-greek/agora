@@ -23,6 +23,12 @@ message Epistello {
   string channel = 4;
 }
 
+message EpistelloBytes {
+  string id = 1;
+  bytes data = 2;
+  string channel = 4;
+}
+
 message MessageUpdate {
   Operation operation = 1;
   InternalEpistello message = 2;
@@ -65,6 +71,8 @@ service Eupalinos {
 
   // Unary RPC for epistello enqueueing
   rpc EnqueueMessage(Epistello) returns (EnqueueResponse);
+
+  rpc EnqueueMessageBytes(EpistelloBytes) returns (EnqueueResponse);
 
   // Unary RPC for epistello dequeueing
   rpc DequeueMessage(ChannelInfo) returns (Epistello);
