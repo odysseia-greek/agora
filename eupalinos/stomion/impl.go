@@ -14,7 +14,7 @@ import (
 
 type QueueService interface {
 	WaitForHealthyState() bool
-	StreamQueueUpdates(ctx context.Context, in *pb.ChannelInfo) (pb.Eupalinos_StreamQueueUpdatesClient, error)
+	StreamQueueUpdates(ctx context.Context, in *pb.MessageUpdate) (pb.Eupalinos_StreamQueueUpdatesClient, error)
 	EnqueueMessage(ctx context.Context, in *pb.Epistello) (*pb.EnqueueResponse, error)
 	DequeueMessage(ctx context.Context, in *pb.ChannelInfo) (*pb.Epistello, error)
 	GetQueueLength(ctx context.Context, in *pb.ChannelInfo) (*pb.QueueLength, error)
@@ -78,7 +78,7 @@ func (q *QueueClient) Health(ctx context.Context, request *pb.HealthRequest) (*p
 	return q.queue.Health(ctx, request)
 }
 
-func (q *QueueClient) StreamQueueUpdates(ctx context.Context) (pb.Eupalinos_StreamQueueUpdatesClient, error) {
+func (q *QueueClient) StreamQueueUpdates(ctx context.Context, in *pb.MessageUpdate) (pb.Eupalinos_StreamQueueUpdatesClient, error) {
 	return q.queue.StreamQueueUpdates(ctx)
 }
 

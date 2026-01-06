@@ -82,6 +82,7 @@ service Eupalinos {
   // Unary RPC for epistello dequeueing
   rpc DequeueMessage(ChannelInfo) returns (Epistello);
 
+
   rpc DequeueMessageBytes(ChannelInfo) returns (EpistelloBytes);
 
   // Unary RPC for getting the length of the queue

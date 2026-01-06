@@ -70,7 +70,7 @@ func (q *QueueServiceImpl) EnqueueMessage(ctx context.Context, message *pb.Epist
 	return response, nil
 }
 
-// EnqueueMessage handles message enqueueing
+// EnqueueMessageBytes handles message enqueueing
 func (q *QueueServiceImpl) EnqueueMessageBytes(ctx context.Context, message *pb.EpistelloBytes) (*pb.EnqueueResponse, error) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
