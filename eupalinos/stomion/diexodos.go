@@ -1,9 +1,10 @@
 package stomion
 
 import (
-	pb "github.com/odysseia-greek/agora/eupalinos/proto"
 	"sync/atomic"
 	"time"
+
+	pb "github.com/odysseia-greek/agora/eupalinos/proto"
 )
 
 // Diexodos represents a task queue
@@ -11,7 +12,7 @@ type Diexodos struct {
 	LastMessageReceived time.Time
 	Name                string
 	InternalID          string
-	MessageQueue        map[string]pb.InternalEpistello
+	MessageQueue        map[string]*pb.InternalEpistello
 	MessageUpdateCh     chan pb.MessageUpdate // Channel for task updates to be broadcasted
 
 	// Statistics

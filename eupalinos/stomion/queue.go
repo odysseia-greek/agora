@@ -2,11 +2,7 @@ package stomion
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"log"
-	"os"
-	"path/filepath"
 	"time"
 
 	"github.com/odysseia-greek/agora/plato/logging"
@@ -16,8 +12,6 @@ import (
 	"github.com/google/uuid"
 	pb "github.com/odysseia-greek/agora/eupalinos/proto"
 )
-
-const saveInterval = 5 * time.Minute // Set the interval for saving the state to disk
 
 func (q *QueueServiceImpl) Health(context.Context, *pb.HealthRequest) (*pb.HealthResponse, error) {
 	return &pb.HealthResponse{
@@ -47,7 +41,7 @@ func (q *QueueServiceImpl) EnqueueMessage(ctx context.Context, message *pb.Epist
 	}
 
 	// Process the received message (e.g., enqueue)
-	diexodos.MessageQueue[internalMessage.Id] = *internalMessage
+	diexodos.MessageQueue[internalMessage.Id] = internalMessage
 	diexodos.LastMessageReceived = time.Now() // Update LastMessageReceived
 
 	// Update statistics
@@ -61,7 +55,11 @@ func (q *QueueServiceImpl) EnqueueMessage(ctx context.Context, message *pb.Epist
 	}
 
 	if q.Streaming {
-		diexodos.MessageUpdateCh <- update
+		select {
+		case diexodos.MessageUpdateCh <- update:
+		default:
+			logging.Error("MessageUpdateCh full; dropping update")
+		}
 	}
 
 	// Return the generated ID in the response
@@ -91,7 +89,7 @@ func (q *QueueServiceImpl) EnqueueMessageBytes(ctx context.Context, message *pb.
 	}
 
 	// Process the received message (e.g., enqueue)
-	diexodos.MessageQueue[internalMessage.Id] = *internalMessage
+	diexodos.MessageQueue[internalMessage.Id] = internalMessage
 	diexodos.LastMessageReceived = time.Now() // Update LastMessageReceived
 
 	// Update statistics
@@ -105,7 +103,11 @@ func (q *QueueServiceImpl) EnqueueMessageBytes(ctx context.Context, message *pb.
 	}
 
 	if q.Streaming {
-		diexodos.MessageUpdateCh <- update
+		select {
+		case diexodos.MessageUpdateCh <- update:
+		default:
+			logging.Error("MessageUpdateCh full; dropping update")
+		}
 	}
 
 	// Return the generated ID in the response
@@ -129,7 +131,7 @@ func (q *QueueServiceImpl) DequeueMessage(ctx context.Context, channelInfo *pb.C
 	// dequeue first
 	var internalMessage *pb.InternalEpistello
 	for _, msg := range diexodos.MessageQueue {
-		internalMessage = &msg
+		internalMessage = msg
 		break
 	}
 	delete(diexodos.MessageQueue, internalMessage.Id)
@@ -139,9 +141,13 @@ func (q *QueueServiceImpl) DequeueMessage(ctx context.Context, channelInfo *pb.C
 	diexodos.MessagesDequeued.Add(1)
 
 	if q.Streaming {
-		diexodos.MessageUpdateCh <- pb.MessageUpdate{
+		select {
+		case diexodos.MessageUpdateCh <- pb.MessageUpdate{
 			Operation: pb.Operation_DEQUEUE,
 			Message:   internalMessage,
+		}:
+		default:
+			logging.Error("MessageUpdateCh full; dropping update")
 		}
 	}
 
@@ -174,7 +180,7 @@ func (q *QueueServiceImpl) DequeueMessageBytes(ctx context.Context, channelInfo 
 	// dequeue first
 	var internalMessage *pb.InternalEpistello
 	for _, msg := range diexodos.MessageQueue {
-		internalMessage = &msg
+		internalMessage = msg
 		break
 	}
 	delete(diexodos.MessageQueue, internalMessage.Id)
@@ -212,25 +218,15 @@ func (q *QueueServiceImpl) StreamQueueUpdates(stream pb.Eupalinos_StreamQueueUpd
 			return err
 		}
 
-		logging.Info(fmt.Sprintf("recieved message: %v", updatedMessage.Message))
-
-		// Process the received task update
-		// Update the task queue based on the task operation received from other replicas
 		q.mu.Lock()
-		defer q.mu.Unlock()
 		diexodos := q.findOrCreateDiexodos(updatedMessage.Message.Channel)
-		if diexodos == nil {
-			return fmt.Errorf("channel not found: %s", updatedMessage.Message.Channel)
-		}
-
 		if updatedMessage.Operation == pb.Operation_ENQUEUE {
-			diexodos.MessageQueue[updatedMessage.Message.Id] = *updatedMessage.Message
+			diexodos.MessageQueue[updatedMessage.Message.Id] = updatedMessage.Message
 		} else if updatedMessage.Operation == pb.Operation_DEQUEUE {
 			delete(diexodos.MessageQueue, updatedMessage.Message.Id)
 		}
-
-		// Update the last message received time for the Diexodos
 		diexodos.LastMessageReceived = time.Now()
+		q.mu.Unlock()
 
 		// Broadcast the task update to all replicas (excluding the sender)
 		for _, replica := range q.DiexodosMap {
@@ -274,8 +270,8 @@ func (q *QueueServiceImpl) findOrCreateDiexodos(channelName string) *Diexodos {
 	d := &Diexodos{
 		Name:                channelName,
 		InternalID:          uuid.New().String(),
-		MessageQueue:        make(map[string]pb.InternalEpistello),
-		MessageUpdateCh:     make(chan pb.MessageUpdate),
+		MessageQueue:        make(map[string]*pb.InternalEpistello),
+		MessageUpdateCh:     make(chan pb.MessageUpdate, 1024),
 		LastMessageReceived: now,
 		LastStatsResetTime:  now,
 	}
@@ -300,93 +296,6 @@ func (q *QueueServiceImpl) findDiexodosByChannel(channelName string) *Diexodos {
 		}
 	}
 	return nil
-}
-
-// StartAutoSave starts a goroutine to periodically save the state of the message queues to disk
-func (q *QueueServiceImpl) StartAutoSave() {
-	go func() {
-		for {
-			q.SaveStateToDisk()
-			time.Sleep(saveInterval)
-		}
-	}()
-}
-
-// SaveStateToDisk saves the state of the message queues to disk
-func (q *QueueServiceImpl) SaveStateToDisk() {
-	q.mu.Lock()
-	defer q.mu.Unlock()
-
-	// Create a map to store the serialized message queues
-	state := make(map[string]map[string]pb.InternalEpistello)
-
-	// Convert the message queues to a map
-	for _, diexodos := range q.DiexodosMap {
-		state[diexodos.Name] = diexodos.MessageQueue
-	}
-
-	// Serialize the state to JSON
-	data, err := json.Marshal(state)
-	if err != nil {
-		log.Printf("error serializing state: %v", err)
-		return
-	}
-
-	// Create the directory if it doesn't exist
-	dir := filepath.Dir(q.SavePath)
-	if _, err := os.Stat(dir); os.IsNotExist(err) {
-		err = os.MkdirAll(dir, 0755)
-		if err != nil {
-			log.Printf("error creating directory: %v", err)
-			return
-		}
-	}
-
-	// Write the data to the file
-	err = os.WriteFile(q.SavePath, data, 0644)
-	if err != nil {
-		log.Printf("error writing state to disk: %v", err)
-	}
-}
-
-// LoadStateFromDisk loads the state of the message queues from disk on startup
-func (q *QueueServiceImpl) LoadStateFromDisk() {
-	q.mu.Lock()
-	defer q.mu.Unlock()
-
-	// Check if the file exists
-	if _, err := os.Stat(q.SavePath); os.IsNotExist(err) {
-		// File does not exist, initialize the message queues with empty maps
-		for _, diexodos := range q.DiexodosMap {
-			diexodos.MessageQueue = make(map[string]pb.InternalEpistello)
-		}
-		return
-	}
-
-	// Read the data from the file
-	data, err := os.ReadFile(q.SavePath)
-	if err != nil {
-		log.Printf("error reading state from disk: %v", err)
-		return
-	}
-
-	// Deserialize the data
-	state := make(map[string]map[string]pb.InternalEpistello)
-	err = json.Unmarshal(data, &state)
-	if err != nil {
-		log.Printf("error deserializing state: %v", err)
-		return
-	}
-
-	// Convert the map to message queues
-	for _, diexodos := range q.DiexodosMap {
-		queue, ok := state[diexodos.Name]
-		if ok {
-			diexodos.MessageQueue = queue
-		} else {
-			diexodos.MessageQueue = make(map[string]pb.InternalEpistello)
-		}
-	}
 }
 
 func (q *QueueServiceImpl) StartBroadcasting() {

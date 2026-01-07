@@ -4,13 +4,14 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"github.com/odysseia-greek/agora/plato/config"
-	"github.com/odysseia-greek/agora/plato/logging"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
+
+	"github.com/odysseia-greek/agora/plato/config"
+	"github.com/odysseia-greek/agora/plato/logging"
 )
 
 const (
@@ -22,7 +23,6 @@ func CreateNewConfig() (*QueueServiceImpl, error) {
 	replicasFromEnv := config.StringFromEnv("TOTAL_REPLICAS", "1")
 	rootPath := config.StringFromEnv(config.EnvRootTlSDir, "")
 	podName := config.StringFromEnv(config.EnvPodName, "eupalinos-0")
-	savePath := config.StringFromEnv("SAVE_PATH", "/tmp")
 	namespace := config.StringFromEnv(config.EnvNamespace, "agora")
 	serviceName := config.StringFromEnv("SERVICE_NAME", DefaultServiceName)
 
@@ -70,8 +70,6 @@ func CreateNewConfig() (*QueueServiceImpl, error) {
 		logging.Error(err.Error())
 	}
 
-	subPath := fmt.Sprintf("%s%d", podName, podID)
-	backUpPath := filepath.Join(savePath, subPath, "eupalinos_state.json")
 	version := os.Getenv(config.EnvVersion)
 
 	return &QueueServiceImpl{
@@ -80,7 +78,6 @@ func CreateNewConfig() (*QueueServiceImpl, error) {
 		mu:          sync.Mutex{},
 		Addresses:   addresses,
 		Streaming:   streaming,
-		SavePath:    backUpPath,
 		TLSConfig:   tlsConfig,
 	}, nil
 }

@@ -62,15 +62,12 @@ func main() {
 		server = grpc.NewServer()
 	}
 
-	config.LoadStateFromDisk()
-	config.StartAutoSave()
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
 	go func() {
 		sig := <-sigChan
 		logging.System(fmt.Sprintf("system send a: %s stopping service", sig.String()))
-		config.SaveStateToDisk()
 		os.Exit(0)
 	}()
 
