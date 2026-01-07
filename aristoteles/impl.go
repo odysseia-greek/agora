@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"crypto/x509"
 	"errors"
-	"github.com/elastic/go-elasticsearch/v8"
-	"github.com/odysseia-greek/agora/aristoteles/models"
 	"log"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/elastic/go-elasticsearch/v9"
+	"github.com/odysseia-greek/agora/aristoteles/models"
 )
 
 type Client interface {

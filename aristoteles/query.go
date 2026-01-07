@@ -3,8 +3,8 @@ package aristoteles
 import (
 	"context"
 	"fmt"
-	"github.com/elastic/go-elasticsearch/v8"
-	"github.com/elastic/go-elasticsearch/v8/esapi"
+	"github.com/elastic/go-elasticsearch/v9"
+	"github.com/elastic/go-elasticsearch/v9/esapi"
 	"github.com/odysseia-greek/agora/aristoteles/models"
 	"io"
 	"time"
