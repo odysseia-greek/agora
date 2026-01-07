@@ -56,6 +56,15 @@ func (r *Aggregations) Marshal() ([]byte, error) {
 	return json.Marshal(r)
 }
 
+type CountResponse struct {
+	Count  int64 `json:"count"`
+	Shards struct {
+		Total      int `json:"total"`
+		Successful int `json:"successful"`
+		Skipped    int `json:"skipped"`
+		Failed     int `json:"failed"`
+	} `json:"_shards"`
+}
 type Aggregations struct {
 	Took         int64              `json:"took"`
 	TimedOut     bool               `json:"timed_out"`

@@ -2,6 +2,7 @@ package aristoteles
 
 import (
 	"bytes"
+	"context"
 	"crypto/x509"
 	"errors"
 	"log"
@@ -29,6 +30,7 @@ type Query interface {
 	MatchWithScroll(index string, request map[string]interface{}) (*models.Response, error)
 	MatchAggregate(index string, request map[string]interface{}) (*models.Aggregations, error)
 	MatchRaw(index string, request map[string]interface{}) ([]byte, error)
+	CountRaw(ctx context.Context, index string, request map[string]interface{}) (*models.CountResponse, error)
 }
 
 type Document interface {
