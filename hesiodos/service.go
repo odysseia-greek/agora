@@ -8,7 +8,7 @@ import (
 )
 
 type GenericGrpcClient[T any] struct {
-	client  T
+	Client  T
 	address string
 	dialFn  func(string) (T, error)
 	mu      sync.Mutex
@@ -20,7 +20,7 @@ func NewGenericGrpcClient[T any](address string, dialFn func(string) (T, error))
 		return nil, err
 	}
 	return &GenericGrpcClient[T]{
-		client:  client,
+		Client:  client,
 		address: address,
 		dialFn:  dialFn,
 	}, nil
@@ -34,13 +34,13 @@ func (g *GenericGrpcClient[T]) Reconnect() error {
 	if err != nil {
 		return err
 	}
-	g.client = client
+	g.Client = client
 	return nil
 }
 
 func (g *GenericGrpcClient[T]) CallWithReconnect(call func(client T) error) error {
 	g.mu.Lock()
-	client := g.client
+	client := g.Client
 	g.mu.Unlock()
 
 	err := call(client)
@@ -59,7 +59,7 @@ func (g *GenericGrpcClient[T]) CallWithReconnect(call func(client T) error) erro
 
 	// Retry once
 	g.mu.Lock()
-	client = g.client
+	client = g.Client
 	g.mu.Unlock()
 
 	return call(client)
