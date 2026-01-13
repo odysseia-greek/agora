@@ -1,0 +1,42 @@
+{
+  "_index": "metrics-2026.01.12",
+  "_id": "814Vt5sBEpCWf9Kb8agJ",
+  "_version": 1,
+  "_seq_no": 64247,
+  "_primary_term": 1,
+  "found": true,
+  "_source": {
+    "schema_version": 1,
+    "@timestamp": "2026-01-13T11:19:33.870136874Z",
+    "node": {
+      "name": "lima-k0s-byzantium"
+    },
+    "node_totals": {
+      "cpu_mcores": 476,
+      "mem_bytes": 9000927232
+    },
+    "workload": {
+      "namespace": "lydia",
+      "pod_name": "flux-test-pod",
+      "pod_uid": "7d5692ca-b3d6-47dc-95c9-a94544d6db2f"
+    },
+    "pod_totals": {
+      "cpu_mcores": 0,
+      "mem_bytes": 212992
+    },
+    "containers": [
+      {
+        "name": "pause",
+        "totals": {
+          "cpu_mcores": 0,
+          "mem_bytes": 212992
+        }
+      }
+    ],
+    "source": {
+      "collector": "sophokles",
+      "method": "kubelet_stats_summary_via_apiserver_proxy",
+      "scrape_duration_ms": 58
+    }
+  }
+}

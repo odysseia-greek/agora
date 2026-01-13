@@ -125,6 +125,23 @@ func TestQueryClientCount(t *testing.T) {
 	})
 }
 
+func TestQueryById(t *testing.T) {
+	index := "test"
+	id := "814Vt5sBEpCWf9Kb8agJ"
+
+	t.Run("QueryById", func(t *testing.T) {
+		file := "byId"
+		status := 200
+		testClient, err := NewMockClient(file, status)
+		assert.Nil(t, err)
+
+		ctx := context.Background()
+		sut, err := testClient.Query().GetById(ctx, index, id)
+		assert.Nil(t, err)
+		assert.True(t, sut.Found)
+	})
+}
+
 func TestQueryClientMatchWithScroll(t *testing.T) {
 	index := "test"
 	match := "elastic"

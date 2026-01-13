@@ -52,8 +52,6 @@ func (g *GenericGrpcClient[T]) CallWithReconnect(call func(client T) error) erro
 		return err
 	}
 
-	// Log reconnecting event
-
 	reconnectErr := g.Reconnect()
 	if reconnectErr != nil {
 		return reconnectErr

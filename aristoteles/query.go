@@ -20,6 +20,27 @@ func NewQueryImpl(suppliedClient *elasticsearch.Client) (*QueryImpl, error) {
 	return &QueryImpl{es: suppliedClient}, nil
 }
 
+func (q *QueryImpl) GetById(ctx context.Context, index, id string) (*models.DirectResponse, error) {
+	req := esapi.GetRequest{
+		Index:      index,
+		DocumentID: id,
+	}
+	res, err := req.Do(ctx, q.es)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	var direct models.DirectResponse
+	body, _ := io.ReadAll(res.Body)
+	err = json.Unmarshal(body, &direct)
+	if err != nil {
+		return nil, err
+	}
+
+	return &direct, nil
+}
+
 func (q *QueryImpl) MatchRaw(index string, request map[string]interface{}) ([]byte, error) {
 	query, err := toBuffer(request)
 	if err != nil {

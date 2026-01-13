@@ -31,6 +31,7 @@ type Query interface {
 	MatchAggregate(index string, request map[string]interface{}) (*models.Aggregations, error)
 	MatchRaw(index string, request map[string]interface{}) ([]byte, error)
 	CountRaw(ctx context.Context, index string, request map[string]interface{}) (*models.CountResponse, error)
+	GetById(ctx context.Context, index, id string) (*models.DirectResponse, error)
 }
 
 type Document interface {
