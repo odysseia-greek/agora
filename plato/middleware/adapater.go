@@ -2,9 +2,7 @@ package middleware
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 
@@ -104,66 +102,6 @@ func SetCorsHeaders() Adapter {
 			next(w, r)
 		}
 	}
-}
-
-func SetCorsHeadersLocal() Adapter {
-	return func(next http.HandlerFunc) http.HandlerFunc {
-		return func(w http.ResponseWriter, r *http.Request) {
-			origin := r.Header.Get("Origin")
-			if origin == "" {
-				// Non-browser / same-origin / curl etc.
-				next(w, r)
-				return
-			}
-
-			if isAllowedLocalOrigin(origin) {
-				logging.Debug(fmt.Sprintf("setting CORS header for origin: %s", origin))
-
-				// Echo origin so credentials are possible
-				w.Header().Set("Access-Control-Allow-Origin", origin)
-				w.Header().Set("Vary", "Origin")
-				w.Header().Set("Access-Control-Allow-Credentials", "true")
-
-				// If you ever send custom headers, list them here
-				w.Header().Set(
-					"Access-Control-Allow-Headers",
-					"Origin, X-Requested-With, Content-Type, Accept, Authorization, Boule",
-				)
-				w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-
-				if r.Method == http.MethodOptions {
-					w.WriteHeader(http.StatusNoContent)
-					return
-				}
-			}
-
-			next(w, r)
-		}
-	}
-}
-
-func isAllowedLocalOrigin(origin string) bool {
-	// Allow common local dev origins with ports
-	allowedPrefixes := []string{
-		"http://localhost",
-		"http://127.0.0.1",
-		"http://0.0.0.0",
-		"https://localhost",
-		"https://127.0.0.1",
-	}
-	for _, p := range allowedPrefixes {
-		if strings.HasPrefix(origin, p) {
-			return true
-		}
-	}
-	return false
-}
-
-func Env() string {
-	if v := os.Getenv("ENV"); v != "" {
-		return v
-	}
-	return "unknown"
 }
 
 // ResponseWithJson returns formed JSON
