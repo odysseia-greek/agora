@@ -3,14 +3,15 @@ package middleware
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/odysseia-greek/agora/plato/models"
-	"github.com/odysseia-greek/agora/plato/service"
-	"github.com/stretchr/testify/assert"
 	"io"
 	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/odysseia-greek/agora/plato/models"
+	"github.com/odysseia-greek/agora/plato/service"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestRouter(t *testing.T) {
