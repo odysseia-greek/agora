@@ -5,11 +5,12 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"github.com/odysseia-greek/agora/plato/logging"
 	"io"
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/odysseia-greek/agora/plato/logging"
 )
 
 const DefaultCertRoot string = "/app/config/"
@@ -23,6 +24,7 @@ type TLSManager struct {
 	gracePeriod      time.Duration
 	lastCertHash     string
 	lastKeyHash      string
+	lastCAHash       string // optional but useful
 	cipherSuites     []uint16
 	curvePreferences []tls.CurveID
 }
@@ -31,19 +33,31 @@ func NewTLSManager(hostName, rootPath string, gracePeriod time.Duration) *TLSMan
 	if rootPath == "" {
 		rootPath = DefaultCertRoot
 	}
-	certPath := filepath.Join(rootPath, hostName, "tls.crt")
-	keyPath := filepath.Join(rootPath, hostName, "tls.key")
-	caPath := filepath.Join(rootPath, hostName, "tls.pem")
+
+	dirPath := filepath.Join(rootPath, hostName)
+
+	// Accept both cert-manager and legacy naming
+	certPath := firstExistingFile(dirPath, []string{"tls.crt"})
+	keyPath := firstExistingFile(dirPath, []string{"tls.key"})
+	caPath := firstExistingFile(dirPath, []string{"ca.crt", "tls.pem"})
+
+	if certPath == "" || keyPath == "" || caPath == "" {
+		logging.Error(fmt.Sprintf(
+			"TLSManager init failed for %s: missing files in %s (cert=%q key=%q ca=%q)",
+			hostName, dirPath, certPath, keyPath, caPath,
+		))
+		return nil
+	}
 
 	// Load CA certificate
 	caPool := x509.NewCertPool()
 	caFromFile, err := os.ReadFile(caPath)
 	if err != nil {
-		logging.Error(fmt.Sprintf("Failed to read CA certificate: %v", err))
+		logging.Error(fmt.Sprintf("Failed to read CA certificate (%s): %v", caPath, err))
 		return nil
 	}
 	if !caPool.AppendCertsFromPEM(caFromFile) {
-		logging.Error("Failed to append CA certificate")
+		logging.Error(fmt.Sprintf("Failed to append CA certificate from: %s", caPath))
 		return nil
 	}
 
@@ -60,7 +74,7 @@ func NewTLSManager(hostName, rootPath string, gracePeriod time.Duration) *TLSMan
 		tls.CurveP256,
 	}
 
-	return &TLSManager{
+	tm := &TLSManager{
 		certPath:         certPath,
 		keyPath:          keyPath,
 		caPath:           caPath,
@@ -69,6 +83,37 @@ func NewTLSManager(hostName, rootPath string, gracePeriod time.Duration) *TLSMan
 		cipherSuites:     cipherSuites,
 		curvePreferences: curvePreferences,
 	}
+
+	// Initialize hashes so the first poll doesn't always count as a "change"
+	if h, err := hashFile(certPath); err == nil {
+		tm.lastCertHash = h
+	}
+	if h, err := hashFile(keyPath); err == nil {
+		tm.lastKeyHash = h
+	}
+	if h, err := hashFile(caPath); err == nil {
+		tm.lastCAHash = h
+	}
+
+	logging.System(fmt.Sprintf(
+		"TLSManager initialized for %s (cert=%s key=%s ca=%s)",
+		hostName,
+		filepath.Base(certPath),
+		filepath.Base(keyPath),
+		filepath.Base(caPath),
+	))
+
+	return tm
+}
+
+func firstExistingFile(dirPath string, candidates []string) string {
+	for _, name := range candidates {
+		p := filepath.Join(dirPath, name)
+		if fi, err := os.Stat(p); err == nil && !fi.IsDir() {
+			return p
+		}
+	}
+	return ""
 }
 
 // GetTLSConfig returns the current TLS configuration for the server.
@@ -130,7 +175,6 @@ func (tm *TLSManager) LoadCertificates() error {
 	return nil
 }
 
-// WatchCertificates starts monitoring the certificate files for changes.
 func (tm *TLSManager) WatchCertificates(interval time.Duration) {
 	go func() {
 		for {
@@ -138,9 +182,24 @@ func (tm *TLSManager) WatchCertificates(interval time.Duration) {
 
 			certChanged := tm.checkFileContentChange(tm.certPath, &tm.lastCertHash)
 			keyChanged := tm.checkFileContentChange(tm.keyPath, &tm.lastKeyHash)
+			caChanged := tm.checkFileContentChange(tm.caPath, &tm.lastCAHash)
 
-			if certChanged || keyChanged {
-				logging.Debug("Certificate content changed; reloading...")
+			if caChanged {
+				// Reload CA pool
+				caPool := x509.NewCertPool()
+				caFromFile, err := os.ReadFile(tm.caPath)
+				if err != nil {
+					logging.Error(fmt.Sprintf("Failed to read CA certificate (%s): %v", tm.caPath, err))
+				} else if !caPool.AppendCertsFromPEM(caFromFile) {
+					logging.Error(fmt.Sprintf("Failed to append CA certificate from: %s", tm.caPath))
+				} else {
+					tm.caPool = caPool
+					logging.System("CA bundle changed; CA pool reloaded.")
+				}
+			}
+
+			if certChanged || keyChanged || caChanged {
+				logging.Debug("TLS material changed; reloading certificates...")
 				if err := tm.LoadCertificates(); err != nil {
 					logging.Error(fmt.Sprintf("Error reloading certificates: %v\n", err))
 				}
