@@ -4,15 +4,16 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
-	"github.com/odysseia-greek/agora/plato/certificates"
-	"github.com/odysseia-greek/agora/plato/logging"
-	"github.com/odysseia-greek/agora/plato/randomizer"
-	"github.com/odysseia-greek/agora/plato/service"
 	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"github.com/odysseia-greek/agora/plato/certificates"
+	"github.com/odysseia-greek/agora/plato/logging"
+	"github.com/odysseia-greek/agora/plato/randomizer"
+	"github.com/odysseia-greek/agora/plato/service"
 )
 
 func CreateOdysseiaClient() (service.OdysseiaClient, error) {
@@ -87,23 +88,63 @@ func getCertPaths(rootPath, serviceName string) (certPath, keyPath, caPath strin
 
 	dirs, err := os.ReadDir(rootPath)
 	if err != nil {
-		return "", "", "", fmt.Errorf("failed to read the directory %s: %w", rootPath, err)
+		return "", "", "", fmt.Errorf("failed to read directory %s: %w", rootPath, err)
 	}
 
+	// Prefer exact directory name matches, then fall back to "contains"
+	var candidates []string
 	for _, dir := range dirs {
-		if dir.IsDir() {
-			dirName := strings.ToLower(dir.Name())
-			if strings.Contains(lowerServiceName, dirName) {
-				dirPath := filepath.Join(rootPath, dir.Name())
-				certPath := filepath.Join(dirPath, "tls.crt")
-				keyPath := filepath.Join(dirPath, "tls.key")
-				caPath := filepath.Join(dirPath, "tls.pem")
-				return certPath, keyPath, caPath, nil
-			}
+		if !dir.IsDir() {
+			continue
+		}
+		name := dir.Name()
+		lowerName := strings.ToLower(name)
+
+		if lowerName == lowerServiceName {
+			// exact match goes first
+			candidates = append([]string{name}, candidates...)
+			continue
+		}
+
+		if strings.Contains(lowerServiceName, lowerName) || strings.Contains(lowerName, lowerServiceName) {
+			candidates = append(candidates, name)
 		}
 	}
 
-	return "", "", "", errors.New("no matching service directory found")
+	if len(candidates) == 0 {
+		return "", "", "", fmt.Errorf("no matching service directory found for %q under %s", serviceName, rootPath)
+	}
+
+	// Try each candidate dir until we find a usable set
+	for _, dirName := range candidates {
+		dirPath := filepath.Join(rootPath, dirName)
+
+		cert := firstExistingFile(dirPath, []string{"tls.crt"})
+		key := firstExistingFile(dirPath, []string{"tls.key"})
+		ca := firstExistingFile(dirPath, []string{"ca.crt", "tls.pem"})
+
+		if cert != "" && key != "" && ca != "" {
+			return cert, key, ca, nil
+		}
+	}
+
+	// If we get here, we found directories but none had a complete set.
+	return "", "", "", fmt.Errorf(
+		"found candidate directories for %q under %s (%s) but none contained a complete TLS set; expected cert one of [tls.crt vault.crt], key one of [tls.key vault.key], ca one of [ca.crt tls.pem vault.ca]",
+		serviceName,
+		rootPath,
+		strings.Join(candidates, ", "),
+	)
+}
+
+func firstExistingFile(dirPath string, candidates []string) string {
+	for _, name := range candidates {
+		p := filepath.Join(dirPath, name)
+		if fi, err := os.Stat(p); err == nil && !fi.IsDir() {
+			return p
+		}
+	}
+	return ""
 }
 
 func CreateNewRandomizer() (randomizer.Random, error) {
