@@ -3,10 +3,10 @@ package diogenes
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/hashicorp/vault/api"
 	auth "github.com/hashicorp/vault/api/auth/kubernetes"
-	"log"
-	"time"
 )
 
 type Client interface {
@@ -53,8 +53,6 @@ func NewVaultClient(address, token string, tlsConfig *api.TLSConfig) (Client, er
 	config := api.Config{
 		Address: address,
 	}
-
-	log.Print(tlsConfig)
 
 	if tlsConfig != nil {
 		err := config.ConfigureTLS(tlsConfig)
