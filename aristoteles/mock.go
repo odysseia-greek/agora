@@ -70,28 +70,27 @@ func (t *MockTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 }
 
 func CreateMockClient(fixtureFiles []string, statusCode int) (*elasticsearch.Client, error) {
-	mockCode := 500
-	switch statusCode {
-	case 200:
-		mockCode = http.StatusOK
-	case 404:
-		mockCode = http.StatusNotFound
-	case 500:
-		mockCode = http.StatusInternalServerError
-	case 502:
-		mockCode = http.StatusBadGateway
-	default:
-		mockCode = 200
+	mockCode := toHTTPStatusCode(statusCode)
+	statusCodes := make([]int, len(fixtureFiles))
+	for i := range fixtureFiles {
+		statusCodes[i] = mockCode
+	}
+	return CreateMockClientWithStatusCodes(fixtureFiles, statusCodes)
+}
+
+func CreateMockClientWithStatusCodes(fixtureFiles []string, statusCodes []int) (*elasticsearch.Client, error) {
+	if len(fixtureFiles) != len(statusCodes) {
+		return nil, fmt.Errorf("fixtureFiles and statusCodes must have equal length")
 	}
 
 	var responses []*http.Response
-	for _, fix := range fixtureFiles {
+	for i, fix := range fixtureFiles {
 		if !strings.Contains(fix, ".json") {
 			fix = fmt.Sprintf("%s.json", fix)
 		}
 		body := fixture(fix)
 		response := &http.Response{
-			StatusCode: mockCode,
+			StatusCode: toHTTPStatusCode(statusCodes[i]),
 			Body:       body,
 			Header:     http.Header{"X-Elastic-Product": []string{"Elasticsearch"}},
 		}
@@ -112,4 +111,23 @@ func CreateMockClient(fixtureFiles []string, statusCode int) (*elasticsearch.Cli
 	}
 
 	return client, nil
+}
+
+func toHTTPStatusCode(statusCode int) int {
+	switch statusCode {
+	case 200:
+		return http.StatusOK
+	case 401:
+		return http.StatusUnauthorized
+	case 403:
+		return http.StatusForbidden
+	case 404:
+		return http.StatusNotFound
+	case 500:
+		return http.StatusInternalServerError
+	case 502:
+		return http.StatusBadGateway
+	default:
+		return http.StatusOK
+	}
 }

@@ -85,10 +85,7 @@ type Builder interface {
 	SearchAsYouTypeIndex(searchWord string) map[string]interface{}
 	Index() map[string]interface{}
 	TextIndex(policyName string) map[string]interface{}
-	DictionaryIndex(min, max int, policyName string) map[string]interface{}
 	GrammarIndex(policyName string) map[string]interface{}
-	CreateTraceIndexMapping(policyName string) map[string]interface{}
-	QuizIndex(policyName string) map[string]interface{}
 }
 
 type Health interface {

@@ -189,32 +189,6 @@ func (b *BuilderImpl) TextIndex(policyName string) map[string]interface{} {
 	}
 }
 
-func (b *BuilderImpl) QuizIndex(policyName string) map[string]interface{} {
-	return map[string]interface{}{
-		"settings": map[string]interface{}{
-			"index": map[string]interface{}{
-				"number_of_shards":   2,
-				"number_of_replicas": 1,
-				"lifecycle.name":     policyName,
-			},
-		},
-		"mappings": map[string]interface{}{
-			"properties": map[string]interface{}{
-				"quizType": map[string]interface{}{
-					"type": "keyword",
-				},
-				"theme": map[string]interface{}{
-					"type": "keyword",
-				},
-				"set": map[string]interface{}{
-					"type": "integer",
-				},
-				// 'content' field is not defined here as it won't be queried
-			},
-		},
-	}
-}
-
 func (b *BuilderImpl) GrammarIndex(policyName string) map[string]interface{} {
 	return map[string]interface{}{
 		"settings": map[string]interface{}{
@@ -246,100 +220,6 @@ func (b *BuilderImpl) GrammarIndex(policyName string) map[string]interface{} {
 					},
 				},
 			},
-		},
-	}
-}
-
-func (b *BuilderImpl) DictionaryIndex(min, max int, policyName string) map[string]interface{} {
-	nGramDiff := max - min
-	return map[string]interface{}{
-		"settings": map[string]interface{}{
-			"index": map[string]interface{}{
-				"number_of_shards":   2,
-				"number_of_replicas": 2,
-				"max_ngram_diff":     nGramDiff,
-				"lifecycle.name":     policyName, // Add this line to associate the policy
-			},
-			"analysis": map[string]interface{}{
-				"analyzer": map[string]interface{}{
-					"greek_analyzer": map[string]interface{}{
-						"tokenizer": "greek_tokenizer",
-					},
-				},
-				"tokenizer": map[string]interface{}{
-					"greek_tokenizer": map[string]interface{}{
-						"type":        "ngram",
-						"min_gram":    min,
-						"max_gram":    max,
-						"token_chars": []string{"letter"},
-					},
-				},
-			},
-		},
-		"mappings": map[string]interface{}{
-			"properties": map[string]interface{}{
-				"greek": map[string]interface{}{
-					"type":     "text",
-					"analyzer": "greek_analyzer",
-					"fields": map[string]interface{}{
-						"keyword": map[string]interface{}{
-							"type": "keyword",
-						},
-					},
-				},
-				"english": map[string]interface{}{
-					"type": "text",
-					"fields": map[string]interface{}{
-						"keyword": map[string]interface{}{
-							"type": "keyword",
-						},
-					},
-				},
-				"dutch": map[string]interface{}{
-					"type": "text",
-					"fields": map[string]interface{}{
-						"keyword": map[string]interface{}{
-							"type": "keyword",
-						},
-					},
-				},
-			},
-		},
-	}
-}
-
-func (b *BuilderImpl) CreateTraceIndexMapping(policyName string) map[string]interface{} {
-	return map[string]interface{}{
-		"mappings": map[string]interface{}{
-			"properties": map[string]interface{}{
-				"items": map[string]interface{}{
-					"type": "nested", // Use "nested" type for arrays of complex objects
-				},
-				"isActive": map[string]interface{}{
-					"type": "boolean",
-				},
-				"timeStarted": map[string]interface{}{
-					"type":   "date",
-					"format": "yyyy-MM-dd'T'HH:mm:ss.SSS",
-				},
-				"timeEnded": map[string]interface{}{
-					"type":       "date",
-					"format":     "yyyy-MM-dd'T'HH:mm:ss.SSS",
-					"null_value": "1970-01-01T00:00:00.000",
-				},
-				"totalTime": map[string]interface{}{
-					"type": "long",
-				},
-				"responseCode": map[string]interface{}{
-					"type": "short",
-				},
-				// Add additional fields here if needed
-			},
-		},
-		"settings": map[string]interface{}{
-			"index.lifecycle.name":                   policyName,
-			"index.lifecycle.rollover_alias":         "trace",
-			"index.lifecycle.parse_origination_date": true,
 		},
 	}
 }
