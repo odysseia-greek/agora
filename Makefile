@@ -3,6 +3,8 @@
 # Default module to release
 MODULE ?= archytas
 PROTO_DIRS := eupalinos
+TOOLS_DIR := $(PWD)/.bin
+PROTOC_GEN_DOC := $(TOOLS_DIR)/protoc-gen-doc
 
 # Get the latest version tag for the specified module
 .PHONY: get-latest-version
@@ -87,6 +89,23 @@ generate:
 		echo "Generating Protobuf files in $$dir..."; \
 		buf generate --template $$dir/buf.gen.yaml $$dir; \
 	done
+
+.PHONY: tools
+tools: $(PROTOC_GEN_DOC)
+
+$(PROTOC_GEN_DOC):
+	@mkdir -p $(TOOLS_DIR)
+	@echo "Installing protoc-gen-doc..."
+	@GOBIN=$(TOOLS_DIR) go install github.com/pseudomuto/protoc-gen-doc/cmd/protoc-gen-doc@latest
+
+
+.PHONY: docs
+docs: tools
+	@for dir in $(PROTO_DIRS); do \
+		echo "Generating gRPC docs in $$dir..."; \
+		PATH=$(TOOLS_DIR):$$PATH buf generate --template $$dir/buf.gen.docs.yaml $$dir; \
+	done
+
 
 # Help command
 .PHONY: help

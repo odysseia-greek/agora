@@ -3,7 +3,7 @@ module github.com/odysseia-greek/agora/aristoteles
 go 1.25.5
 
 require (
-	github.com/elastic/go-elasticsearch/v9 v9.2.1
+	github.com/elastic/go-elasticsearch/v9 v9.3.1
 	github.com/stretchr/testify v1.11.1
 )
 

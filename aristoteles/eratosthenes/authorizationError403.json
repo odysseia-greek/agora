@@ -1,0 +1,13 @@
+{
+  "error": {
+    "root_cause": [
+      {
+        "type": "security_exception",
+        "reason": "action [indices:data/write/index] is unauthorized for user [plato] with roles [reader]"
+      }
+    ],
+    "type": "security_exception",
+    "reason": "action [indices:data/write/index] is unauthorized for user [plato] with roles [reader]"
+  },
+  "status": 403
+}

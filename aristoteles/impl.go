@@ -5,7 +5,7 @@ import (
 	"context"
 	"crypto/x509"
 	"errors"
-	"log"
+	"fmt"
 	"net/http"
 	"os"
 	"time"
@@ -26,34 +26,52 @@ type Client interface {
 
 type Query interface {
 	Match(index string, request map[string]interface{}) (*models.Response, error)
+	MatchWithContext(ctx context.Context, index string, request map[string]interface{}) (*models.Response, error)
 	MatchWithSort(index, mode, sort string, size int, request map[string]interface{}) (*models.Response, error)
+	MatchWithSortWithContext(ctx context.Context, index, mode, sort string, size int, request map[string]interface{}) (*models.Response, error)
 	MatchWithScroll(index string, request map[string]interface{}) (*models.Response, error)
+	MatchWithScrollWithContext(ctx context.Context, index string, request map[string]interface{}) (*models.Response, error)
 	MatchAggregate(index string, request map[string]interface{}) (*models.Aggregations, error)
+	MatchAggregateWithContext(ctx context.Context, index string, request map[string]interface{}) (*models.Aggregations, error)
 	MatchRaw(index string, request map[string]interface{}) ([]byte, error)
+	MatchRawWithContext(ctx context.Context, index string, request map[string]interface{}) ([]byte, error)
 	CountRaw(ctx context.Context, index string, request map[string]interface{}) (*models.CountResponse, error)
 	GetById(ctx context.Context, index, id string) (*models.DirectResponse, error)
 }
 
 type Document interface {
 	Create(index string, body []byte) (*models.CreateResult, error)
+	CreateWithContext(ctx context.Context, index string, body []byte) (*models.CreateResult, error)
 	Update(index, id string, body []byte) (*models.CreateResult, error)
+	UpdateWithContext(ctx context.Context, index, id string, body []byte) (*models.CreateResult, error)
 	AddItemToDocument(index, id, body, paramName string) (*models.CreateResult, error)
+	AddItemToDocumentWithContext(ctx context.Context, index, id, body, paramName string) (*models.CreateResult, error)
 	CreateWithId(index, documentId string, body []byte) (*models.CreateResult, error)
+	CreateWithIdWithContext(ctx context.Context, index, documentId string, body []byte) (*models.CreateResult, error)
 	CreateWithIdAndFirstItem(index, documentId, body, paramName string) (*models.CreateResult, error)
+	CreateWithIdAndFirstItemWithContext(ctx context.Context, index, documentId, body, paramName string) (*models.CreateResult, error)
 	Bulk(buf bytes.Buffer, index string) (*BulkResponse, error)
+	BulkWithContext(ctx context.Context, buf bytes.Buffer, index string) (*BulkResponse, error)
 }
 
 type Index interface {
 	CreateDocument(index string, body []byte) (*models.CreateResult, error)
+	CreateDocumentWithContext(ctx context.Context, index string, body []byte) (*models.CreateResult, error)
 	Create(index string, request map[string]interface{}) (*models.IndexCreateResult, error)
+	CreateWithContext(ctx context.Context, index string, request map[string]interface{}) (*models.IndexCreateResult, error)
 	CreateWithAlias(indexName string, request map[string]interface{}) (*models.IndexCreateResult, error)
+	CreateWithAliasWithContext(ctx context.Context, indexName string, request map[string]interface{}) (*models.IndexCreateResult, error)
 	Delete(index string) (bool, error)
+	DeleteWithContext(ctx context.Context, index string) (bool, error)
 	IndexExists(index string) (bool, *models.IndexInfo, error)
+	IndexExistsWithContext(ctx context.Context, index string) (bool, *models.IndexInfo, error)
 }
 
 type Policy interface {
 	CreatePolicyWithRollOver(name, maxAge, phase string) (*models.IndexCreateResult, error)
+	CreatePolicyWithRollOverWithContext(ctx context.Context, name, maxAge, phase string) (*models.IndexCreateResult, error)
 	CreatePolicy(name, phase string) (*models.IndexCreateResult, error)
+	CreatePolicyWithContext(ctx context.Context, name, phase string) (*models.IndexCreateResult, error)
 }
 
 type Builder interface {
@@ -67,10 +85,7 @@ type Builder interface {
 	SearchAsYouTypeIndex(searchWord string) map[string]interface{}
 	Index() map[string]interface{}
 	TextIndex(policyName string) map[string]interface{}
-	DictionaryIndex(min, max int, policyName string) map[string]interface{}
 	GrammarIndex(policyName string) map[string]interface{}
-	CreateTraceIndexMapping(policyName string) map[string]interface{}
-	QuizIndex(policyName string) map[string]interface{}
 }
 
 type Health interface {
@@ -80,9 +95,13 @@ type Health interface {
 
 type Access interface {
 	CreateRole(name string, roleRequest models.CreateRoleRequest) (bool, error)
+	CreateRoleWithContext(ctx context.Context, name string, roleRequest models.CreateRoleRequest) (bool, error)
 	CreateUser(name string, userCreation models.CreateUserRequest) (bool, error)
+	CreateUserWithContext(ctx context.Context, name string, userCreation models.CreateUserRequest) (bool, error)
 	ListUsers() ([]string, error)
+	ListUsersWithContext(ctx context.Context) ([]string, error)
 	DeleteUser(name string) (bool, error)
+	DeleteUserWithContext(ctx context.Context, name string) (bool, error)
 }
 
 type Elastic struct {
@@ -216,8 +235,6 @@ func NewMockClient(fixtureFiles interface{}, statusCode int) (Client, error) {
 }
 
 func create(config models.Config) (*elasticsearch.Client, error) {
-	log.Print("creating elasticClient")
-
 	cfg := elasticsearch.Config{
 		Username:  config.Username,
 		Password:  config.Password,
@@ -225,7 +242,6 @@ func create(config models.Config) (*elasticsearch.Client, error) {
 	}
 	es, err := elasticsearch.NewClient(cfg)
 	if err != nil {
-		log.Printf("Error creating the client: %s", err)
 		return nil, err
 	}
 
@@ -233,8 +249,6 @@ func create(config models.Config) (*elasticsearch.Client, error) {
 }
 
 func createWithTLS(config models.Config) (*elasticsearch.Client, error) {
-	log.Print("creating elasticClient with tls")
-
 	caCert := []byte(config.ElasticCERT)
 
 	// --> Clone the default HTTP transport
@@ -246,13 +260,13 @@ func createWithTLS(config models.Config) (*elasticsearch.Client, error) {
 	var err error
 
 	if tp.TLSClientConfig.RootCAs, err = x509.SystemCertPool(); err != nil {
-		log.Fatalf("ERROR: Problem adding system CA: %s", err)
+		return nil, fmt.Errorf("problem adding system CA: %w", err)
 	}
 
 	// --> Add the custom certificate authority
 	//
 	if ok := tp.TLSClientConfig.RootCAs.AppendCertsFromPEM(caCert); !ok {
-		log.Fatalf("ERROR: Problem adding CA from file %q", caCert)
+		return nil, fmt.Errorf("problem adding CA from certificate data")
 	}
 
 	cfg := elasticsearch.Config{
@@ -263,7 +277,6 @@ func createWithTLS(config models.Config) (*elasticsearch.Client, error) {
 	}
 	es, err := elasticsearch.NewClient(cfg)
 	if err != nil {
-		log.Printf("Error creating the client: %s", err)
 		return nil, err
 	}
 

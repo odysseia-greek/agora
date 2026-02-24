@@ -1,9 +1,11 @@
 package aristoteles
 
 import (
+	"strings"
+	"testing"
+
 	"github.com/odysseia-greek/agora/aristoteles/models"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestCreateDocumentWithIndexClient(t *testing.T) {
@@ -199,5 +201,76 @@ func TestDeleteIndexClient(t *testing.T) {
 		sut, err := testClient.Index().Delete(index)
 		assert.NotNil(t, err)
 		assert.False(t, sut)
+	})
+}
+
+type seederHandler struct {
+	Elastic    Client
+	Index      string
+	PolicyName string
+}
+
+func (s *seederHandler) DeleteIndexAtStartUp() error {
+	deleted, err := s.Elastic.Index().Delete(s.Index)
+	if err != nil {
+		if deleted {
+			return nil
+		}
+		if strings.Contains(err.Error(), "index_not_found_exception") {
+			return nil
+		}
+		return err
+	}
+
+	return nil
+}
+
+func (s *seederHandler) CreateIndexAtStartup() error {
+	indexMapping := s.Elastic.Builder().TextIndex(s.PolicyName)
+	_, err := s.Elastic.Index().Create(s.Index, indexMapping)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func TestSeederDeleteThenCreateIndexFlow(t *testing.T) {
+	t.Run("DeletedThenCreated", func(t *testing.T) {
+		testClient, err := NewMockClient([]string{"deleteIndex", "createIndex"}, 200)
+		assert.Nil(t, err)
+
+		handler := &seederHandler{
+			Elastic:    testClient,
+			Index:      "parmenides-quiz",
+			PolicyName: "parmenides-policy",
+		}
+
+		err = handler.DeleteIndexAtStartUp()
+		assert.Nil(t, err)
+
+		err = handler.CreateIndexAtStartup()
+		assert.Nil(t, err)
+	})
+
+	t.Run("NotFoundThenCreated", func(t *testing.T) {
+		testClient, err := NewMockClient("deleteIndex404", 404)
+		assert.Nil(t, err)
+
+		handler := &seederHandler{
+			Elastic:    testClient,
+			Index:      "parmenides-quiz",
+			PolicyName: "parmenides-policy",
+		}
+
+		err = handler.DeleteIndexAtStartUp()
+		assert.Nil(t, err)
+
+		createClient, err := NewMockClient("createIndex", 200)
+		assert.Nil(t, err)
+		handler.Elastic = createClient
+
+		err = handler.CreateIndexAtStartup()
+		assert.Nil(t, err)
 	})
 }

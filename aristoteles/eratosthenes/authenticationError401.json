@@ -1,0 +1,13 @@
+{
+  "error": {
+    "root_cause": [
+      {
+        "type": "security_exception",
+        "reason": "unable to authenticate user [plato] for REST request [/_doc/test]"
+      }
+    ],
+    "type": "security_exception",
+    "reason": "unable to authenticate user [plato] for REST request [/_doc/test]"
+  },
+  "status": 401
+}
