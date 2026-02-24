@@ -31,10 +31,16 @@ func (q *QueryImpl) GetById(ctx context.Context, index, id string) (*models.Dire
 	}
 	defer res.Body.Close()
 
-	var direct models.DirectResponse
-	body, _ := io.ReadAll(res.Body)
-	err = json.Unmarshal(body, &direct)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
+		return nil, err
+	}
+	if res.IsError() {
+		return nil, newElasticErrorFromBody("get document by id", res, body)
+	}
+
+	var direct models.DirectResponse
+	if err := json.Unmarshal(body, &direct); err != nil {
 		return nil, err
 	}
 
@@ -42,52 +48,53 @@ func (q *QueryImpl) GetById(ctx context.Context, index, id string) (*models.Dire
 }
 
 func (q *QueryImpl) MatchRaw(index string, request map[string]interface{}) ([]byte, error) {
+	return q.MatchRawWithContext(context.Background(), index, request)
+}
+
+func (q *QueryImpl) MatchRawWithContext(ctx context.Context, index string, request map[string]interface{}) ([]byte, error) {
 	query, err := toBuffer(request)
 	if err != nil {
 		return nil, err
 	}
 
 	res, err := q.es.Search(
-		q.es.Search.WithContext(context.Background()),
+		q.es.Search.WithContext(ctx),
 		q.es.Search.WithIndex(index),
 		q.es.Search.WithBody(&query),
 		q.es.Search.WithTrackTotalHits(true),
 		q.es.Search.WithPretty(),
 	)
-
 	if err != nil {
 		return nil, err
 	}
-
 	defer res.Body.Close()
 
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
 	if res.IsError() {
-		return nil, fmt.Errorf("%s: %s", errorMessage, res.Status())
+		return nil, newElasticErrorFromBody("raw match query", res, body)
 	}
 
-	return io.ReadAll(res.Body)
+	return body, nil
 }
 
 func (q *QueryImpl) CountRaw(ctx context.Context, index string, request map[string]interface{}) (*models.CountResponse, error) {
-	var (
-		body io.Reader
-	)
+	var body io.Reader
 
 	if len(request) > 0 {
-		buf, err := toBuffer(request) // your helper
+		buf, err := toBuffer(request)
 		if err != nil {
 			return nil, err
 		}
 		body = &buf
 	}
 
-	// Build options
 	opts := []func(*esapi.CountRequest){
 		q.es.Count.WithContext(ctx),
 		q.es.Count.WithIndex(index),
 	}
-
-	// Only include body if present
 	if body != nil {
 		opts = append(opts, q.es.Count.WithBody(body))
 	}
@@ -98,13 +105,16 @@ func (q *QueryImpl) CountRaw(ctx context.Context, index string, request map[stri
 	}
 	defer res.Body.Close()
 
+	respBody, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
 	if res.IsError() {
-		b, _ := io.ReadAll(res.Body)
-		return nil, fmt.Errorf("%s: %s: %s", errorMessage, res.Status(), string(b))
+		return nil, newElasticErrorFromBody("count query", res, respBody)
 	}
 
 	var parsed models.CountResponse
-	if err := json.NewDecoder(res.Body).Decode(&parsed); err != nil {
+	if err := json.Unmarshal(respBody, &parsed); err != nil {
 		return nil, err
 	}
 
@@ -112,34 +122,41 @@ func (q *QueryImpl) CountRaw(ctx context.Context, index string, request map[stri
 }
 
 func (q *QueryImpl) Match(index string, request map[string]interface{}) (*models.Response, error) {
+	return q.MatchWithContext(context.Background(), index, request)
+}
+
+func (q *QueryImpl) MatchWithContext(ctx context.Context, index string, request map[string]interface{}) (*models.Response, error) {
 	query, err := toBuffer(request)
 	if err != nil {
 		return nil, err
 	}
 
 	res, err := q.es.Search(
-		q.es.Search.WithContext(context.Background()),
+		q.es.Search.WithContext(ctx),
 		q.es.Search.WithIndex(index),
 		q.es.Search.WithBody(&query),
 		q.es.Search.WithTrackTotalHits(true),
 		q.es.Search.WithPretty(),
 	)
-
 	if err != nil {
 		return nil, err
 	}
 
-	return q.parseResponse(res)
+	return q.parseResponse("match query", res)
 }
 
 func (q *QueryImpl) MatchWithSort(index, direction, sortField string, size int, request map[string]interface{}) (*models.Response, error) {
+	return q.MatchWithSortWithContext(context.Background(), index, direction, sortField, size, request)
+}
+
+func (q *QueryImpl) MatchWithSortWithContext(ctx context.Context, index, direction, sortField string, size int, request map[string]interface{}) (*models.Response, error) {
 	query, err := toBuffer(request)
 	if err != nil {
 		return nil, err
 	}
 
 	res, err := q.es.Search(
-		q.es.Search.WithContext(context.Background()),
+		q.es.Search.WithContext(ctx),
 		q.es.Search.WithIndex(index),
 		q.es.Search.WithBody(&query),
 		q.es.Search.WithSize(size),
@@ -147,15 +164,18 @@ func (q *QueryImpl) MatchWithSort(index, direction, sortField string, size int, 
 		q.es.Search.WithSort(fmt.Sprintf("%s:%s", sortField, direction), "mode:max"),
 		q.es.Search.WithPretty(),
 	)
-
 	if err != nil {
 		return nil, err
 	}
 
-	return q.parseResponse(res)
+	return q.parseResponse("match query with sort", res)
 }
 
 func (q *QueryImpl) MatchWithScroll(index string, request map[string]interface{}) (*models.Response, error) {
+	return q.MatchWithScrollWithContext(context.Background(), index, request)
+}
+
+func (q *QueryImpl) MatchWithScrollWithContext(ctx context.Context, index string, request map[string]interface{}) (*models.Response, error) {
 	var elasticResult models.Response
 
 	query, err := toBuffer(request)
@@ -164,7 +184,7 @@ func (q *QueryImpl) MatchWithScroll(index string, request map[string]interface{}
 	}
 
 	res, err := q.es.Search(
-		q.es.Search.WithContext(context.Background()),
+		q.es.Search.WithContext(ctx),
 		q.es.Search.WithIndex(index),
 		q.es.Search.WithBody(&query),
 		q.es.Search.WithSize(10),
@@ -172,38 +192,41 @@ func (q *QueryImpl) MatchWithScroll(index string, request map[string]interface{}
 		q.es.Search.WithTrackTotalHits(true),
 		q.es.Search.WithPretty(),
 	)
-
 	if err != nil {
 		return nil, err
 	}
 
-	firstResponse, err := q.parseResponse(res)
+	firstResponse, err := q.parseResponse("scroll query", res)
 	if err != nil {
 		return nil, err
 	}
 
 	scrollID := firstResponse.ScrollId
-
-	for _, hit := range firstResponse.Hits.Hits {
-		elasticResult.Hits.Hits = append(elasticResult.Hits.Hits, hit)
-	}
+	elasticResult.Hits.Hits = append(elasticResult.Hits.Hits, firstResponse.Hits.Hits...)
 
 	if len(firstResponse.Hits.Hits) < 10 {
 		return &elasticResult, nil
 	}
 
 	for {
-		scrollRes, err := q.es.Scroll(q.es.Scroll.WithScrollID(scrollID), q.es.Scroll.WithScroll(5*time.Second))
+		scrollRes, err := q.es.Scroll(
+			q.es.Scroll.WithContext(ctx),
+			q.es.Scroll.WithScrollID(scrollID),
+			q.es.Scroll.WithScroll(5*time.Second),
+		)
 		if err != nil {
 			return nil, err
 		}
-		defer scrollRes.Body.Close()
 
+		scrollBody, readErr := io.ReadAll(scrollRes.Body)
+		scrollRes.Body.Close()
+		if readErr != nil {
+			return nil, readErr
+		}
 		if scrollRes.IsError() {
-			return nil, fmt.Errorf("elasticSearch returned an error: %s", scrollRes.Status())
+			return nil, newElasticErrorFromBody("scroll query", scrollRes, scrollBody)
 		}
 
-		scrollBody, _ := io.ReadAll(scrollRes.Body)
 		scrollResponse, err := models.UnmarshalResponse(scrollBody)
 		if err != nil {
 			return nil, err
@@ -213,42 +236,47 @@ func (q *QueryImpl) MatchWithScroll(index string, request map[string]interface{}
 			break
 		}
 
-		for _, hit := range scrollResponse.Hits.Hits {
-			elasticResult.Hits.Hits = append(elasticResult.Hits.Hits, hit)
-		}
+		elasticResult.Hits.Hits = append(elasticResult.Hits.Hits, scrollResponse.Hits.Hits...)
 	}
+
 	return &elasticResult, nil
 }
 
 func (q *QueryImpl) MatchAggregate(index string, request map[string]interface{}) (*models.Aggregations, error) {
+	return q.MatchAggregateWithContext(context.Background(), index, request)
+}
+
+func (q *QueryImpl) MatchAggregateWithContext(ctx context.Context, index string, request map[string]interface{}) (*models.Aggregations, error) {
 	query, err := toBuffer(request)
 	if err != nil {
 		return nil, err
 	}
 
 	res, err := q.es.Search(
-		q.es.Search.WithContext(context.Background()),
+		q.es.Search.WithContext(ctx),
 		q.es.Search.WithIndex(index),
 		q.es.Search.WithBody(&query),
 		q.es.Search.WithTrackTotalHits(true),
 		q.es.Search.WithPretty(),
 	)
-
 	if err != nil {
 		return nil, err
 	}
 
-	return q.parseAggregate(res)
+	return q.parseAggregate("aggregate query", res)
 }
 
-func (q *QueryImpl) parseResponse(res *esapi.Response) (*models.Response, error) {
+func (q *QueryImpl) parseResponse(operation string, res *esapi.Response) (*models.Response, error) {
 	defer res.Body.Close()
 
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
 	if res.IsError() {
-		return nil, fmt.Errorf("%s: %s", errorMessage, res.Status())
+		return nil, newElasticErrorFromBody(operation, res, body)
 	}
 
-	body, _ := io.ReadAll(res.Body)
 	result, err := models.UnmarshalResponse(body)
 	if err != nil {
 		return nil, err
@@ -257,14 +285,17 @@ func (q *QueryImpl) parseResponse(res *esapi.Response) (*models.Response, error)
 	return &result, nil
 }
 
-func (q *QueryImpl) parseAggregate(res *esapi.Response) (*models.Aggregations, error) {
+func (q *QueryImpl) parseAggregate(operation string, res *esapi.Response) (*models.Aggregations, error) {
 	defer res.Body.Close()
 
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
 	if res.IsError() {
-		return nil, fmt.Errorf("%s: %s", errorMessage, res.Status())
+		return nil, newElasticErrorFromBody(operation, res, body)
 	}
 
-	body, _ := io.ReadAll(res.Body)
 	result, err := models.UnmarshalAggregations(body)
 	if err != nil {
 		return nil, err

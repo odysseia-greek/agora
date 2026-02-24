@@ -22,3 +22,8 @@ go.work
 
 .idea
 .code
+
+# docs
+*/docs/docs.html
+*/docs/docs.md
+*/docs/public

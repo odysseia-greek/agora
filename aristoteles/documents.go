@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
+
 	"github.com/elastic/go-elasticsearch/v9"
 	"github.com/elastic/go-elasticsearch/v9/esapi"
 	"github.com/odysseia-greek/agora/aristoteles/models"
-	"io"
-	"log"
 )
 
 type DocumentImpl struct {
@@ -20,26 +20,28 @@ func NewDocumentImpl(suppliedClient *elasticsearch.Client) (*DocumentImpl, error
 }
 
 func (d *DocumentImpl) Create(index string, body []byte) (*models.CreateResult, error) {
-	var elasticResult models.CreateResult
+	return d.CreateWithContext(context.Background(), index, body)
+}
 
-	ctx := context.Background()
+func (d *DocumentImpl) CreateWithContext(ctx context.Context, index string, body []byte) (*models.CreateResult, error) {
 	res, err := esapi.CreateRequest{
 		Index: index,
 		Body:  bytes.NewReader(body),
 	}.Do(ctx, d.es)
-
 	if err != nil {
 		return nil, err
 	}
-
 	defer res.Body.Close()
 
+	jsonBody, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
 	if res.IsError() {
-		return nil, fmt.Errorf("%s: %s", errorMessage, res.Status())
+		return nil, newElasticErrorFromBody("create document", res, jsonBody)
 	}
 
-	jsonBody, _ := io.ReadAll(res.Body)
-	elasticResult, err = models.UnmarshalCreateResult(jsonBody)
+	elasticResult, err := models.UnmarshalCreateResult(jsonBody)
 	if err != nil {
 		return nil, err
 	}
@@ -48,27 +50,29 @@ func (d *DocumentImpl) Create(index string, body []byte) (*models.CreateResult, 
 }
 
 func (d *DocumentImpl) CreateWithId(index, documentId string, body []byte) (*models.CreateResult, error) {
-	var elasticResult models.CreateResult
+	return d.CreateWithIdWithContext(context.Background(), index, documentId, body)
+}
 
-	ctx := context.Background()
+func (d *DocumentImpl) CreateWithIdWithContext(ctx context.Context, index, documentId string, body []byte) (*models.CreateResult, error) {
 	res, err := esapi.CreateRequest{
 		Index:      index,
 		DocumentID: documentId,
 		Body:       bytes.NewReader(body),
 	}.Do(ctx, d.es)
-
 	if err != nil {
 		return nil, err
 	}
-
 	defer res.Body.Close()
 
+	jsonBody, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
 	if res.IsError() {
-		return nil, fmt.Errorf("%s: %s", errorMessage, res.Status())
+		return nil, newElasticErrorFromBody("create document with id", res, jsonBody)
 	}
 
-	jsonBody, _ := io.ReadAll(res.Body)
-	elasticResult, err = models.UnmarshalCreateResult(jsonBody)
+	elasticResult, err := models.UnmarshalCreateResult(jsonBody)
 	if err != nil {
 		return nil, err
 	}
@@ -77,9 +81,10 @@ func (d *DocumentImpl) CreateWithId(index, documentId string, body []byte) (*mod
 }
 
 func (d *DocumentImpl) CreateWithIdAndFirstItem(index, documentId, body, paramName string) (*models.CreateResult, error) {
-	var elasticResult models.CreateResult
+	return d.CreateWithIdAndFirstItemWithContext(context.Background(), index, documentId, body, paramName)
+}
 
-	ctx := context.Background()
+func (d *DocumentImpl) CreateWithIdAndFirstItemWithContext(ctx context.Context, index, documentId, body, paramName string) (*models.CreateResult, error) {
 	res, err := esapi.CreateRequest{
 		Index:      index,
 		DocumentID: documentId,
@@ -92,19 +97,20 @@ func (d *DocumentImpl) CreateWithIdAndFirstItem(index, documentId, body, paramNa
 			}
 		}`, paramName, body))),
 	}.Do(ctx, d.es)
-
 	if err != nil {
 		return nil, err
 	}
-
 	defer res.Body.Close()
 
+	jsonBody, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
 	if res.IsError() {
-		return nil, fmt.Errorf("%s: %s", errorMessage, res.Status())
+		return nil, newElasticErrorFromBody("create document with first item", res, jsonBody)
 	}
 
-	jsonBody, _ := io.ReadAll(res.Body)
-	elasticResult, err = models.UnmarshalCreateResult(jsonBody)
+	elasticResult, err := models.UnmarshalCreateResult(jsonBody)
 	if err != nil {
 		return nil, err
 	}
@@ -113,29 +119,29 @@ func (d *DocumentImpl) CreateWithIdAndFirstItem(index, documentId, body, paramNa
 }
 
 func (d *DocumentImpl) Update(index, id string, body []byte) (*models.CreateResult, error) {
-	var elasticResult models.CreateResult
+	return d.UpdateWithContext(context.Background(), index, id, body)
+}
 
-	ctx := context.Background()
+func (d *DocumentImpl) UpdateWithContext(ctx context.Context, index, id string, body []byte) (*models.CreateResult, error) {
 	res, err := esapi.UpdateRequest{
 		Index:      index,
 		DocumentID: id,
 		Body:       bytes.NewReader([]byte(fmt.Sprintf(`{"doc":%s}`, body))),
 	}.Do(ctx, d.es)
-
 	if err != nil {
 		return nil, err
 	}
-
 	defer res.Body.Close()
 
+	jsonBody, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
 	if res.IsError() {
-		jsonBody, _ := io.ReadAll(res.Body)
-		log.Print(jsonBody)
-		return nil, fmt.Errorf("%s: %s", errorMessage, res.Status())
+		return nil, newElasticErrorFromBody("update document", res, jsonBody)
 	}
 
-	jsonBody, _ := io.ReadAll(res.Body)
-	elasticResult, err = models.UnmarshalCreateResult(jsonBody)
+	elasticResult, err := models.UnmarshalCreateResult(jsonBody)
 	if err != nil {
 		return nil, err
 	}
@@ -144,11 +150,10 @@ func (d *DocumentImpl) Update(index, id string, body []byte) (*models.CreateResu
 }
 
 func (d *DocumentImpl) AddItemToDocument(index, id, body, paramName string) (*models.CreateResult, error) {
-	var elasticResult models.CreateResult
+	return d.AddItemToDocumentWithContext(context.Background(), index, id, body, paramName)
+}
 
-	ctx := context.Background()
-
-	// Build the update request
+func (d *DocumentImpl) AddItemToDocumentWithContext(ctx context.Context, index, id, body, paramName string) (*models.CreateResult, error) {
 	res, err := esapi.UpdateRequest{
 		Index:      index,
 		DocumentID: id,
@@ -162,19 +167,20 @@ func (d *DocumentImpl) AddItemToDocument(index, id, body, paramName string) (*mo
 			}
 		}`, paramName, body))),
 	}.Do(ctx, d.es)
-
 	if err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
 
+	jsonBody, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
 	if res.IsError() {
-		jsonBody, _ := io.ReadAll(res.Body)
-		return nil, fmt.Errorf("%s: %s", errorMessage, string(jsonBody))
+		return nil, newElasticErrorFromBody("add item to document", res, jsonBody)
 	}
 
-	jsonBody, _ := io.ReadAll(res.Body)
-	elasticResult, err = models.UnmarshalCreateResult(jsonBody)
+	elasticResult, err := models.UnmarshalCreateResult(jsonBody)
 	if err != nil {
 		return nil, err
 	}

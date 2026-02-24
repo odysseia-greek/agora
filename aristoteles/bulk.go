@@ -2,10 +2,9 @@ package aristoteles
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
-	"fmt"
 	"io"
-	"log"
 )
 
 type BulkResponse struct {
@@ -28,23 +27,31 @@ type BulkResponse struct {
 }
 
 func (d *DocumentImpl) Bulk(buf bytes.Buffer, index string) (*BulkResponse, error) {
-	var elasticResult BulkResponse
-	res, err := d.es.Bulk(bytes.NewReader(buf.Bytes()), d.es.Bulk.WithIndex(index))
+	return d.BulkWithContext(context.Background(), buf, index)
+}
+
+func (d *DocumentImpl) BulkWithContext(ctx context.Context, buf bytes.Buffer, index string) (*BulkResponse, error) {
+	res, err := d.es.Bulk(
+		bytes.NewReader(buf.Bytes()),
+		d.es.Bulk.WithContext(ctx),
+		d.es.Bulk.WithIndex(index),
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	jsonBody, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
 	}
 
-	defer res.Body.Close()
-
 	if res.IsError() {
-		jsonBody, _ := io.ReadAll(res.Body)
-		log.Print(jsonBody)
-		return nil, fmt.Errorf("%s: %s", errorMessage, res.Status())
+		return nil, newElasticErrorFromBody("bulk create documents", res, jsonBody)
 	}
 
-	jsonBody, _ := io.ReadAll(res.Body)
-	err = json.Unmarshal(jsonBody, &elasticResult)
-	if err != nil {
+	var elasticResult BulkResponse
+	if err := json.Unmarshal(jsonBody, &elasticResult); err != nil {
 		return nil, err
 	}
 

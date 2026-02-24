@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/elastic/go-elasticsearch/v9"
 	"github.com/odysseia-greek/agora/aristoteles/models"
-	"log"
 	"time"
 )
 
@@ -25,12 +24,10 @@ func (h *HealthImpl) Check(ticks, tick time.Duration) bool {
 
 	for {
 		select {
-		case t := <-ticker.C:
-			log.Printf("tick: %s", t)
+		case <-ticker.C:
 			res := h.Info()
 			healthy = res.Healthy
 			if !healthy {
-				log.Print("Elastic not yet healthy")
 				continue
 			}
 
