@@ -2,6 +2,7 @@
 
 # Default module to release
 MODULE ?= archytas
+PROTO_DIRS := eupalinos
 
 # Get the latest version tag for the specified module
 .PHONY: get-latest-version
@@ -71,6 +72,21 @@ release-major:
 	fi; \
 	git tag $$new_tag && git push origin $$new_tag; \
 	echo "Released: $$new_tag"
+
+.PHONY: generate
+generate:
+	@for dir in $(PROTO_DIRS); do \
+		echo "Generating Protobuf files in $$dir..."; \
+		(cd $$dir && \
+		 protoc --go_out=. --go_opt=paths=source_relative \
+		        --go-grpc_out=. --go-grpc_opt=paths=source_relative \
+		        proto/$$dir.proto); \
+	done
+
+	@for dir in $(PROTO_DIRS_NEW); do \
+		echo "Generating Protobuf files in $$dir..."; \
+		buf generate --template $$dir/buf.gen.yaml $$dir; \
+	done
 
 # Help command
 .PHONY: help

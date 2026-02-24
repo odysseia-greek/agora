@@ -2,11 +2,13 @@ package diogenes
 
 import (
 	"fmt"
-	"github.com/hashicorp/vault/api"
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
+
+	"github.com/hashicorp/vault/api"
 )
 
 const (
@@ -59,10 +61,10 @@ func CreateVaultClient(healthCheck bool) (Client, error) {
 	var tlsConfig *api.TLSConfig
 
 	if tlsEnabled {
-		ca := fmt.Sprintf("%s/vault.ca", secretPath)
-		cert := fmt.Sprintf("%s/vault.crt", secretPath)
-		key := fmt.Sprintf("%s/vault.key", secretPath)
-
+		ca, cert, key, err := resolveTLSFiles(secretPath)
+		if err != nil {
+			return nil, err
+		}
 		tlsConfig = CreateTLSConfig(ca, cert, key, secretPath)
 	}
 
@@ -101,4 +103,57 @@ func CreateVaultClient(healthCheck bool) (Client, error) {
 	}
 
 	return vaultClient, nil
+}
+
+// resolveTLSFiles returns file paths for CA, cert, and key in secretPath.
+// It supports both legacy (vault.*) and cert-manager (ca.crt/tls.*) naming.
+func resolveTLSFiles(secretPath string) (caPath, certPath, keyPath string, err error) {
+	// Priority order: prefer cert-manager if present, else legacy
+	caCandidates := []string{
+		"ca.crt",   // cert-manager
+		"vault.ca", // legacy
+	}
+	certCandidates := []string{
+		"tls.crt",   // cert-manager
+		"vault.crt", // legacy
+	}
+	keyCandidates := []string{
+		"tls.key",   // cert-manager
+		"vault.key", // legacy
+	}
+
+	caPath = firstExisting(secretPath, caCandidates)
+	certPath = firstExisting(secretPath, certCandidates)
+	keyPath = firstExisting(secretPath, keyCandidates)
+
+	var missing []string
+	if caPath == "" {
+		missing = append(missing, "CA (ca.crt or vault.ca)")
+	}
+	if certPath == "" {
+		missing = append(missing, "cert (tls.crt or vault.crt)")
+	}
+	if keyPath == "" {
+		missing = append(missing, "key (tls.key or vault.key)")
+	}
+
+	if len(missing) > 0 {
+		return "", "", "", fmt.Errorf(
+			"TLS enabled but missing %s in %s",
+			strings.Join(missing, ", "),
+			secretPath,
+		)
+	}
+
+	return caPath, certPath, keyPath, nil
+}
+
+func firstExisting(dir string, candidates []string) string {
+	for _, name := range candidates {
+		p := filepath.Join(dir, name)
+		if fi, err := os.Stat(p); err == nil && !fi.IsDir() {
+			return p
+		}
+	}
+	return ""
 }

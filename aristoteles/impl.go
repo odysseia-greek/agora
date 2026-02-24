@@ -2,14 +2,16 @@ package aristoteles
 
 import (
 	"bytes"
+	"context"
 	"crypto/x509"
 	"errors"
-	"github.com/elastic/go-elasticsearch/v8"
-	"github.com/odysseia-greek/agora/aristoteles/models"
 	"log"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/elastic/go-elasticsearch/v9"
+	"github.com/odysseia-greek/agora/aristoteles/models"
 )
 
 type Client interface {
@@ -28,6 +30,8 @@ type Query interface {
 	MatchWithScroll(index string, request map[string]interface{}) (*models.Response, error)
 	MatchAggregate(index string, request map[string]interface{}) (*models.Aggregations, error)
 	MatchRaw(index string, request map[string]interface{}) ([]byte, error)
+	CountRaw(ctx context.Context, index string, request map[string]interface{}) (*models.CountResponse, error)
+	GetById(ctx context.Context, index, id string) (*models.DirectResponse, error)
 }
 
 type Document interface {

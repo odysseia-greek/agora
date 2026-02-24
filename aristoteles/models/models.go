@@ -12,6 +12,16 @@ func (r *Response) Marshal() ([]byte, error) {
 	return json.Marshal(r)
 }
 
+type DirectResponse struct {
+	Index       string                 `json:"_index"`
+	Id          string                 `json:"_id"`
+	Version     int                    `json:"_version"`
+	SeqNo       int                    `json:"_seq_no"`
+	PrimaryTerm int                    `json:"_primary_term"`
+	Found       bool                   `json:"found"`
+	Source      map[string]interface{} `json:"_source"`
+}
+
 type Response struct {
 	ScrollId string `json:"_scroll_id,omitempty"`
 	Took     int64  `json:"took"`
@@ -56,6 +66,15 @@ func (r *Aggregations) Marshal() ([]byte, error) {
 	return json.Marshal(r)
 }
 
+type CountResponse struct {
+	Count  int64 `json:"count"`
+	Shards struct {
+		Total      int `json:"total"`
+		Successful int `json:"successful"`
+		Skipped    int `json:"skipped"`
+		Failed     int `json:"failed"`
+	} `json:"_shards"`
+}
 type Aggregations struct {
 	Took         int64              `json:"took"`
 	TimedOut     bool               `json:"timed_out"`

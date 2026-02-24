@@ -1,10 +1,12 @@
 package aristoteles
 
 import (
+	"context"
 	"fmt"
+	"testing"
+
 	"github.com/odysseia-greek/agora/aristoteles/models"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestQueryClientMatch(t *testing.T) {
@@ -103,6 +105,40 @@ func TestQueryClientMatch(t *testing.T) {
 		sut, err := testClient.Query().Match(index, body)
 		assert.NotNil(t, err)
 		assert.Nil(t, sut)
+	})
+}
+
+func TestQueryClientCount(t *testing.T) {
+	index := "test"
+
+	t.Run("CountPass", func(t *testing.T) {
+		file := "count"
+		status := 200
+		expected := int64(1132)
+		testClient, err := NewMockClient(file, status)
+		assert.Nil(t, err)
+
+		ctx := context.Background()
+		sut, err := testClient.Query().CountRaw(ctx, index, nil)
+		assert.Nil(t, err)
+		assert.Equal(t, expected, sut.Count)
+	})
+}
+
+func TestQueryById(t *testing.T) {
+	index := "test"
+	id := "814Vt5sBEpCWf9Kb8agJ"
+
+	t.Run("QueryById", func(t *testing.T) {
+		file := "byId"
+		status := 200
+		testClient, err := NewMockClient(file, status)
+		assert.Nil(t, err)
+
+		ctx := context.Background()
+		sut, err := testClient.Query().GetById(ctx, index, id)
+		assert.Nil(t, err)
+		assert.True(t, sut.Found)
 	})
 }
 

@@ -2,12 +2,13 @@ package middleware
 
 import (
 	"encoding/json"
-	"github.com/odysseia-greek/agora/plato/logging"
-	"github.com/odysseia-greek/agora/plato/models"
-	"github.com/odysseia-greek/agora/plato/service"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/odysseia-greek/agora/plato/logging"
+	"github.com/odysseia-greek/agora/plato/models"
+	"github.com/odysseia-greek/agora/plato/service"
 )
 
 type Adapter func(http.HandlerFunc) http.HandlerFunc
@@ -87,18 +88,18 @@ func ValidateRestMethod(method string) Adapter {
 	}
 }
 func SetCorsHeaders() Adapter {
-
-	return func(f http.HandlerFunc) http.HandlerFunc {
-
+	// "open" CORS helper: useful for quick dev / tools, but do NOT use with credentials.
+	return func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
-			//allow all CORS
 			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-			w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-			if (*r).Method == "OPTIONS" {
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, Boule")
+			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE")
+
+			if r.Method == http.MethodOptions {
+				w.WriteHeader(http.StatusNoContent)
 				return
 			}
-			f(w, r)
+			next(w, r)
 		}
 	}
 }

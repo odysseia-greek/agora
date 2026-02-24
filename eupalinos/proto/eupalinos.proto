@@ -11,7 +11,12 @@ enum Operation {
 // Internal Epistello message with traceid
 message InternalEpistello {
   string id = 1;
-  string data = 2;
+
+  oneof payload {
+    string data = 2;      // legacy UTF-8 / JSON
+    bytes  bytes_data = 3; // protobuf / binary
+  }
+
   string channel = 4;
   string traceid = 5;
 }
@@ -20,6 +25,12 @@ message InternalEpistello {
 message Epistello {
   string id = 1;
   string data = 2;
+  string channel = 4;
+}
+
+message EpistelloBytes {
+  string id = 1;
+  bytes data = 2;
   string channel = 4;
 }
 
@@ -48,16 +59,31 @@ message EnqueueResponse {
   string id = 1;
 }
 
+message HealthRequest {}
+
+// Response message for health check
+message HealthResponse {
+  bool healthy = 1;
+  string time = 2;
+  string version = 3;
+}
 
 service Eupalinos {
+  rpc Health (HealthRequest) returns (HealthResponse) {};
+
   // Bidirectional Streaming for task updates between Eupalinos pods
   rpc StreamQueueUpdates(stream MessageUpdate) returns (stream InternalEpistello);
 
   // Unary RPC for epistello enqueueing
   rpc EnqueueMessage(Epistello) returns (EnqueueResponse);
 
+  rpc EnqueueMessageBytes(EpistelloBytes) returns (EnqueueResponse);
+
   // Unary RPC for epistello dequeueing
   rpc DequeueMessage(ChannelInfo) returns (Epistello);
+
+
+  rpc DequeueMessageBytes(ChannelInfo) returns (EpistelloBytes);
 
   // Unary RPC for getting the length of the queue
   rpc GetQueueLength(ChannelInfo) returns (QueueLength);

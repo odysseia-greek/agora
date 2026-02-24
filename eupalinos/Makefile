@@ -1,3 +1,5 @@
+
+
 generate_docs:
 	docker run --rm \
 		-v $(CURDIR)/docs:/out \

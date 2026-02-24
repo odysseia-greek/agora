@@ -85,6 +85,10 @@ const (
 	AliasElasticRole           = "alias"
 	TracingElasticIndex        = "tracing"
 	MetricsElasticIndex        = "metrics"
+	MetricsRollupElasticIndex  = "metrics_rollup"
+	KubernetesApiEndpoint      = "https://kubernetes.default.svc"
+	KubernetesApiEndPointEnv   = "KUBERNETES_API_ENDPOINT"
+	HotPolicyEnv               = "HOT_POLICY_NAME"
 )
 
 var serviceMapping = map[string]string{

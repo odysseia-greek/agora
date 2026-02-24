@@ -3,7 +3,7 @@ package aristoteles
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/elastic/go-elasticsearch/v8"
+	"github.com/elastic/go-elasticsearch/v9"
 	"github.com/odysseia-greek/agora/aristoteles/models"
 	"log"
 	"time"

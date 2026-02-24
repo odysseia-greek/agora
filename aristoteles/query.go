@@ -2,12 +2,14 @@ package aristoteles
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"github.com/elastic/go-elasticsearch/v8"
-	"github.com/elastic/go-elasticsearch/v8/esapi"
-	"github.com/odysseia-greek/agora/aristoteles/models"
 	"io"
 	"time"
+
+	"github.com/elastic/go-elasticsearch/v9"
+	"github.com/elastic/go-elasticsearch/v9/esapi"
+	"github.com/odysseia-greek/agora/aristoteles/models"
 )
 
 type QueryImpl struct {
@@ -16,6 +18,27 @@ type QueryImpl struct {
 
 func NewQueryImpl(suppliedClient *elasticsearch.Client) (*QueryImpl, error) {
 	return &QueryImpl{es: suppliedClient}, nil
+}
+
+func (q *QueryImpl) GetById(ctx context.Context, index, id string) (*models.DirectResponse, error) {
+	req := esapi.GetRequest{
+		Index:      index,
+		DocumentID: id,
+	}
+	res, err := req.Do(ctx, q.es)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	var direct models.DirectResponse
+	body, _ := io.ReadAll(res.Body)
+	err = json.Unmarshal(body, &direct)
+	if err != nil {
+		return nil, err
+	}
+
+	return &direct, nil
 }
 
 func (q *QueryImpl) MatchRaw(index string, request map[string]interface{}) ([]byte, error) {
@@ -43,6 +66,49 @@ func (q *QueryImpl) MatchRaw(index string, request map[string]interface{}) ([]by
 	}
 
 	return io.ReadAll(res.Body)
+}
+
+func (q *QueryImpl) CountRaw(ctx context.Context, index string, request map[string]interface{}) (*models.CountResponse, error) {
+	var (
+		body io.Reader
+	)
+
+	if len(request) > 0 {
+		buf, err := toBuffer(request) // your helper
+		if err != nil {
+			return nil, err
+		}
+		body = &buf
+	}
+
+	// Build options
+	opts := []func(*esapi.CountRequest){
+		q.es.Count.WithContext(ctx),
+		q.es.Count.WithIndex(index),
+	}
+
+	// Only include body if present
+	if body != nil {
+		opts = append(opts, q.es.Count.WithBody(body))
+	}
+
+	res, err := q.es.Count(opts...)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	if res.IsError() {
+		b, _ := io.ReadAll(res.Body)
+		return nil, fmt.Errorf("%s: %s: %s", errorMessage, res.Status(), string(b))
+	}
+
+	var parsed models.CountResponse
+	if err := json.NewDecoder(res.Body).Decode(&parsed); err != nil {
+		return nil, err
+	}
+
+	return &parsed, nil
 }
 
 func (q *QueryImpl) Match(index string, request map[string]interface{}) (*models.Response, error) {
