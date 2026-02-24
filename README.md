@@ -1,63 +1,82 @@
-# Agora
+# Agora | Ἀγορά
 
-Welcome to the Agora repository, an integral part of the Odysseia-Greek project. Drawing inspiration from the ancient Greek Agora, a central public space known for its vibrant gatherings and communal activities, this repository serves as the cornerstone of our microservices architecture. Just as the historical Agoras were the heartbeat of Greek city-states, centralizing commerce, conversation, and civic life, this repository centralizes and harmonizes our diverse array of APIs and shared services.
+Welcome to **Agora**, the central public space and shared library repository for the [odysseia-greek](https://github.com/odysseia-greek) project.
+
+In ancient Greece, the Agora was the heartbeat of the city-state. A place for gathering, commerce, and civic life. Similarly, this repository serves as the foundational cornerstone for our microservices architecture. It houses the shared packages, interfaces, and models used by nearly every other repository within the organization.
 
 ## Repository Overview
-Agora is designed to be the foundational layer that connects various microservices and components within the Odysseia-Greek project. It houses essential interfaces and common layers, including but not limited to Kubernetes, Elastic, Queue, and Common interfaces. Each of these components is a vital cog in the larger mechanism of our project, enabling seamless integration and efficient functionality across different services.
 
-## Features
-Modular Design: Each interface within Agora is encapsulated as a separate package, complete with its own go.mod, allowing for independent versioning and release cycles.
-Centralized Interfaces: Agora unifies essential interfaces and layers, facilitating easy access and standardization across our microservices.
-Scalable and Maintainable: With a focus on scalability and maintainability, Agora is structured to support the evolving needs of the Odysseia-Greek project.
-Contributing
-We welcome contributions to the Agora repository. For detailed guidelines on how to contribute, please refer to our Contribution Guidelines.
+Agora is a **poly-monorepo**. While all code resides in this single repository, each package is designed to be independent, with its own `go.mod` file, allowing for granular versioning and minimal dependency bloat in downstream services.
 
+The packages here range from stable core utilities to experimental services, all evolving to support the needs of the Odysseia-Greek project.
 
-## Interfaces
+## Packages
 
-### Archytas - Ἀρχύτας
+### [Archytas - Ἀρχύτας](./archytas)
+*Shared Cache Interface*
+Provides a unified interface for caching mechanisms, currently implementing **BadgerDB** for local key-value storage.
 
-Ἀνάγκη γάρ ποτε τῷ ἀκριβεῖ λόγῳ τὰ πολλὰ τῶν ἀνθρώπων ὑποτεταχέναι - For many things among men are necessarily subjected to accurate reason.
+### [Aristoteles - Ἀριστοτέλης](./aristoteles)
+*Elasticsearch Interface*
+The primary bridge to Elasticsearch. It contains models and clients for searching, indexing, and managing documents across the Odysseia platform.
 
+### [Diogenes - Διογένης](./diogenes)
+*Vault & Security Interface*
+Handles interactions with **HashiCorp Vault** for secret management, including Kubernetes authentication and secure retrieval of sensitive data.
 
-Cache interface
+### [Eupalinos - Εὐπαλῖνος](./eupalinos) (Experimental)
+*gRPC Queue Service*
+An ongoing experiment in building a high-performance gRPC-based queuing system for message passing between internal services.
 
+### [Plato - Πλάτων](./plato)
+*Common Shared Layer*
+The most widely used package in the organization. It contains common models (Solon, etc.), logging utilities, middleware, and helper functions used by almost all Go-based apps in the project.
 
-### Aristoteles - Ἀριστοτέλης
+### [Thales - Θαλῆς](./thales)
+*Kubernetes Abstraction & CRDs*
+Contains Kubernetes client wrappers and Custom Resource Definitions (CRDs) specific to the Odysseia infrastructure, such as service mappings.
 
-Τριών δει παιδεία: φύσεως, μαθήσεως, ασκήσεως. - Education needs these three: natural endowment, study, practice.
+### [Theofrastos - Θεόφραστος](./theofrastos)
+*Elasticsearch Seeder & Configuration*
+Focused on the initialization and configuration of Elasticsearch, including index patterns, ILM policies, and role mappings.
 
-Elasticsearch interface
+---
 
-### Diogenes - Διογένης
+## Makefile & Release Management
 
-ἄνθρωπον ζητῶ - I am looking for an honest man
+Since Agora is a poly-monorepo, we do not release the entire repository under a single version. Instead, each package is released and versioned independently. 
 
-Vault interfaces
+The `Makefile` at the root is the primary tool for managing these releases. It uses **Git Tags** following the format `package/vX.Y.Z` (e.g., `plato/v0.2.12`).
 
-### Eupalinos - Εὐπαλῖνος
+### Common Commands
 
-ἀρχιτέκτων δὲ τοῦ ὀρύγματος τούτου ἐγένετο Μεγαρεὺς Εὐπαλῖνος Ναυστρόφου - The designer of this work was Eupalinus son of Naustrophus, a Megarian
+To run a command for a specific module, pass the `MODULE` variable (defaults to `archytas` if omitted).
 
+*   **Get the latest version:**
+    ```bash
+    make get-latest-version MODULE=plato
+    ```
 
-Queue interfaces for odysseia-greek
+*   **Release a Patch (v0.1.2 -> v0.1.3):**
+    ```bash
+    make release-patch MODULE=plato
+    ```
 
-### Plato - Πλάτων
+*   **Release a Minor version (v0.1.2 -> v0.2.0):**
+    ```bash
+    make release-minor MODULE=plato
+    ```
 
-χαλεπὰ τὰ καλά - good things are difficult to attain
+*   **Release a Major version (v0.1.2 -> v1.0.0):**
+    ```bash
+    make release-major MODULE=plato
+    ```
 
+### Why this approach?
+This structure allows downstream projects to depend only on the specific parts of Agora they need (e.g., `github.com/odysseia-greek/agora/plato`) without pulling in unrelated dependencies like Vault or Elasticsearch clients. It also ensures that a breaking change in an experimental package (like Eupalinos) doesn't force a version bump across the entire organization.
 
-Common layer for all odysseia-greek apps
+---
 
-### Thales - Θαλῆς
+## Contributing
 
-Μέγιστον τόπος· ἄπαντα γὰρ χωρεῖ. - he greatest is space, for it holds all things
-
-
-Kubernetes interface and abstraction. Probably in need of a rework.
-
-### Theofrastos - Θεόφραστος
-
-Εἰ μὲν ἀμαθὴς εἶ, φρονίμως ποιεῖς, εἰ δὲ πεπαίδευσαι, ἀφρόνως. - If you are an ignorant man, you are acting wisely; but if you have had any education, you are behaving like a fool.
-
-Seeder for elasticsearch
+We welcome contributions! Whether it's a bug fix, a new feature, or an improvement to an experimental package, please feel free to open a Pull Request.
