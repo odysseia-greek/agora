@@ -82,7 +82,7 @@ generate:
 		(cd $$dir && \
 		 protoc --go_out=. --go_opt=paths=source_relative \
 		        --go-grpc_out=. --go-grpc_opt=paths=source_relative \
-		        proto/$$dir.proto); \
+		        v1/$$dir.proto); \
 	done
 
 	@for dir in $(PROTO_DIRS_NEW); do \

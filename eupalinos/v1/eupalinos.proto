@@ -1,37 +1,45 @@
 syntax = "proto3";
-option go_package = "github.com/odysseia-greek/agora/eupalinos/proto";
 
-package proto;
+package eupalinos.v1;
+
+option go_package = "github.com/odysseia-greek/agora/eupalinos/v1;v1";
 
 enum Operation {
   ENQUEUE = 0;
   DEQUEUE = 1;
+  ACKNOWLEDGE = 2;
+  NACK = 3;
 }
 
-// Internal Epistello message with traceid
 message InternalEpistello {
   string id = 1;
 
   oneof payload {
-    string data = 2;      // legacy UTF-8 / JSON
-    bytes  bytes_data = 3; // protobuf / binary
+    string data = 2;
+    bytes bytes_data = 3;
   }
 
   string channel = 4;
   string traceid = 5;
+  uint32 nack_count = 6;
 }
 
-// Public Epistello message without traceid
+message DeliveryMetadata {
+  uint32 nack_count = 1;
+}
+
 message Epistello {
   string id = 1;
   string data = 2;
   string channel = 4;
+  DeliveryMetadata delivery = 5;
 }
 
 message EpistelloBytes {
   string id = 1;
   bytes data = 2;
   string channel = 4;
+  DeliveryMetadata delivery = 5;
 }
 
 message MessageUpdate {
@@ -43,16 +51,37 @@ message Diexodos {
   string name = 1;
 }
 
-// Message for specifying the channel name
 message ChannelInfo {
   string name = 1;
+
+  // When enabled, dequeue reserves a message until AcknowledgeMessage is called.
+  bool ack_mode = 2;
+}
+
+message AcknowledgeRequest {
+  string channel = 1;
+  string id = 2;
+}
+
+message AcknowledgeResponse {
+  bool acknowledged = 1;
+}
+
+message NackRequest {
+  string channel = 1;
+  string id = 2;
+}
+
+message NackResponse {
+  bool requeued = 1;
+  uint32 nack_count = 2;
 }
 
 message Empty {}
 
-// Response message for getting the length of the queue
 message QueueLength {
   int32 length = 1;
+  int32 pending_acknowledgements = 2;
 }
 
 message EnqueueResponse {
@@ -61,7 +90,6 @@ message EnqueueResponse {
 
 message HealthRequest {}
 
-// Response message for health check
 message HealthResponse {
   bool healthy = 1;
   string time = 2;
@@ -69,22 +97,13 @@ message HealthResponse {
 }
 
 service Eupalinos {
-  rpc Health (HealthRequest) returns (HealthResponse) {};
-
-  // Bidirectional Streaming for task updates between Eupalinos pods
+  rpc Health(HealthRequest) returns (HealthResponse);
   rpc StreamQueueUpdates(stream MessageUpdate) returns (stream InternalEpistello);
-
-  // Unary RPC for epistello enqueueing
   rpc EnqueueMessage(Epistello) returns (EnqueueResponse);
-
   rpc EnqueueMessageBytes(EpistelloBytes) returns (EnqueueResponse);
-
-  // Unary RPC for epistello dequeueing
   rpc DequeueMessage(ChannelInfo) returns (Epistello);
-
-
   rpc DequeueMessageBytes(ChannelInfo) returns (EpistelloBytes);
-
-  // Unary RPC for getting the length of the queue
+  rpc AcknowledgeMessage(AcknowledgeRequest) returns (AcknowledgeResponse);
+  rpc NackMessage(NackRequest) returns (NackResponse);
   rpc GetQueueLength(ChannelInfo) returns (QueueLength);
 }
