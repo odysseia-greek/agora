@@ -89,3 +89,44 @@ func TestBadgerClient(t *testing.T) {
 		newTestClient.Close()
 	})
 }
+
+func TestBadgerConvenienceMethods(t *testing.T) {
+	client, err := NewInMemoryBadgerClientWithOptions(WithLogging(false))
+	assert.NoError(t, err)
+	t.Cleanup(func() { assert.NoError(t, client.Close()) })
+
+	assert.NoError(t, client.SetBytes("users:1", []byte{0, 1, 2}))
+	assert.NoError(t, client.Set("users:2", "Homer"))
+
+	exists, err := client.Exists("users:1")
+	assert.NoError(t, err)
+	assert.True(t, exists)
+
+	value, err := client.GetString("users:2")
+	assert.NoError(t, err)
+	assert.Equal(t, "Homer", value)
+
+	stats, err := client.Stats()
+	assert.NoError(t, err)
+	assert.Equal(t, uint64(2), stats.KeyCount)
+	assert.Equal(t, stats.LSMSizeBytes+stats.ValueLogSizeBytes, stats.TotalSizeBytes)
+
+	assert.NoError(t, client.Delete("users:1"))
+	exists, err = client.Exists("users:1")
+	assert.NoError(t, err)
+	assert.False(t, exists)
+
+	assert.NoError(t, client.DeletePrefix("users:"))
+	stats, err = client.Stats()
+	assert.NoError(t, err)
+	assert.Zero(t, stats.KeyCount)
+}
+
+func TestWithLoggingDisabled(t *testing.T) {
+	client, err := NewInMemoryBadgerClientWithOptions(WithLogging(false))
+	assert.NoError(t, err)
+	t.Cleanup(func() { assert.NoError(t, client.Close()) })
+
+	implementation := client.(*Badger)
+	assert.Nil(t, implementation.db.Opts().Logger)
+}
