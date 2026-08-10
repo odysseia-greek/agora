@@ -17,68 +17,40 @@ import (
 )
 
 func CreateOdysseiaClient() (service.OdysseiaClient, error) {
-	serviceNames := []string{EnvSolonService, EnvHerodotosService, EnvAlexandrosService, EnvDionysiosService}
-	serviceURLs := make(map[string]*url.URL)
-
-	for _, serviceName := range serviceNames {
-		serviceURL := os.Getenv(serviceName)
-		if serviceURL == "" {
-			continue
-		}
-		parsedURL, err := url.Parse(serviceURL)
-		if err != nil {
-			return nil, err
-		}
-		serviceURLs[serviceName] = parsedURL
+	serviceURL := os.Getenv(EnvSolonService)
+	parsedURL, err := url.Parse(serviceURL)
+	if err != nil {
+		return nil, err
 	}
 
 	config := service.ClientConfig{}
+	apiConfig := service.OdysseiaApi{
+		Url:    parsedURL.Host,
+		Scheme: parsedURL.Scheme,
+	}
 
-	rootPath := os.Getenv("CERT_ROOT")
-	for serviceName, parsedURL := range serviceURLs {
-		apiConfig := service.OdysseiaApi{
-			Url:    parsedURL.Host,
-			Scheme: parsedURL.Scheme,
-			Cert:   nil,
-		}
-
-		if parsedURL.Scheme == "https" {
-			certPath, keyPath, caPath, err := getCertPaths(rootPath, serviceName)
-			if err != nil {
-				logging.Error(err.Error())
-				continue
-			}
-
+	if parsedURL.Scheme == "https" {
+		rootPath := os.Getenv("CERT_ROOT")
+		certPath, keyPath, caPath, err := getCertPaths(rootPath, EnvSolonService)
+		if err != nil {
+			logging.Errorf("failed to find Solon TLS files: %v", err)
+		} else {
 			if _, err := os.Stat(certPath); !errors.Is(err, os.ErrNotExist) {
 				if _, err := os.Stat(keyPath); !errors.Is(err, os.ErrNotExist) {
-					loadedCerts, err := tls.LoadX509KeyPair(certPath, keyPath)
-					if err != nil {
-						return nil, err
+					loadedCerts, loadErr := tls.LoadX509KeyPair(certPath, keyPath)
+					if loadErr != nil {
+						return nil, loadErr
 					}
-
 					apiConfig.Cert = []tls.Certificate{loadedCerts}
 				}
 			}
 
-			if config.Ca == nil {
-				if _, err := os.Stat(caPath); !errors.Is(err, os.ErrNotExist) {
-					config.Ca, _ = os.ReadFile(caPath)
-				}
+			if _, err := os.Stat(caPath); !errors.Is(err, os.ErrNotExist) {
+				config.Ca, _ = os.ReadFile(caPath)
 			}
 		}
-
-		// Set the API configuration for each service
-		switch serviceName {
-		case EnvSolonService:
-			config.Solon = apiConfig
-		case EnvHerodotosService:
-			config.Herodotos = apiConfig
-		case EnvAlexandrosService:
-			config.Alexandros = apiConfig
-		case EnvDionysiosService:
-			config.Dionysios = apiConfig
-		}
 	}
+	config.Solon = apiConfig
 
 	return service.NewClient(config)
 }

@@ -1,10 +1,10 @@
 module github.com/odysseia-greek/agora/plato
 
-go 1.25.5
+go 1.26.5
 
 require (
 	github.com/stretchr/testify v1.11.1
-	golang.org/x/text v0.32.0
+	golang.org/x/text v0.40.0
 )
 
 require (

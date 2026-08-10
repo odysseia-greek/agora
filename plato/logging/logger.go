@@ -37,8 +37,16 @@ func Debug(message string) {
 	log.Print(formatLog("DEBUG", message, blue))
 }
 
+func Debugf(format string, args ...any) {
+	Debug(fmt.Sprintf(format, args...))
+}
+
 func Info(message string) {
 	log.Print(formatLog("INFO", message, green))
+}
+
+func Infof(format string, args ...any) {
+	Info(fmt.Sprintf(format, args...))
 }
 
 func Api(statusCode int, method, traceId, clientIp, path string, latency time.Duration) {
@@ -49,16 +57,32 @@ func Warn(message string) {
 	log.Print(formatLog("WARN", message, yellow))
 }
 
+func Warnf(format string, args ...any) {
+	Warn(fmt.Sprintf(format, args...))
+}
+
 func System(message string) {
 	log.Print(formatLog("SYSTEM", message, purple))
+}
+
+func Systemf(format string, args ...any) {
+	System(fmt.Sprintf(format, args...))
 }
 
 func Trace(message string) {
 	log.Print(formatLog("TRACE", message, cyan))
 }
 
+func Tracef(format string, args ...any) {
+	Trace(fmt.Sprintf(format, args...))
+}
+
 func Error(message string) {
 	log.Print(formatLog("ERROR", message, red))
+}
+
+func Errorf(format string, args ...any) {
+	Error(fmt.Sprintf(format, args...))
 }
 
 func formatLog(level, message, color string) string {

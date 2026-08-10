@@ -33,6 +33,16 @@ func TestTrace(t *testing.T) {
 	testLogFunction(t, Trace, message, cyan)
 }
 
+func TestFormattedLog(t *testing.T) {
+	var buf bytes.Buffer
+	log.SetOutput(&buf)
+	t.Cleanup(func() { log.SetOutput(nil) })
+
+	Infof("listening on %s:%d", "localhost", 8080)
+
+	assert.Contains(t, buf.String(), "listening on localhost:8080")
+}
+
 func testLogFunction(t *testing.T, logFunc func(string), expected string, color string) {
 	// Redirect the log output to a buffer
 	var buf bytes.Buffer
