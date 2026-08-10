@@ -94,6 +94,9 @@ func CreateVaultClientKubernetes(address, vaultRole, jwt string, tlsConfig *api.
 		vaultRole,
 		auth.WithServiceAccountToken(jwt),
 	)
+	if err != nil {
+		return nil, fmt.Errorf("create Kubernetes auth method: %w", err)
+	}
 
 	// log in to Vault's Kubernetes auth method
 	resp, err := client.Auth().Login(context.Background(), k8sAuth)

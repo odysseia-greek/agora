@@ -52,6 +52,15 @@ func CreateVaultClient(healthCheck bool) (Client, error) {
 	var vaultClient Client
 
 	vaultAuthMethod := getStringFromEnv(EnvAuthMethod, AuthMethodToken)
+	if vaultAuthMethod != AuthMethodKube && vaultAuthMethod != AuthMethodToken {
+		return nil, fmt.Errorf(
+			"unsupported %s %q: expected %q or %q",
+			EnvAuthMethod,
+			vaultAuthMethod,
+			AuthMethodKube,
+			AuthMethodToken,
+		)
+	}
 	vaultService := getStringFromEnv(EnvVaultService, defaultVault)
 	vaultRole := getStringFromEnv(EnvVaultRole, defaultRoleName)
 	tlsEnabled := getBoolFromEnv(EnvTLSEnabled)

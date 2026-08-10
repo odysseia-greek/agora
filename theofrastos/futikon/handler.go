@@ -2,9 +2,9 @@ package futikon
 
 import (
 	"fmt"
+
 	elastic "github.com/odysseia-greek/agora/aristoteles"
 	"github.com/odysseia-greek/agora/plato/logging"
-	"github.com/odysseia-greek/agora/thales"
 	"gopkg.in/yaml.v3"
 )
 
@@ -12,7 +12,7 @@ type TheofratosHandler struct {
 	Elastic       elastic.Client
 	Namespace     string
 	ConfigMapName string
-	Kube          *thales.KubeClient
+	Kube          *KubeClient
 }
 
 func (t *TheofratosHandler) handle(configMap map[string]string) error {

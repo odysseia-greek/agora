@@ -80,5 +80,14 @@ func (v *Vault) ReadPolicy(policyName string) (string, error) {
 		return "", fmt.Errorf("policy not found")
 	}
 
-	return policy.Data["policy"].(string), nil
+	policyValue, ok := policy.Data["policy"]
+	if !ok {
+		return "", fmt.Errorf("policy %q response does not contain a policy field", policyName)
+	}
+	policyText, ok := policyValue.(string)
+	if !ok {
+		return "", fmt.Errorf("policy %q response contains a non-string policy field", policyName)
+	}
+
+	return policyText, nil
 }

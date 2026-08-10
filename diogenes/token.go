@@ -45,6 +45,9 @@ func (v *Vault) CreateOneTimeToken(policy []string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	if resp == nil || resp.Auth == nil || resp.Auth.ClientToken == "" {
+		return "", fmt.Errorf("create one-time token response did not contain a client token")
+	}
 
 	return resp.Auth.ClientToken, nil
 }
