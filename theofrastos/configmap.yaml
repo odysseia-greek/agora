@@ -12,6 +12,7 @@ roles:
       - text
       - tracing
       - metrics
+      - readings
     role:
       privileges:
         - read
@@ -29,6 +30,7 @@ roles:
       - dictionary
       - grammar
       - text
+      - readings
     role:
       privileges:
         - create_index

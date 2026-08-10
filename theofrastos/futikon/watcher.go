@@ -8,17 +8,25 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func (t *TheofratosHandler) WatchConfigMapChanges() error {
+func (t *TheofratosHandler) WatchConfigMapChanges(ctx context.Context) error {
 	configMapClient := t.Kube.CoreV1().ConfigMaps(t.Namespace)
 
 	// Watch for changes in the ConfigMap
-	watch, err := configMapClient.Watch(context.Background(), metav1.ListOptions{})
+	watch, err := configMapClient.Watch(ctx, metav1.ListOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to watch config map: %v", err)
 	}
 
-	go func() {
-		for event := range watch.ResultChan() {
+	defer watch.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case event, ok := <-watch.ResultChan():
+			if !ok {
+				return fmt.Errorf("config map watch closed")
+			}
 			if event.Type == "MODIFIED" || event.Type == "ADDED" {
 				// Get the ConfigMap object
 				configMap, ok := event.Object.(*v1.ConfigMap)
@@ -31,14 +39,12 @@ func (t *TheofratosHandler) WatchConfigMapChanges() error {
 				if configMap.Name == t.ConfigMapName {
 					logging.Debug(fmt.Sprintf("ConfigMap %s changed: %s", configMap.Name, event.Type))
 
-					err := t.handle(configMap.Data)
+					err := t.handle(ctx, configMap.Data)
 					if err != nil {
 						logging.Error(fmt.Sprintf("Failed to handle config map change: %v", err))
 					}
 				}
 			}
 		}
-	}()
-
-	select {}
+	}
 }

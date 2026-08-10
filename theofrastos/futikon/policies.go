@@ -1,21 +1,22 @@
 package futikon
 
 import (
+	"context"
 	"fmt"
 	"github.com/odysseia-greek/agora/aristoteles/models"
 	"github.com/odysseia-greek/agora/plato/logging"
 )
 
-func (t *TheofratosHandler) createILMPolicy(policy, phase, rollOver string) error {
+func (t *TheofratosHandler) createILMPolicy(ctx context.Context, policy, phase, rollOver string) error {
 	logging.Debug(fmt.Sprintf("creating policy %s with phase %s and rollover: %s", policy, phase, rollOver))
 
 	var policyCreated *models.IndexCreateResult
 	var err error
 
 	if rollOver != "" {
-		policyCreated, err = t.Elastic.Policy().CreatePolicyWithRollOver(policy, rollOver, phase)
+		policyCreated, err = t.Elastic.Policy().CreatePolicyWithRollOver(ctx, policy, rollOver, phase)
 	} else {
-		policyCreated, err = t.Elastic.Policy().CreatePolicy(policy, phase)
+		policyCreated, err = t.Elastic.Policy().CreatePolicy(ctx, policy, phase)
 	}
 
 	if err != nil {
