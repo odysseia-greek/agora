@@ -1,6 +1,7 @@
 package aristoteles
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -18,7 +19,7 @@ func TestCreateDocument(t *testing.T) {
 		testClient, err := NewMockClient(file, status)
 		assert.Nil(t, err)
 
-		created, err := testClient.Document().Create(index, body)
+		created, err := testClient.Document().Create(context.Background(), index, body)
 		assert.Nil(t, err)
 		assert.Equal(t, index, created.Index)
 	})
@@ -29,7 +30,7 @@ func TestCreateDocument(t *testing.T) {
 		testClient, err := NewMockClient(file, status)
 		assert.Nil(t, err)
 
-		created, err := testClient.Document().Create(index, body)
+		created, err := testClient.Document().Create(context.Background(), index, body)
 		assert.NotNil(t, err)
 		assert.Nil(t, created)
 	})
@@ -40,7 +41,7 @@ func TestCreateDocument(t *testing.T) {
 		testClient, err := NewMockClient(file, status)
 		assert.Nil(t, err)
 
-		created, err := testClient.Document().Create(index, body)
+		created, err := testClient.Document().Create(context.Background(), index, body)
 		assert.NotNil(t, err)
 		assert.Nil(t, created)
 	})
@@ -55,7 +56,7 @@ func TestCreateDocument(t *testing.T) {
 		testClient, err := NewClient(config)
 		assert.Nil(t, err)
 
-		created, err := testClient.Document().Create(index, body)
+		created, err := testClient.Document().Create(context.Background(), index, body)
 		assert.NotNil(t, err)
 		assert.Nil(t, created)
 	})
@@ -66,7 +67,7 @@ func TestCreateDocument(t *testing.T) {
 		testClient, err := NewMockClient(file, status)
 		assert.Nil(t, err)
 
-		created, err := testClient.Document().Create(index, body)
+		created, err := testClient.Document().Create(context.Background(), index, body)
 		assert.NotNil(t, err)
 		assert.Nil(t, created)
 
@@ -87,7 +88,7 @@ func TestCreateDocument(t *testing.T) {
 		testClient, err := NewMockClient(file, status)
 		assert.Nil(t, err)
 
-		created, err := testClient.Document().Create(index, body)
+		created, err := testClient.Document().Create(context.Background(), index, body)
 		assert.NotNil(t, err)
 		assert.Nil(t, created)
 
@@ -112,7 +113,7 @@ func TestCreateWithId(t *testing.T) {
 		testClient, err := NewMockClient("createWithId", 200)
 		assert.Nil(t, err)
 
-		created, err := testClient.Document().CreateWithId(index, documentID, body)
+		created, err := testClient.Document().CreateWithId(context.Background(), index, documentID, body)
 		assert.Nil(t, err)
 		assert.Equal(t, "created", created.Result)
 	})
@@ -121,7 +122,7 @@ func TestCreateWithId(t *testing.T) {
 		testClient, err := NewMockClient("serviceDown", 502)
 		assert.Nil(t, err)
 
-		created, err := testClient.Document().CreateWithId(index, documentID, body)
+		created, err := testClient.Document().CreateWithId(context.Background(), index, documentID, body)
 		assert.NotNil(t, err)
 		assert.Nil(t, created)
 
@@ -135,7 +136,7 @@ func TestCreateWithId(t *testing.T) {
 		testClient, err := NewMockClient("malformed", 200)
 		assert.Nil(t, err)
 
-		created, err := testClient.Document().CreateWithId(index, documentID, body)
+		created, err := testClient.Document().CreateWithId(context.Background(), index, documentID, body)
 		assert.NotNil(t, err)
 		assert.Nil(t, created)
 		assert.Contains(t, err.Error(), "invalid character")
@@ -152,7 +153,7 @@ func TestCreateWithIdAndFirstItem(t *testing.T) {
 		testClient, err := NewMockClient("createWithId", 200)
 		assert.Nil(t, err)
 
-		created, err := testClient.Document().CreateWithIdAndFirstItem(index, documentID, itemBody, paramName)
+		created, err := testClient.Document().CreateWithIdAndFirstItem(context.Background(), index, documentID, itemBody, paramName)
 		assert.Nil(t, err)
 		assert.Equal(t, "created", created.Result)
 	})
@@ -161,7 +162,7 @@ func TestCreateWithIdAndFirstItem(t *testing.T) {
 		testClient, err := NewMockClient("serviceDown", 502)
 		assert.Nil(t, err)
 
-		created, err := testClient.Document().CreateWithIdAndFirstItem(index, documentID, itemBody, paramName)
+		created, err := testClient.Document().CreateWithIdAndFirstItem(context.Background(), index, documentID, itemBody, paramName)
 		assert.NotNil(t, err)
 		assert.Nil(t, created)
 
@@ -175,7 +176,7 @@ func TestCreateWithIdAndFirstItem(t *testing.T) {
 		testClient, err := NewMockClient("malformed", 200)
 		assert.Nil(t, err)
 
-		created, err := testClient.Document().CreateWithIdAndFirstItem(index, documentID, itemBody, paramName)
+		created, err := testClient.Document().CreateWithIdAndFirstItem(context.Background(), index, documentID, itemBody, paramName)
 		assert.NotNil(t, err)
 		assert.Nil(t, created)
 		assert.Contains(t, err.Error(), "invalid character")
@@ -191,7 +192,7 @@ func TestUpdateDocument(t *testing.T) {
 		testClient, err := NewMockClient("updated", 200)
 		assert.Nil(t, err)
 
-		updated, err := testClient.Document().Update(index, documentID, body)
+		updated, err := testClient.Document().Update(context.Background(), index, documentID, body)
 		assert.Nil(t, err)
 		assert.Equal(t, "updated", updated.Result)
 	})
@@ -200,7 +201,7 @@ func TestUpdateDocument(t *testing.T) {
 		testClient, err := NewMockClient("serviceDown", 502)
 		assert.Nil(t, err)
 
-		updated, err := testClient.Document().Update(index, documentID, body)
+		updated, err := testClient.Document().Update(context.Background(), index, documentID, body)
 		assert.NotNil(t, err)
 		assert.Nil(t, updated)
 
@@ -214,7 +215,7 @@ func TestUpdateDocument(t *testing.T) {
 		testClient, err := NewMockClient("malformed", 200)
 		assert.Nil(t, err)
 
-		updated, err := testClient.Document().Update(index, documentID, body)
+		updated, err := testClient.Document().Update(context.Background(), index, documentID, body)
 		assert.NotNil(t, err)
 		assert.Nil(t, updated)
 		assert.Contains(t, err.Error(), "invalid character")
@@ -231,7 +232,7 @@ func TestAddItemToDocument(t *testing.T) {
 		testClient, err := NewMockClient("updated", 200)
 		assert.Nil(t, err)
 
-		updated, err := testClient.Document().AddItemToDocument(index, documentID, itemBody, paramName)
+		updated, err := testClient.Document().AddItemToDocument(context.Background(), index, documentID, itemBody, paramName)
 		assert.Nil(t, err)
 		assert.Equal(t, "updated", updated.Result)
 	})
@@ -240,7 +241,7 @@ func TestAddItemToDocument(t *testing.T) {
 		testClient, err := NewMockClient("serviceDown", 502)
 		assert.Nil(t, err)
 
-		updated, err := testClient.Document().AddItemToDocument(index, documentID, itemBody, paramName)
+		updated, err := testClient.Document().AddItemToDocument(context.Background(), index, documentID, itemBody, paramName)
 		assert.NotNil(t, err)
 		assert.Nil(t, updated)
 
@@ -254,7 +255,7 @@ func TestAddItemToDocument(t *testing.T) {
 		testClient, err := NewMockClient("malformed", 200)
 		assert.Nil(t, err)
 
-		updated, err := testClient.Document().AddItemToDocument(index, documentID, itemBody, paramName)
+		updated, err := testClient.Document().AddItemToDocument(context.Background(), index, documentID, itemBody, paramName)
 		assert.NotNil(t, err)
 		assert.Nil(t, updated)
 		assert.Contains(t, err.Error(), "invalid character")

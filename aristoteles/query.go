@@ -47,11 +47,7 @@ func (q *QueryImpl) GetById(ctx context.Context, index, id string) (*models.Dire
 	return &direct, nil
 }
 
-func (q *QueryImpl) MatchRaw(index string, request map[string]interface{}) ([]byte, error) {
-	return q.MatchRawWithContext(context.Background(), index, request)
-}
-
-func (q *QueryImpl) MatchRawWithContext(ctx context.Context, index string, request map[string]interface{}) ([]byte, error) {
+func (q *QueryImpl) MatchRaw(ctx context.Context, index string, request map[string]interface{}) ([]byte, error) {
 	query, err := toBuffer(request)
 	if err != nil {
 		return nil, err
@@ -121,11 +117,7 @@ func (q *QueryImpl) CountRaw(ctx context.Context, index string, request map[stri
 	return &parsed, nil
 }
 
-func (q *QueryImpl) Match(index string, request map[string]interface{}) (*models.Response, error) {
-	return q.MatchWithContext(context.Background(), index, request)
-}
-
-func (q *QueryImpl) MatchWithContext(ctx context.Context, index string, request map[string]interface{}) (*models.Response, error) {
+func (q *QueryImpl) Match(ctx context.Context, index string, request map[string]interface{}) (*models.Response, error) {
 	query, err := toBuffer(request)
 	if err != nil {
 		return nil, err
@@ -145,11 +137,7 @@ func (q *QueryImpl) MatchWithContext(ctx context.Context, index string, request 
 	return q.parseResponse("match query", res)
 }
 
-func (q *QueryImpl) MatchWithSort(index, direction, sortField string, size int, request map[string]interface{}) (*models.Response, error) {
-	return q.MatchWithSortWithContext(context.Background(), index, direction, sortField, size, request)
-}
-
-func (q *QueryImpl) MatchWithSortWithContext(ctx context.Context, index, direction, sortField string, size int, request map[string]interface{}) (*models.Response, error) {
+func (q *QueryImpl) MatchWithSort(ctx context.Context, index, direction, sortField string, size int, request map[string]interface{}) (*models.Response, error) {
 	query, err := toBuffer(request)
 	if err != nil {
 		return nil, err
@@ -171,11 +159,7 @@ func (q *QueryImpl) MatchWithSortWithContext(ctx context.Context, index, directi
 	return q.parseResponse("match query with sort", res)
 }
 
-func (q *QueryImpl) MatchWithScroll(index string, request map[string]interface{}) (*models.Response, error) {
-	return q.MatchWithScrollWithContext(context.Background(), index, request)
-}
-
-func (q *QueryImpl) MatchWithScrollWithContext(ctx context.Context, index string, request map[string]interface{}) (*models.Response, error) {
+func (q *QueryImpl) MatchWithScroll(ctx context.Context, index string, request map[string]interface{}) (*models.Response, error) {
 	var elasticResult models.Response
 
 	query, err := toBuffer(request)
@@ -242,11 +226,7 @@ func (q *QueryImpl) MatchWithScrollWithContext(ctx context.Context, index string
 	return &elasticResult, nil
 }
 
-func (q *QueryImpl) MatchAggregate(index string, request map[string]interface{}) (*models.Aggregations, error) {
-	return q.MatchAggregateWithContext(context.Background(), index, request)
-}
-
-func (q *QueryImpl) MatchAggregateWithContext(ctx context.Context, index string, request map[string]interface{}) (*models.Aggregations, error) {
+func (q *QueryImpl) MatchAggregate(ctx context.Context, index string, request map[string]interface{}) (*models.Aggregations, error) {
 	query, err := toBuffer(request)
 	if err != nil {
 		return nil, err

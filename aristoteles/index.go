@@ -21,11 +21,7 @@ func NewIndexImpl(suppliedClient *elasticsearch.Client) (*IndexImpl, error) {
 	return &IndexImpl{es: suppliedClient}, nil
 }
 
-func (i *IndexImpl) CreateDocument(index string, body []byte) (*models.CreateResult, error) {
-	return i.CreateDocumentWithContext(context.Background(), index, body)
-}
-
-func (i *IndexImpl) CreateDocumentWithContext(ctx context.Context, index string, body []byte) (*models.CreateResult, error) {
+func (i *IndexImpl) CreateDocument(ctx context.Context, index string, body []byte) (*models.CreateResult, error) {
 	bodyString := strings.NewReader(string(body))
 
 	esRequest := esapi.IndexRequest{
@@ -58,11 +54,7 @@ func (i *IndexImpl) CreateDocumentWithContext(ctx context.Context, index string,
 	return &elasticResult, nil
 }
 
-func (i *IndexImpl) Create(index string, request map[string]interface{}) (*models.IndexCreateResult, error) {
-	return i.CreateWithContext(context.Background(), index, request)
-}
-
-func (i *IndexImpl) CreateWithContext(ctx context.Context, index string, request map[string]interface{}) (*models.IndexCreateResult, error) {
+func (i *IndexImpl) Create(ctx context.Context, index string, request map[string]interface{}) (*models.IndexCreateResult, error) {
 	query, err := toBuffer(request)
 	if err != nil {
 		return nil, err
@@ -97,11 +89,7 @@ func (i *IndexImpl) CreateWithContext(ctx context.Context, index string, request
 	return &elasticResult, nil
 }
 
-func (i *IndexImpl) CreateWithAlias(indexName string, request map[string]interface{}) (*models.IndexCreateResult, error) {
-	return i.CreateWithAliasWithContext(context.Background(), indexName, request)
-}
-
-func (i *IndexImpl) CreateWithAliasWithContext(ctx context.Context, indexName string, request map[string]interface{}) (*models.IndexCreateResult, error) {
+func (i *IndexImpl) CreateWithAlias(ctx context.Context, indexName string, request map[string]interface{}) (*models.IndexCreateResult, error) {
 	today := time.Now().Format("2006.01.02")
 	indexNameWithDate := fmt.Sprintf("%s-%s", indexName, today)
 	var elasticResult models.IndexCreateResult
@@ -152,11 +140,7 @@ func (i *IndexImpl) CreateWithAliasWithContext(ctx context.Context, indexName st
 	return &elasticResult, nil
 }
 
-func (i *IndexImpl) Delete(index string) (bool, error) {
-	return i.DeleteWithContext(context.Background(), index)
-}
-
-func (i *IndexImpl) DeleteWithContext(ctx context.Context, index string) (bool, error) {
+func (i *IndexImpl) Delete(ctx context.Context, index string) (bool, error) {
 	res, err := i.es.Indices.Delete([]string{index}, i.es.Indices.Delete.WithContext(ctx))
 	if err != nil {
 		return false, err
@@ -185,11 +169,7 @@ func (i *IndexImpl) DeleteWithContext(ctx context.Context, index string) (bool, 
 	return acknowledged, nil
 }
 
-func (i *IndexImpl) IndexExists(index string) (bool, *models.IndexInfo, error) {
-	return i.IndexExistsWithContext(context.Background(), index)
-}
-
-func (i *IndexImpl) IndexExistsWithContext(ctx context.Context, index string) (bool, *models.IndexInfo, error) {
+func (i *IndexImpl) IndexExists(ctx context.Context, index string) (bool, *models.IndexInfo, error) {
 	getRequest := esapi.IndicesGetRequest{
 		Index: []string{index},
 	}

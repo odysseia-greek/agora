@@ -1,6 +1,7 @@
 package aristoteles
 
 import (
+	"context"
 	"strings"
 	"testing"
 
@@ -18,7 +19,7 @@ func TestCreateDocumentWithIndexClient(t *testing.T) {
 		testClient, err := NewMockClient(file, status)
 		assert.Nil(t, err)
 
-		created, err := testClient.Index().CreateDocument(index, body)
+		created, err := testClient.Index().CreateDocument(context.Background(), index, body)
 		assert.Nil(t, err)
 		assert.Equal(t, index, created.Index)
 	})
@@ -29,7 +30,7 @@ func TestCreateDocumentWithIndexClient(t *testing.T) {
 		testClient, err := NewMockClient(file, status)
 		assert.Nil(t, err)
 
-		created, err := testClient.Index().CreateDocument(index, body)
+		created, err := testClient.Index().CreateDocument(context.Background(), index, body)
 		assert.NotNil(t, err)
 		assert.Nil(t, created)
 	})
@@ -40,7 +41,7 @@ func TestCreateDocumentWithIndexClient(t *testing.T) {
 		testClient, err := NewMockClient(file, status)
 		assert.Nil(t, err)
 
-		created, err := testClient.Index().CreateDocument(index, body)
+		created, err := testClient.Index().CreateDocument(context.Background(), index, body)
 		assert.NotNil(t, err)
 		assert.Nil(t, created)
 	})
@@ -55,7 +56,7 @@ func TestCreateDocumentWithIndexClient(t *testing.T) {
 		testClient, err := NewClient(config)
 		assert.Nil(t, err)
 
-		created, err := testClient.Index().CreateDocument(index, body)
+		created, err := testClient.Index().CreateDocument(context.Background(), index, body)
 		assert.NotNil(t, err)
 		assert.Nil(t, created)
 	})
@@ -74,7 +75,7 @@ func TestCreateIndexClient(t *testing.T) {
 
 		body := testClient.Builder().SearchAsYouTypeIndex(searchWord)
 
-		sut, err := testClient.Index().Create(index, body)
+		sut, err := testClient.Index().Create(context.Background(), index, body)
 		assert.Nil(t, err)
 		assert.Equal(t, index, sut.Index)
 	})
@@ -87,7 +88,7 @@ func TestCreateIndexClient(t *testing.T) {
 
 		body := testClient.Builder().SearchAsYouTypeIndex(searchWord)
 
-		sut, err := testClient.Index().Create(index, body)
+		sut, err := testClient.Index().Create(context.Background(), index, body)
 		assert.NotNil(t, err)
 		assert.Nil(t, sut)
 	})
@@ -100,7 +101,7 @@ func TestCreateIndexClient(t *testing.T) {
 
 		body := testClient.Builder().SearchAsYouTypeIndex(searchWord)
 
-		sut, err := testClient.Index().Create(index, body)
+		sut, err := testClient.Index().Create(context.Background(), index, body)
 		assert.NotNil(t, err)
 		assert.Nil(t, sut)
 		assert.Contains(t, err.Error(), expectedMalformed)
@@ -116,7 +117,7 @@ func TestCreateIndexClient(t *testing.T) {
 			"key": make(chan int),
 		}
 
-		created, err := testClient.Index().Create(index, invalidBody)
+		created, err := testClient.Index().Create(context.Background(), index, invalidBody)
 		assert.NotNil(t, err)
 		assert.Nil(t, created)
 	})
@@ -132,7 +133,7 @@ func TestCreateIndexClient(t *testing.T) {
 		assert.Nil(t, err)
 
 		body := testClient.Builder().SearchAsYouTypeIndex(searchWord)
-		created, err := testClient.Index().Create(index, body)
+		created, err := testClient.Index().Create(context.Background(), index, body)
 		assert.NotNil(t, err)
 		assert.False(t, created.Acknowledged)
 	})
@@ -148,7 +149,7 @@ func TestDeleteIndexClient(t *testing.T) {
 		testClient, err := NewMockClient(file, status)
 		assert.Nil(t, err)
 
-		sut, err := testClient.Index().Delete(index)
+		sut, err := testClient.Index().Delete(context.Background(), index)
 		assert.Nil(t, err)
 		assert.True(t, sut)
 	})
@@ -159,7 +160,7 @@ func TestDeleteIndexClient(t *testing.T) {
 		testClient, err := NewMockClient(file, status)
 		assert.Nil(t, err)
 
-		sut, err := testClient.Index().Delete(index)
+		sut, err := testClient.Index().Delete(context.Background(), index)
 		assert.NotNil(t, err)
 		assert.False(t, sut)
 	})
@@ -170,7 +171,7 @@ func TestDeleteIndexClient(t *testing.T) {
 		testClient, err := NewMockClient(file, status)
 		assert.Nil(t, err)
 
-		sut, err := testClient.Index().Delete(index)
+		sut, err := testClient.Index().Delete(context.Background(), index)
 		assert.NotNil(t, err)
 		assert.False(t, sut)
 		assert.Contains(t, err.Error(), expectedMalformed)
@@ -182,7 +183,7 @@ func TestDeleteIndexClient(t *testing.T) {
 		testClient, err := NewMockClient(file, status)
 		assert.Nil(t, err)
 
-		sut, err := testClient.Index().Delete(index)
+		sut, err := testClient.Index().Delete(context.Background(), index)
 		assert.NotNil(t, err)
 		assert.False(t, sut)
 		assert.Contains(t, err.Error(), "index_not_found_exception")
@@ -198,7 +199,7 @@ func TestDeleteIndexClient(t *testing.T) {
 		testClient, err := NewClient(config)
 		assert.Nil(t, err)
 
-		sut, err := testClient.Index().Delete(index)
+		sut, err := testClient.Index().Delete(context.Background(), index)
 		assert.NotNil(t, err)
 		assert.False(t, sut)
 	})
@@ -211,7 +212,7 @@ type seederHandler struct {
 }
 
 func (s *seederHandler) DeleteIndexAtStartUp() error {
-	deleted, err := s.Elastic.Index().Delete(s.Index)
+	deleted, err := s.Elastic.Index().Delete(context.Background(), s.Index)
 	if err != nil {
 		if deleted {
 			return nil
@@ -227,7 +228,7 @@ func (s *seederHandler) DeleteIndexAtStartUp() error {
 
 func (s *seederHandler) CreateIndexAtStartup() error {
 	indexMapping := s.Elastic.Builder().TextIndex(s.PolicyName)
-	_, err := s.Elastic.Index().Create(s.Index, indexMapping)
+	_, err := s.Elastic.Index().Create(context.Background(), s.Index, indexMapping)
 	if err != nil {
 		return err
 	}
