@@ -1,8 +1,10 @@
 package diogenes
 
 import (
-	"github.com/stretchr/testify/assert"
+	"context"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestTokenClient(t *testing.T) {
@@ -14,7 +16,7 @@ func TestTokenClient(t *testing.T) {
 
 		policy := []string{"sdgdfg"}
 
-		sut, err := testClient.CreateOneTimeToken(policy)
+		sut, err := testClient.CreateOneTimeToken(context.Background(), policy)
 		assert.Nil(t, err)
 		assert.Contains(t, sut, expected)
 	})

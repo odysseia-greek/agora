@@ -1,6 +1,7 @@
 package diogenes
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -48,7 +49,7 @@ func getBoolFromEnv(envName string) bool {
 	return value
 }
 
-func CreateVaultClient(healthCheck bool) (Client, error) {
+func CreateVaultClient(ctx context.Context, healthCheck bool) (Client, error) {
 	var vaultClient Client
 
 	vaultAuthMethod := getStringFromEnv(EnvAuthMethod, AuthMethodToken)
@@ -86,7 +87,7 @@ func CreateVaultClient(healthCheck bool) (Client, error) {
 
 		vaultToken := string(jwt)
 
-		client, err := CreateVaultClientKubernetes(vaultService, vaultRole, vaultToken, tlsConfig)
+		client, err := CreateVaultClientKubernetes(ctx, vaultService, vaultRole, vaultToken, tlsConfig)
 		if err != nil {
 			log.Print(err)
 			return nil, err
@@ -95,7 +96,7 @@ func CreateVaultClient(healthCheck bool) (Client, error) {
 		if healthCheck {
 			ticks := 120 * time.Second
 			tick := 1 * time.Second
-			healthy := client.CheckHealthyStatus(ticks, tick)
+			healthy := client.CheckHealthyStatus(ctx, ticks, tick)
 			if !healthy {
 				return nil, fmt.Errorf("error getting healthy status from vault")
 			}

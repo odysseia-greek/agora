@@ -1,14 +1,15 @@
 package diogenes
 
 import (
+	"context"
 	"fmt"
 	"github.com/hashicorp/vault/api"
 	"log"
 )
 
-func (v *Vault) WritePolicy(policyName string, policyContent []byte) error {
+func (v *Vault) WritePolicy(ctx context.Context, policyName string, policyContent []byte) error {
 	// Check if the policy already exists
-	existingPolicy, err := v.ReadPolicy(policyName)
+	existingPolicy, err := v.ReadPolicy(ctx, policyName)
 	if err != nil {
 		log.Printf("policy %s does not exist, creating...", policyName)
 	} else {
@@ -25,7 +26,7 @@ func (v *Vault) WritePolicy(policyName string, policyContent []byte) error {
 		"policy": string(policyContent),
 	}
 
-	_, err = v.Connection.Logical().Write(path, data)
+	_, err = v.Connection.Logical().WriteWithContext(ctx, path, data)
 	if err != nil {
 		return fmt.Errorf("failed to write Vault policy: %w", err)
 	}
@@ -33,15 +34,15 @@ func (v *Vault) WritePolicy(policyName string, policyContent []byte) error {
 	return nil
 }
 
-func (v *Vault) DeletePolicy(policyName string) (*api.Secret, error) {
+func (v *Vault) DeletePolicy(ctx context.Context, policyName string) (*api.Secret, error) {
 	path := fmt.Sprintf("sys/policies/acl/%s", policyName)
-	return v.Connection.Logical().Delete(path)
+	return v.Connection.Logical().DeleteWithContext(ctx, path)
 }
 
-func (v *Vault) ListPolicies() ([]string, error) {
+func (v *Vault) ListPolicies(ctx context.Context) ([]string, error) {
 	path := "sys/policies/acl"
 
-	secret, err := v.Connection.Logical().List(path)
+	secret, err := v.Connection.Logical().ListWithContext(ctx, path)
 	if err != nil {
 		return nil, fmt.Errorf("unable to list policies in Vault: %w", err)
 	}
@@ -68,10 +69,10 @@ func (v *Vault) ListPolicies() ([]string, error) {
 	return policies, nil
 }
 
-func (v *Vault) ReadPolicy(policyName string) (string, error) {
+func (v *Vault) ReadPolicy(ctx context.Context, policyName string) (string, error) {
 	path := fmt.Sprintf("sys/policies/acl/%s", policyName)
 
-	policy, err := v.Connection.Logical().Read(path)
+	policy, err := v.Connection.Logical().ReadWithContext(ctx, path)
 	if err != nil {
 		return "", fmt.Errorf("failed to read Vault policy: %w", err)
 	}

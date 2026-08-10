@@ -1,6 +1,7 @@
 package diogenes
 
 import (
+	"context"
 	"fmt"
 	vault "github.com/hashicorp/vault/api"
 )
@@ -9,11 +10,11 @@ func (v *Vault) SetOnetimeToken(token string) {
 	v.Connection.SetToken(token)
 }
 
-func (v *Vault) ValidateToken(oneTimeToken string) (map[string]interface{}, error) {
+func (v *Vault) ValidateToken(ctx context.Context, oneTimeToken string) (map[string]interface{}, error) {
 	data := map[string]interface{}{
 		"token": oneTimeToken,
 	}
-	secret, err := v.Connection.Logical().Write("auth/token/lookup", data)
+	secret, err := v.Connection.Logical().WriteWithContext(ctx, "auth/token/lookup", data)
 	if err != nil {
 		return nil, fmt.Errorf("failed to validate token: %w", err)
 	}
@@ -30,7 +31,7 @@ func (v *Vault) GetCurrentToken() string {
 	return v.Connection.Token()
 }
 
-func (v *Vault) CreateOneTimeToken(policy []string) (string, error) {
+func (v *Vault) CreateOneTimeToken(ctx context.Context, policy []string) (string, error) {
 	renew := false
 
 	tokenRequest := vault.TokenCreateRequest{
@@ -41,7 +42,7 @@ func (v *Vault) CreateOneTimeToken(policy []string) (string, error) {
 		Renewable:   &renew,
 	}
 
-	resp, err := v.Connection.Auth().Token().Create(&tokenRequest)
+	resp, err := v.Connection.Auth().Token().CreateWithContext(ctx, &tokenRequest)
 	if err != nil {
 		return "", err
 	}

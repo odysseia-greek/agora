@@ -1,10 +1,12 @@
 package diogenes
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestSecretClient(t *testing.T) {
@@ -24,7 +26,7 @@ func TestSecretClient(t *testing.T) {
 		payload, err := json.Marshal(jsonBody)
 		assert.Nil(t, err)
 
-		sut, err := testClient.CreateNewSecret(name, payload)
+		sut, err := testClient.CreateNewSecret(context.Background(), name, payload)
 		assert.Nil(t, err)
 		assert.True(t, sut)
 	})
@@ -34,7 +36,7 @@ func TestSecretClient(t *testing.T) {
 		testClient, err := CreateMockVaultClient(fixtures, 200)
 		assert.Nil(t, err)
 
-		secret, err := testClient.GetSecret(fixtureSecretName)
+		secret, err := testClient.GetSecret(context.Background(), fixtureSecretName)
 		assert.Nil(t, err)
 		sut := fmt.Sprintf("%v", secret.Data)
 		assert.Contains(t, sut, "value1")

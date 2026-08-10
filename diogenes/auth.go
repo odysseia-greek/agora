@@ -1,6 +1,7 @@
 package diogenes
 
 import (
+	"context"
 	"fmt"
 	"github.com/hashicorp/vault/api"
 )
@@ -9,10 +10,10 @@ const (
 	defaultMountPath = "kubernetes"
 )
 
-func (v *Vault) KubernetesAuthMethod(role, serviceAccountName, namespace, kubeHost string) error {
+func (v *Vault) KubernetesAuthMethod(ctx context.Context, role, serviceAccountName, namespace, kubeHost string) error {
 	path := fmt.Sprintf("auth/%s", defaultMountPath)
 
-	err := v.Connection.Sys().EnableAuthWithOptions(defaultMountPath, &api.EnableAuthOptions{
+	err := v.Connection.Sys().EnableAuthWithOptionsWithContext(ctx, defaultMountPath, &api.EnableAuthOptions{
 		Type: defaultMountPath,
 		Options: map[string]string{
 			"mount_path":        defaultMountPath,
@@ -31,7 +32,7 @@ func (v *Vault) KubernetesAuthMethod(role, serviceAccountName, namespace, kubeHo
 		"disable_iss_validation": "true",
 	}
 
-	_, err = v.Connection.Logical().Write(configPath, configData)
+	_, err = v.Connection.Logical().WriteWithContext(ctx, configPath, configData)
 	if err != nil {
 		return err
 	}
@@ -44,7 +45,7 @@ func (v *Vault) KubernetesAuthMethod(role, serviceAccountName, namespace, kubeHo
 		"policies":                         role,      // Replace with the desired policies
 	}
 
-	_, err = v.Connection.Logical().Write(rolePath, roleData)
+	_, err = v.Connection.Logical().WriteWithContext(ctx, rolePath, roleData)
 	if err != nil {
 		return err
 	}

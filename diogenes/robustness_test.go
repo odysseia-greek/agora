@@ -2,6 +2,7 @@ package diogenes
 
 import (
 	"bytes"
+	"context"
 	"io"
 	"net/http"
 	"sync"
@@ -16,7 +17,7 @@ import (
 func TestCreateVaultClientRejectsUnknownAuthMethod(t *testing.T) {
 	t.Setenv(EnvAuthMethod, "kubernets")
 
-	client, err := CreateVaultClient(false)
+	client, err := CreateVaultClient(context.Background(), false)
 
 	assert.Nil(t, client)
 	require.Error(t, err)
@@ -27,8 +28,8 @@ func TestCheckHealthyStatusValidatesDurations(t *testing.T) {
 	client, err := CreateMockVaultClient([]string{"health"}, http.StatusOK)
 	require.NoError(t, err)
 
-	assert.False(t, client.CheckHealthyStatus(0, time.Millisecond))
-	assert.False(t, client.CheckHealthyStatus(time.Millisecond, 0))
+	assert.False(t, client.CheckHealthyStatus(context.Background(), 0, time.Millisecond))
+	assert.False(t, client.CheckHealthyStatus(context.Background(), time.Millisecond, 0))
 }
 
 func TestCheckHealthyStatusRetriesUntilHealthy(t *testing.T) {
@@ -51,8 +52,21 @@ func TestCheckHealthyStatusRetriesUntilHealthy(t *testing.T) {
 	require.NoError(t, err)
 	client := &Vault{Connection: connection}
 
-	assert.True(t, client.CheckHealthyStatus(250*time.Millisecond, time.Millisecond))
+	assert.True(t, client.CheckHealthyStatus(context.Background(), 250*time.Millisecond, time.Millisecond))
 	assert.Equal(t, 0, transport.ResponseIdx)
+}
+
+func TestCheckHealthyStatusStopsWhenContextIsCancelled(t *testing.T) {
+	client, err := CreateMockVaultClient([]string{"health"}, http.StatusOK)
+	require.NoError(t, err)
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	started := time.Now()
+	healthy := client.CheckHealthyStatus(ctx, time.Minute, time.Second)
+
+	assert.False(t, healthy)
+	assert.Less(t, time.Since(started), 100*time.Millisecond)
 }
 
 func TestMockVaultClientValidation(t *testing.T) {
@@ -89,7 +103,7 @@ func TestMockVaultClientIsSafeForConcurrentUse(t *testing.T) {
 		waitGroup.Add(1)
 		go func() {
 			defer waitGroup.Done()
-			_, err := client.Health()
+			_, err := client.Health(context.Background())
 			errors <- err
 		}()
 	}
@@ -116,7 +130,7 @@ func TestReadPolicyValidatesResponse(t *testing.T) {
 			client, err := CreateMockVaultClient([]string{test.fixture}, http.StatusOK)
 			require.NoError(t, err)
 
-			policy, err := client.ReadPolicy("test")
+			policy, err := client.ReadPolicy(context.Background(), "test")
 			assert.Empty(t, policy)
 			require.Error(t, err)
 			assert.Contains(t, err.Error(), test.errorMatch)
@@ -128,7 +142,7 @@ func TestCreateOneTimeTokenValidatesResponse(t *testing.T) {
 	client, err := CreateMockVaultClient([]string{"empty"}, http.StatusOK)
 	require.NoError(t, err)
 
-	token, err := client.CreateOneTimeToken([]string{"test"})
+	token, err := client.CreateOneTimeToken(context.Background(), []string{"test"})
 
 	assert.Empty(t, token)
 	require.Error(t, err)
