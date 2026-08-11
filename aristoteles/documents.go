@@ -19,11 +19,7 @@ func NewDocumentImpl(suppliedClient *elasticsearch.Client) (*DocumentImpl, error
 	return &DocumentImpl{es: suppliedClient}, nil
 }
 
-func (d *DocumentImpl) Create(index string, body []byte) (*models.CreateResult, error) {
-	return d.CreateWithContext(context.Background(), index, body)
-}
-
-func (d *DocumentImpl) CreateWithContext(ctx context.Context, index string, body []byte) (*models.CreateResult, error) {
+func (d *DocumentImpl) Create(ctx context.Context, index string, body []byte) (*models.CreateResult, error) {
 	res, err := esapi.CreateRequest{
 		Index: index,
 		Body:  bytes.NewReader(body),
@@ -49,11 +45,7 @@ func (d *DocumentImpl) CreateWithContext(ctx context.Context, index string, body
 	return &elasticResult, nil
 }
 
-func (d *DocumentImpl) CreateWithId(index, documentId string, body []byte) (*models.CreateResult, error) {
-	return d.CreateWithIdWithContext(context.Background(), index, documentId, body)
-}
-
-func (d *DocumentImpl) CreateWithIdWithContext(ctx context.Context, index, documentId string, body []byte) (*models.CreateResult, error) {
+func (d *DocumentImpl) CreateWithId(ctx context.Context, index, documentId string, body []byte) (*models.CreateResult, error) {
 	res, err := esapi.CreateRequest{
 		Index:      index,
 		DocumentID: documentId,
@@ -80,11 +72,7 @@ func (d *DocumentImpl) CreateWithIdWithContext(ctx context.Context, index, docum
 	return &elasticResult, nil
 }
 
-func (d *DocumentImpl) CreateWithIdAndFirstItem(index, documentId, body, paramName string) (*models.CreateResult, error) {
-	return d.CreateWithIdAndFirstItemWithContext(context.Background(), index, documentId, body, paramName)
-}
-
-func (d *DocumentImpl) CreateWithIdAndFirstItemWithContext(ctx context.Context, index, documentId, body, paramName string) (*models.CreateResult, error) {
+func (d *DocumentImpl) CreateWithIdAndFirstItem(ctx context.Context, index, documentId, body, paramName string) (*models.CreateResult, error) {
 	res, err := esapi.CreateRequest{
 		Index:      index,
 		DocumentID: documentId,
@@ -118,11 +106,7 @@ func (d *DocumentImpl) CreateWithIdAndFirstItemWithContext(ctx context.Context, 
 	return &elasticResult, nil
 }
 
-func (d *DocumentImpl) Update(index, id string, body []byte) (*models.CreateResult, error) {
-	return d.UpdateWithContext(context.Background(), index, id, body)
-}
-
-func (d *DocumentImpl) UpdateWithContext(ctx context.Context, index, id string, body []byte) (*models.CreateResult, error) {
+func (d *DocumentImpl) Update(ctx context.Context, index, id string, body []byte) (*models.CreateResult, error) {
 	res, err := esapi.UpdateRequest{
 		Index:      index,
 		DocumentID: id,
@@ -149,11 +133,7 @@ func (d *DocumentImpl) UpdateWithContext(ctx context.Context, index, id string, 
 	return &elasticResult, nil
 }
 
-func (d *DocumentImpl) AddItemToDocument(index, id, body, paramName string) (*models.CreateResult, error) {
-	return d.AddItemToDocumentWithContext(context.Background(), index, id, body, paramName)
-}
-
-func (d *DocumentImpl) AddItemToDocumentWithContext(ctx context.Context, index, id, body, paramName string) (*models.CreateResult, error) {
+func (d *DocumentImpl) AddItemToDocument(ctx context.Context, index, id, body, paramName string) (*models.CreateResult, error) {
 	res, err := esapi.UpdateRequest{
 		Index:      index,
 		DocumentID: id,

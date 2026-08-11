@@ -22,11 +22,7 @@ func NewAccessImpl(suppliedClient *elasticsearch.Client) (*AccessImpl, error) {
 	return &AccessImpl{es: suppliedClient}, nil
 }
 
-func (a *AccessImpl) CreateRole(name string, roleRequest models.CreateRoleRequest) (bool, error) {
-	return a.CreateRoleWithContext(context.Background(), name, roleRequest)
-}
-
-func (a *AccessImpl) CreateRoleWithContext(ctx context.Context, name string, roleRequest models.CreateRoleRequest) (bool, error) {
+func (a *AccessImpl) CreateRole(ctx context.Context, name string, roleRequest models.CreateRoleRequest) (bool, error) {
 	jsonRole, err := roleRequest.Marshal()
 	if err != nil {
 		return false, err
@@ -45,11 +41,7 @@ func (a *AccessImpl) CreateRoleWithContext(ctx context.Context, name string, rol
 	return true, nil
 }
 
-func (a *AccessImpl) CreateUser(name string, userCreation models.CreateUserRequest) (bool, error) {
-	return a.CreateUserWithContext(context.Background(), name, userCreation)
-}
-
-func (a *AccessImpl) CreateUserWithContext(ctx context.Context, name string, userCreation models.CreateUserRequest) (bool, error) {
+func (a *AccessImpl) CreateUser(ctx context.Context, name string, userCreation models.CreateUserRequest) (bool, error) {
 	jsonUser, err := userCreation.Marshal()
 	if err != nil {
 		return false, err
@@ -68,11 +60,7 @@ func (a *AccessImpl) CreateUserWithContext(ctx context.Context, name string, use
 	return true, nil
 }
 
-func (a *AccessImpl) ListUsers() ([]string, error) {
-	return a.ListUsersWithContext(context.Background())
-}
-
-func (a *AccessImpl) ListUsersWithContext(ctx context.Context) ([]string, error) {
+func (a *AccessImpl) ListUsers(ctx context.Context) ([]string, error) {
 	res, err := a.es.Security.GetUser(a.es.Security.GetUser.WithContext(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("error fetching users from Elasticsearch: %w", err)
@@ -100,11 +88,7 @@ func (a *AccessImpl) ListUsersWithContext(ctx context.Context) ([]string, error)
 	return userList, nil
 }
 
-func (a *AccessImpl) DeleteUser(name string) (bool, error) {
-	return a.DeleteUserWithContext(context.Background(), name)
-}
-
-func (a *AccessImpl) DeleteUserWithContext(ctx context.Context, name string) (bool, error) {
+func (a *AccessImpl) DeleteUser(ctx context.Context, name string) (bool, error) {
 	res, err := a.es.Security.DeleteUser(name, a.es.Security.DeleteUser.WithContext(ctx))
 	if err != nil {
 		return false, fmt.Errorf("error deleting user %s: %w", name, err)

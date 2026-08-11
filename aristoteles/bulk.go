@@ -26,11 +26,7 @@ type BulkResponse struct {
 	} `json:"items"`
 }
 
-func (d *DocumentImpl) Bulk(buf bytes.Buffer, index string) (*BulkResponse, error) {
-	return d.BulkWithContext(context.Background(), buf, index)
-}
-
-func (d *DocumentImpl) BulkWithContext(ctx context.Context, buf bytes.Buffer, index string) (*BulkResponse, error) {
+func (d *DocumentImpl) Bulk(ctx context.Context, buf bytes.Buffer, index string) (*BulkResponse, error) {
 	res, err := d.es.Bulk(
 		bytes.NewReader(buf.Bytes()),
 		d.es.Bulk.WithContext(ctx),

@@ -1,14 +1,18 @@
 package main
 
 import (
-	"fmt"
+	"context"
 	"github.com/odysseia-greek/agora/plato/logging"
 	"github.com/odysseia-greek/agora/theofrastos/futikon"
 	"log"
-	"time"
+	"os/signal"
+	"syscall"
 )
 
 func main() {
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+
 	//https://patorjk.com/software/taag/#p=display&f=Crawford2&t=theofrastos
 	logging.System(`
  ______  __ __    ___   ___   _____  ____    ____  _____ ______   ___   _____
@@ -29,12 +33,7 @@ func main() {
 		log.Fatal("death has found me")
 	}
 
-	go func() {
-		err := handler.WatchConfigMapChanges()
-		if err != nil {
-			logging.Error(fmt.Sprintf("Failed to start watching ConfigMap: %v", err))
-		}
-	}()
-
-	time.Sleep(5 * time.Hour)
+	if err := handler.WatchConfigMapChanges(ctx); err != nil && ctx.Err() == nil {
+		logging.Errorf("failed to watch ConfigMap: %v", err)
+	}
 }

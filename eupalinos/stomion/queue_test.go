@@ -3,7 +3,7 @@ package stomion
 import (
 	"context"
 	"encoding/json"
-	pb "github.com/odysseia-greek/agora/eupalinos/proto"
+	pb "github.com/odysseia-greek/agora/eupalinos/v1"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
@@ -18,7 +18,7 @@ const GENERATED_ID string = "eupalinos-test-uuid"
 func NewMockEupalinosServer() *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Handle the EnqueueMessage request
-		if r.Method == http.MethodPost && r.URL.Path == "/proto.Eupalinos/EnqueueMessage" {
+		if r.Method == http.MethodPost && r.URL.Path == "/eupalinos.v1.Eupalinos/EnqueueMessage" {
 			// Decode the request body into pb.Epistello message
 			var requestMessage pb.Epistello
 			err := json.NewDecoder(r.Body).Decode(&requestMessage)
@@ -134,10 +134,10 @@ func TestDequeueMessage(t *testing.T) {
 					LastMessageReceived: time.Now(),
 					Name:                channelName,
 					InternalID:          "",
-					MessageQueue: map[string]pb.InternalEpistello{
+					MessageQueue: map[string]*pb.InternalEpistello{
 						channelName: {
 							Id:      "testuuid",
-							Data:    data,
+							Payload: &pb.InternalEpistello_Data{Data: data},
 							Channel: channelName,
 							Traceid: GENERATED_ID,
 						},
@@ -192,16 +192,16 @@ func TestDequeueMessage(t *testing.T) {
 					LastMessageReceived: time.Now(),
 					Name:                channelName,
 					InternalID:          "",
-					MessageQueue: map[string]pb.InternalEpistello{
+					MessageQueue: map[string]*pb.InternalEpistello{
 						"testuuid": {
 							Id:      "testuuid",
-							Data:    data,
+							Payload: &pb.InternalEpistello_Data{Data: data},
 							Channel: channelName,
 							Traceid: GENERATED_ID,
 						},
 						"testuuid2": {
 							Id:      "testuuid2",
-							Data:    data,
+							Payload: &pb.InternalEpistello_Data{Data: data},
 							Channel: channelName,
 							Traceid: GENERATED_ID,
 						},
@@ -240,4 +240,78 @@ func IsUUID(s string) bool {
 	uuidPattern := `^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$`
 	re := regexp.MustCompile(uuidPattern)
 	return re.MatchString(s)
+}
+
+func TestAcknowledgedDequeue(t *testing.T) {
+	queue := NewMockQueueService()
+	ctx := context.Background()
+
+	enqueued, err := queue.EnqueueMessage(ctx, &pb.Epistello{Channel: "jobs", Data: "do work"})
+	assert.NoError(t, err)
+
+	message, err := queue.DequeueMessage(ctx, &pb.ChannelInfo{Name: "jobs", AckMode: true})
+	assert.NoError(t, err)
+	assert.Equal(t, enqueued.Id, message.Id)
+
+	length, err := queue.GetQueueLength(ctx, &pb.ChannelInfo{Name: "jobs"})
+	assert.NoError(t, err)
+	assert.Equal(t, int32(1), length.Length)
+	assert.Equal(t, int32(1), length.PendingAcknowledgements)
+
+	_, err = queue.DequeueMessage(ctx, &pb.ChannelInfo{Name: "jobs", AckMode: true})
+	assert.ErrorContains(t, err, "no available message")
+
+	acknowledged, err := queue.AcknowledgeMessage(ctx, &pb.AcknowledgeRequest{Channel: "jobs", Id: message.Id})
+	assert.NoError(t, err)
+	assert.True(t, acknowledged.Acknowledged)
+
+	length, err = queue.GetQueueLength(ctx, &pb.ChannelInfo{Name: "jobs"})
+	assert.NoError(t, err)
+	assert.Zero(t, length.Length)
+	assert.Zero(t, length.PendingAcknowledgements)
+}
+
+func TestMockQueueServiceDequeuesRealMessages(t *testing.T) {
+	queue := NewMockQueueService()
+	ctx := context.Background()
+
+	_, err := queue.EnqueueMessageBytes(ctx, &pb.EpistelloBytes{Channel: "events", Data: []byte{1, 2, 3}})
+	assert.NoError(t, err)
+
+	message, err := queue.DequeueMessageBytes(ctx, &pb.ChannelInfo{Name: "events"})
+	assert.NoError(t, err)
+	assert.Equal(t, []byte{1, 2, 3}, message.Data)
+
+	length, err := queue.GetQueueLength(ctx, &pb.ChannelInfo{Name: "events"})
+	assert.NoError(t, err)
+	assert.Zero(t, length.Length)
+}
+
+func TestNackMovesMessageToBackAndCountsDenials(t *testing.T) {
+	queue := NewMockQueueService()
+	ctx := context.Background()
+
+	first, err := queue.EnqueueMessage(ctx, &pb.Epistello{Channel: "jobs", Data: "first"})
+	assert.NoError(t, err)
+	_, err = queue.EnqueueMessage(ctx, &pb.Epistello{Channel: "jobs", Data: "second"})
+	assert.NoError(t, err)
+
+	message, err := queue.DequeueMessage(ctx, &pb.ChannelInfo{Name: "jobs", AckMode: true})
+	assert.NoError(t, err)
+	assert.Equal(t, first.Id, message.Id)
+	assert.Zero(t, message.Delivery.NackCount)
+
+	nacked, err := queue.NackMessage(ctx, &pb.NackRequest{Channel: "jobs", Id: message.Id})
+	assert.NoError(t, err)
+	assert.True(t, nacked.Requeued)
+	assert.Equal(t, uint32(1), nacked.NackCount)
+
+	message, err = queue.DequeueMessage(ctx, &pb.ChannelInfo{Name: "jobs"})
+	assert.NoError(t, err)
+	assert.Equal(t, "second", message.Data)
+
+	message, err = queue.DequeueMessage(ctx, &pb.ChannelInfo{Name: "jobs", AckMode: true})
+	assert.NoError(t, err)
+	assert.Equal(t, first.Id, message.Id)
+	assert.Equal(t, uint32(1), message.Delivery.NackCount)
 }

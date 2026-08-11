@@ -19,11 +19,7 @@ func NewPolicyImpl(suppliedClient *elasticsearch.Client) (*PolicyImpl, error) {
 	return &PolicyImpl{es: suppliedClient}, nil
 }
 
-func (p *PolicyImpl) CreatePolicyWithRollOver(name, maxAge, phase string) (*models.IndexCreateResult, error) {
-	return p.CreatePolicyWithRollOverWithContext(context.Background(), name, maxAge, phase)
-}
-
-func (p *PolicyImpl) CreatePolicyWithRollOverWithContext(ctx context.Context, name, maxAge, phase string) (*models.IndexCreateResult, error) {
+func (p *PolicyImpl) CreatePolicyWithRollOver(ctx context.Context, name, maxAge, phase string) (*models.IndexCreateResult, error) {
 	policyDefinition := fmt.Sprintf(`{
 		"policy": {
 			"phases": {
@@ -41,11 +37,7 @@ func (p *PolicyImpl) CreatePolicyWithRollOverWithContext(ctx context.Context, na
 	return p.create(ctx, name, policyDefinition)
 }
 
-func (p *PolicyImpl) CreatePolicy(name, phase string) (*models.IndexCreateResult, error) {
-	return p.CreatePolicyWithContext(context.Background(), name, phase)
-}
-
-func (p *PolicyImpl) CreatePolicyWithContext(ctx context.Context, name, phase string) (*models.IndexCreateResult, error) {
+func (p *PolicyImpl) CreatePolicy(ctx context.Context, name, phase string) (*models.IndexCreateResult, error) {
 	policyDefinition := fmt.Sprintf(`{
 	"policy": {
 		"phases": {

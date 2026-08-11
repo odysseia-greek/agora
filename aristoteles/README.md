@@ -23,6 +23,8 @@ To use `aristoteles`, first define a configuration and create a new client:
 
 ```go
 import (
+	"context"
+
     "github.com/odysseia-greek/agora/aristoteles"
     "github.com/odysseia-greek/agora/aristoteles/models"
 )
@@ -47,10 +49,11 @@ func main() {
 The `Query()` sub-interface handles searches:
 
 ```go
+ctx := context.Background()
 queryBuilder := client.Builder()
 query := queryBuilder.MatchQuery("word", "λόγος")
 
-response, err := client.Query().Match("dictionary", query)
+response, err := client.Query().Match(ctx, "dictionary", query)
 if err != nil {
     // handle error
 }
@@ -66,8 +69,38 @@ Use the `Document()` or `Index()` sub-interfaces for CRUD operations:
 
 ```go
 body := []byte(`{"word": "λόγος", "meaning": "word, reason"}`)
-res, err := client.Index().CreateDocument("dictionary", body)
+res, err := client.Index().CreateDocument(ctx, "dictionary", body)
 ```
+
+## Migrating from v0.3.x to v0.4.0
+
+Version `v0.4.0` requires a `context.Context` for every Elasticsearch operation.
+The non-context methods and the `XWithContext` method names were removed. Pass
+the context as the first argument to the original method name:
+
+| v0.3.x | v0.4.0 |
+| --- | --- |
+| `MatchWithContext(ctx, index, query)` | `Match(ctx, index, query)` |
+| `CreateWithContext(ctx, index, body)` | `Create(ctx, index, body)` |
+| `CreateWithIdWithContext(ctx, index, id, body)` | `CreateWithId(ctx, index, id, body)` |
+| `UpdateWithContext(ctx, index, id, body)` | `Update(ctx, index, id, body)` |
+| `DeleteWithContext(ctx, index)` | `Delete(ctx, index)` |
+| `CreateUserWithContext(ctx, name, request)` | `CreateUser(ctx, name, request)` |
+
+Code using the old background-context convenience methods must now supply a
+context explicitly:
+
+```go
+// v0.3.x
+response, err := client.Query().Match(index, query)
+
+// v0.4.0
+response, err := client.Query().Match(ctx, index, query)
+```
+
+Use the request context in handlers and jobs whenever one is available. Only
+use `context.Background()` at an application boundary that genuinely has no
+parent context.
 
 ## Sub-Interfaces
 

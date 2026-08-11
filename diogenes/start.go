@@ -1,22 +1,23 @@
 package diogenes
 
 import (
+	"context"
 	"fmt"
 	"github.com/hashicorp/vault/api"
 	"time"
 )
 
 // Initialize initializes the Vault server.
-func (v *Vault) Initialize(shares, threshold int) (*api.InitResponse, error) {
+func (v *Vault) Initialize(ctx context.Context, shares, threshold int) (*api.InitResponse, error) {
 	initRequest := &api.InitRequest{
 		SecretShares:    shares,
 		SecretThreshold: threshold,
 	}
 
-	return v.Connection.Sys().Init(initRequest)
+	return v.Connection.Sys().InitWithContext(ctx, initRequest)
 }
 
-func (v *Vault) InitializeAutoUnseal(shares, threshold int) (*api.InitResponse, error) {
+func (v *Vault) InitializeAutoUnseal(ctx context.Context, shares, threshold int) (*api.InitResponse, error) {
 	initRequest := &api.InitRequest{
 		SecretShares:      0,
 		SecretThreshold:   0,
@@ -24,23 +25,23 @@ func (v *Vault) InitializeAutoUnseal(shares, threshold int) (*api.InitResponse, 
 		RecoveryShares:    shares,
 		RecoveryThreshold: threshold,
 	}
-	return v.Connection.Sys().Init(initRequest)
+	return v.Connection.Sys().InitWithContext(ctx, initRequest)
 }
 
-func (v *Vault) Leader() (*api.LeaderResponse, error) {
-	return v.Connection.Sys().Leader()
+func (v *Vault) Leader(ctx context.Context) (*api.LeaderResponse, error) {
+	return v.Connection.Sys().LeaderWithContext(ctx)
 }
 
 // Status attempts to unseal the Vault using the provided keys.
-func (v *Vault) Status() (*api.SealStatusResponse, error) {
+func (v *Vault) Status(ctx context.Context) (*api.SealStatusResponse, error) {
 	// Check if the Vault is sealed
-	return v.Connection.Sys().SealStatus()
+	return v.Connection.Sys().SealStatusWithContext(ctx)
 }
 
 // Unseal attempts to unseal the Vault using the provided keys.
-func (v *Vault) Unseal(keys []string) (bool, error) {
+func (v *Vault) Unseal(ctx context.Context, keys []string) (bool, error) {
 	// Check if the Vault is sealed
-	status, err := v.Status()
+	status, err := v.Status(ctx)
 	if err != nil {
 		return false, err
 	}
@@ -51,7 +52,7 @@ func (v *Vault) Unseal(keys []string) (bool, error) {
 
 	// Unseal the Vault
 	for _, key := range keys {
-		response, err := v.Connection.Sys().Unseal(key)
+		response, err := v.Connection.Sys().UnsealWithContext(ctx, key)
 		if err != nil {
 			return false, err
 		}
@@ -62,9 +63,11 @@ func (v *Vault) Unseal(keys []string) (bool, error) {
 		}
 
 		// it will take some time for the status to change if you don't wait another key will be presented resulting in an error
-		time.Sleep(1 * time.Second)
+		if err := waitForContext(ctx, time.Second); err != nil {
+			return false, err
+		}
 
-		status, err = v.Status()
+		status, err = v.Status(ctx)
 		if err != nil {
 			return false, err
 		}
@@ -79,9 +82,9 @@ func (v *Vault) Unseal(keys []string) (bool, error) {
 }
 
 // AutoUnsealGCP attempts to unseal Vault using a gcp provider key
-func (v *Vault) AutoUnsealGCP(keyRing, cryptoKey, location string, keys []string) (bool, error) {
+func (v *Vault) AutoUnsealGCP(ctx context.Context, keyRing, cryptoKey, location string, keys []string) (bool, error) {
 	// Check if the Vault is sealed
-	status, err := v.Status()
+	status, err := v.Status(ctx)
 	if err != nil {
 		return false, err
 	}
@@ -99,15 +102,17 @@ func (v *Vault) AutoUnsealGCP(keyRing, cryptoKey, location string, keys []string
 			"key":                key,
 		}
 
-		_, err = v.Connection.Logical().Write("sys/unseal", unsealConfig)
+		_, err = v.Connection.Logical().WriteWithContext(ctx, "sys/unseal", unsealConfig)
 		if err != nil {
 			return false, err
 		}
 
 		// it will take some time for the status to change if you don't wait another key will be presented resulting in an error
-		time.Sleep(1 * time.Second)
+		if err := waitForContext(ctx, time.Second); err != nil {
+			return false, err
+		}
 
-		status, err = v.Status()
+		status, err = v.Status(ctx)
 		if err != nil {
 			return false, err
 		}
@@ -120,7 +125,7 @@ func (v *Vault) AutoUnsealGCP(keyRing, cryptoKey, location string, keys []string
 	return false, fmt.Errorf("unable to unseal Vault with provided keys")
 }
 
-func (v *Vault) RaftJoin(leaderAddress string, cert, key, ca []byte) (*api.RaftJoinResponse, error) {
+func (v *Vault) RaftJoin(ctx context.Context, leaderAddress string, cert, key, ca []byte) (*api.RaftJoinResponse, error) {
 	raftCommand := &api.RaftJoinRequest{
 		LeaderAPIAddr:    leaderAddress,
 		LeaderClientKey:  string(key),
@@ -128,5 +133,17 @@ func (v *Vault) RaftJoin(leaderAddress string, cert, key, ca []byte) (*api.RaftJ
 		LeaderCACert:     string(ca),
 	}
 
-	return v.Connection.Sys().RaftJoin(raftCommand)
+	return v.Connection.Sys().RaftJoinWithContext(ctx, raftCommand)
+}
+
+func waitForContext(ctx context.Context, duration time.Duration) error {
+	timer := time.NewTimer(duration)
+	defer timer.Stop()
+
+	select {
+	case <-timer.C:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
 }

@@ -1,13 +1,14 @@
 package diogenes
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"time"
 )
 
-func (v *Vault) Health() (bool, error) {
-	_, err := v.Connection.Logical().Read("sys/health")
+func (v *Vault) Health(ctx context.Context) (bool, error) {
+	_, err := v.Connection.Sys().HealthWithContext(ctx)
 	if err != nil {
 		return false, fmt.Errorf("unable to connect to vault: %w", err)
 	}
@@ -15,31 +16,32 @@ func (v *Vault) Health() (bool, error) {
 	return true, nil
 }
 
-func (v *Vault) CheckHealthyStatus(ticks, tick time.Duration) bool {
-	healthy := false
+func (v *Vault) CheckHealthyStatus(ctx context.Context, ticks, tick time.Duration) bool {
+	if ticks <= 0 || tick <= 0 {
+		return false
+	}
 
 	ticker := time.NewTicker(tick)
-	timeout := time.After(ticks)
+	defer ticker.Stop()
+	timeout := time.NewTimer(ticks)
+	defer timeout.Stop()
 
 	for {
 		select {
 		case t := <-ticker.C:
 			log.Printf("tick: %s", t)
-			res, err := v.Health()
+			healthy, err := v.Health(ctx)
 			if err != nil {
 				log.Printf("Error getting response: %s", err)
 				continue
 			}
-			if res {
-				healthy = true
-				ticker.Stop()
+			if healthy {
+				return true
 			}
-
-		case <-timeout:
-			ticker.Stop()
+		case <-timeout.C:
+			return false
+		case <-ctx.Done():
+			return false
 		}
-		break
 	}
-
-	return healthy
 }

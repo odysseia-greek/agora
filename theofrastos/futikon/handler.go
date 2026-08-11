@@ -1,21 +1,23 @@
 package futikon
 
 import (
+	"context"
 	"fmt"
+
 	elastic "github.com/odysseia-greek/agora/aristoteles"
 	"github.com/odysseia-greek/agora/plato/logging"
-	"github.com/odysseia-greek/agora/thales"
 	"gopkg.in/yaml.v3"
+	"k8s.io/client-go/kubernetes"
 )
 
 type TheofratosHandler struct {
 	Elastic       elastic.Client
 	Namespace     string
 	ConfigMapName string
-	Kube          *thales.KubeClient
+	Kube          kubernetes.Interface
 }
 
-func (t *TheofratosHandler) handle(configMap map[string]string) error {
+func (t *TheofratosHandler) handle(ctx context.Context, configMap map[string]string) error {
 	var config Config
 
 	// Unmarshal roles
@@ -50,13 +52,13 @@ func (t *TheofratosHandler) handle(configMap map[string]string) error {
 
 	// Create roles
 	for roleName, role := range config.Roles {
-		if err := t.createElasticRoles(role, roleName); err != nil {
+		if err := t.createElasticRoles(ctx, role, roleName); err != nil {
 			return fmt.Errorf("failed to create role %s: %v", roleName, err)
 		}
 	}
 
 	// Create users
-	existingUsers, err := t.Elastic.Access().ListUsers()
+	existingUsers, err := t.Elastic.Access().ListUsers(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to list existing users: %w", err)
 	}
@@ -72,7 +74,7 @@ func (t *TheofratosHandler) handle(configMap map[string]string) error {
 			continue
 		}
 
-		if err := t.createElasticUser(user, name); err != nil {
+		if err := t.createElasticUser(ctx, user, name); err != nil {
 			return fmt.Errorf("failed to create user %s: %w", name, err)
 		}
 
@@ -82,7 +84,7 @@ func (t *TheofratosHandler) handle(configMap map[string]string) error {
 	// Create policies
 	for phaseName, policyPhase := range config.Policies {
 		for _, policy := range policyPhase.Rollover {
-			if err := t.createILMPolicy(policy.Name, phaseName, policy.MaxAge); err != nil {
+			if err := t.createILMPolicy(ctx, policy.Name, phaseName, policy.MaxAge); err != nil {
 				return fmt.Errorf("failed to create ILM policy %s: %v", policy.Name, err)
 			}
 		}

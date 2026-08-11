@@ -1,8 +1,10 @@
 package diogenes
 
 import (
-	"github.com/stretchr/testify/assert"
+	"context"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestUnsealClient(t *testing.T) {
@@ -14,7 +16,7 @@ func TestUnsealClient(t *testing.T) {
 		keys := []string{"key1", "key2", "key3"}
 
 		// Call the Unseal method
-		unsealed, err := testClient.Unseal(keys)
+		unsealed, err := testClient.Unseal(context.Background(), keys)
 		assert.Nil(t, err)
 
 		// Assertions
@@ -28,7 +30,7 @@ func TestUnsealClient(t *testing.T) {
 		assert.Nil(t, err)
 
 		// Call the Unseal method
-		status, err := testClient.Status()
+		status, err := testClient.Status(context.Background())
 		assert.Nil(t, err)
 
 		// Assertions
@@ -43,7 +45,7 @@ func TestUnsealClient(t *testing.T) {
 		assert.Nil(t, err)
 
 		// Call the Unseal method
-		initialized, err := testClient.Initialize(1, 1)
+		initialized, err := testClient.Initialize(context.Background(), 1, 1)
 		assert.Nil(t, err)
 
 		// Assertions

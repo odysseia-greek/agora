@@ -24,7 +24,7 @@ func TestQueryClientMatch(t *testing.T) {
 
 		body := testClient.Builder().MatchQuery(match, word)
 
-		sut, err := testClient.Query().Match(index, body)
+		sut, err := testClient.Query().Match(context.Background(), index, body)
 		assert.Nil(t, err)
 		assert.Equal(t, expected, sut.Hits.Total.Value)
 	})
@@ -39,10 +39,10 @@ func TestQueryClientMatch(t *testing.T) {
 
 		body := testClient.Builder().MatchQuery(match, word)
 
-		sut, err := testClient.Query().Match(index, body)
+		sut, err := testClient.Query().Match(context.Background(), index, body)
 		assert.Nil(t, err)
 		assert.Equal(t, expectedFirstCall, sut.Hits.Total.Value)
-		sut2, err := testClient.Query().Match(index, body)
+		sut2, err := testClient.Query().Match(context.Background(), index, body)
 		assert.Nil(t, err)
 		assert.Equal(t, expectedSecondCall, sut2.Hits.Total.Value)
 	})
@@ -55,7 +55,7 @@ func TestQueryClientMatch(t *testing.T) {
 
 		body := testClient.Builder().MatchQuery(match, word)
 
-		sut, err := testClient.Query().Match(index, body)
+		sut, err := testClient.Query().Match(context.Background(), index, body)
 		assert.NotNil(t, err)
 		assert.Nil(t, sut)
 		assert.Contains(t, err.Error(), errorMessage)
@@ -69,7 +69,7 @@ func TestQueryClientMatch(t *testing.T) {
 
 		body := testClient.Builder().MatchQuery(match, word)
 
-		sut, err := testClient.Query().Match(index, body)
+		sut, err := testClient.Query().Match(context.Background(), index, body)
 		assert.NotNil(t, err)
 		assert.Nil(t, sut)
 		assert.Contains(t, err.Error(), expectedMalformed)
@@ -85,7 +85,7 @@ func TestQueryClientMatch(t *testing.T) {
 			"key": make(chan int),
 		}
 
-		sut, err := testClient.Query().Match(index, invalidBody)
+		sut, err := testClient.Query().Match(context.Background(), index, invalidBody)
 		assert.NotNil(t, err)
 		assert.Nil(t, sut)
 	})
@@ -102,7 +102,7 @@ func TestQueryClientMatch(t *testing.T) {
 
 		body := testClient.Builder().MatchQuery(match, word)
 
-		sut, err := testClient.Query().Match(index, body)
+		sut, err := testClient.Query().Match(context.Background(), index, body)
 		assert.NotNil(t, err)
 		assert.Nil(t, sut)
 	})
@@ -156,7 +156,7 @@ func TestQueryClientMatchWithScroll(t *testing.T) {
 
 		body := testClient.Builder().MatchQuery(match, word)
 
-		sut, err := testClient.Query().MatchWithScroll(index, body)
+		sut, err := testClient.Query().MatchWithScroll(context.Background(), index, body)
 		assert.Nil(t, err)
 		assert.Equal(t, len(sut.Hits.Hits), 5)
 	})
@@ -169,7 +169,7 @@ func TestQueryClientMatchWithScroll(t *testing.T) {
 
 		body := testClient.Builder().MatchQuery(match, word)
 
-		sut, err := testClient.Query().MatchWithScroll(index, body)
+		sut, err := testClient.Query().MatchWithScroll(context.Background(), index, body)
 		assert.NotNil(t, err)
 		assert.Nil(t, sut)
 		assert.Contains(t, err.Error(), errorMessage)
@@ -183,7 +183,7 @@ func TestQueryClientMatchWithScroll(t *testing.T) {
 
 		body := testClient.Builder().MatchQuery(match, word)
 
-		sut, err := testClient.Query().MatchWithScroll(index, body)
+		sut, err := testClient.Query().MatchWithScroll(context.Background(), index, body)
 		assert.NotNil(t, err)
 		assert.Nil(t, sut)
 		assert.Contains(t, err.Error(), expectedMalformed)
@@ -199,7 +199,7 @@ func TestQueryClientMatchWithScroll(t *testing.T) {
 			"key": make(chan int),
 		}
 
-		sut, err := testClient.Query().MatchWithScroll(index, invalidBody)
+		sut, err := testClient.Query().MatchWithScroll(context.Background(), index, invalidBody)
 		assert.NotNil(t, err)
 		assert.Nil(t, sut)
 	})
@@ -216,7 +216,7 @@ func TestQueryClientMatchWithScroll(t *testing.T) {
 
 		body := testClient.Builder().MatchQuery(match, word)
 
-		sut, err := testClient.Query().MatchWithScroll(index, body)
+		sut, err := testClient.Query().MatchWithScroll(context.Background(), index, body)
 		assert.NotNil(t, err)
 		assert.Nil(t, sut)
 	})
@@ -237,7 +237,7 @@ func TestQueryClientMatchAggregate(t *testing.T) {
 		assert.Nil(t, err)
 
 		body := testClient.Builder().Aggregate(aggregate, field)
-		sut, err := testClient.Query().MatchAggregate(index, body)
+		sut, err := testClient.Query().MatchAggregate(context.Background(), index, body)
 		assert.Nil(t, err)
 		assert.Equal(t, expected, sut.Hits.Total.Value)
 		for _, bucket := range sut.Aggregations.AuthorAggregation.Buckets {
@@ -252,7 +252,7 @@ func TestQueryClientMatchAggregate(t *testing.T) {
 		assert.Nil(t, err)
 
 		body := testClient.Builder().Aggregate(aggregate, field)
-		sut, err := testClient.Query().MatchAggregate(index, body)
+		sut, err := testClient.Query().MatchAggregate(context.Background(), index, body)
 		assert.NotNil(t, err)
 		assert.Nil(t, sut)
 		assert.Contains(t, err.Error(), errorMessage)
@@ -265,7 +265,7 @@ func TestQueryClientMatchAggregate(t *testing.T) {
 		assert.Nil(t, err)
 
 		body := testClient.Builder().Aggregate(aggregate, field)
-		sut, err := testClient.Query().MatchAggregate(index, body)
+		sut, err := testClient.Query().MatchAggregate(context.Background(), index, body)
 		assert.NotNil(t, err)
 		assert.Nil(t, sut)
 		assert.Contains(t, err.Error(), expectedMalformed)
@@ -281,7 +281,7 @@ func TestQueryClientMatchAggregate(t *testing.T) {
 			"key": make(chan int),
 		}
 
-		sut, err := testClient.Query().MatchAggregate(index, invalidBody)
+		sut, err := testClient.Query().MatchAggregate(context.Background(), index, invalidBody)
 		assert.NotNil(t, err)
 		assert.Nil(t, sut)
 	})
@@ -297,7 +297,7 @@ func TestQueryClientMatchAggregate(t *testing.T) {
 		assert.Nil(t, err)
 
 		body := testClient.Builder().Aggregate(aggregate, field)
-		sut, err := testClient.Query().MatchAggregate(index, body)
+		sut, err := testClient.Query().MatchAggregate(context.Background(), index, body)
 		assert.NotNil(t, err)
 		assert.Nil(t, sut)
 	})
@@ -327,7 +327,7 @@ func TestQueryClientSort(t *testing.T) {
 		assert.Nil(t, err)
 
 		body := testClient.Builder().MultipleMatch(query)
-		sut, err := testClient.Query().MatchWithSort(index, mode, sort, size, body)
+		sut, err := testClient.Query().MatchWithSort(context.Background(), index, mode, sort, size, body)
 		assert.Nil(t, err)
 		assert.Equal(t, size, len(sut.Hits.Hits))
 	})
@@ -339,7 +339,7 @@ func TestQueryClientSort(t *testing.T) {
 		assert.Nil(t, err)
 
 		body := testClient.Builder().MultipleMatch(query)
-		sut, err := testClient.Query().MatchWithSort(index, mode, sort, size, body)
+		sut, err := testClient.Query().MatchWithSort(context.Background(), index, mode, sort, size, body)
 		assert.NotNil(t, err)
 		assert.Nil(t, sut)
 		assert.Contains(t, err.Error(), errorMessage)
@@ -352,7 +352,7 @@ func TestQueryClientSort(t *testing.T) {
 		assert.Nil(t, err)
 
 		body := testClient.Builder().MultipleMatch(query)
-		sut, err := testClient.Query().MatchWithSort(index, mode, sort, size, body)
+		sut, err := testClient.Query().MatchWithSort(context.Background(), index, mode, sort, size, body)
 		assert.NotNil(t, err)
 		assert.Nil(t, sut)
 		assert.Contains(t, err.Error(), expectedMalformed)
@@ -368,7 +368,7 @@ func TestQueryClientSort(t *testing.T) {
 			"key": make(chan int),
 		}
 
-		sut, err := testClient.Query().MatchWithSort(index, mode, sort, size, invalidBody)
+		sut, err := testClient.Query().MatchWithSort(context.Background(), index, mode, sort, size, invalidBody)
 		assert.NotNil(t, err)
 		assert.Nil(t, sut)
 	})
@@ -384,7 +384,7 @@ func TestQueryClientSort(t *testing.T) {
 		assert.Nil(t, err)
 
 		body := testClient.Builder().MultipleMatch(query)
-		sut, err := testClient.Query().MatchWithSort(index, mode, sort, size, body)
+		sut, err := testClient.Query().MatchWithSort(context.Background(), index, mode, sort, size, body)
 		assert.NotNil(t, err)
 		assert.Nil(t, sut)
 	})

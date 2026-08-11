@@ -2,11 +2,11 @@ package futikon
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/odysseia-greek/agora/aristoteles"
 	"github.com/odysseia-greek/agora/plato/config"
 	"github.com/odysseia-greek/agora/plato/logging"
-	"github.com/odysseia-greek/agora/thales"
-	"os"
 )
 
 func CreateNewConfig() (*TheofratosHandler, error) {
@@ -15,7 +15,7 @@ func CreateNewConfig() (*TheofratosHandler, error) {
 	tls := config.BoolFromEnv(config.EnvTlSKey)
 	cfg, err := aristoteles.ElasticConfig(tls)
 	if err != nil {
-		logging.Error(fmt.Sprintf("failed to create Elastic client operations will be interupted, %s", err.Error()))
+		return nil, fmt.Errorf("create Elasticsearch configuration: %w", err)
 	}
 
 	elastic, err := aristoteles.NewClient(cfg)
@@ -38,7 +38,7 @@ func CreateNewConfig() (*TheofratosHandler, error) {
 
 	}
 
-	kube, err := thales.CreateKubeClient(false)
+	kube, err := newKubeClient()
 	if err != nil {
 		return nil, err
 	}

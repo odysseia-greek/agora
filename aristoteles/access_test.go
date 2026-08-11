@@ -1,9 +1,11 @@
 package aristoteles
 
 import (
+	"context"
+	"testing"
+
 	"github.com/odysseia-greek/agora/aristoteles/models"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestCreateRoles(t *testing.T) {
@@ -22,7 +24,7 @@ func TestCreateRoles(t *testing.T) {
 			RunAs:        nil,
 			Metadata:     models.Metadata{},
 		}
-		sut, err := testClient.Access().CreateRole(name, roleRequest)
+		sut, err := testClient.Access().CreateRole(context.Background(), name, roleRequest)
 		assert.Nil(t, err)
 		assert.True(t, sut)
 	})
@@ -41,7 +43,7 @@ func TestCreateRoles(t *testing.T) {
 			Metadata:     models.Metadata{},
 		}
 
-		sut, err := testClient.Access().CreateRole(name, roleRequest)
+		sut, err := testClient.Access().CreateRole(context.Background(), name, roleRequest)
 		assert.NotNil(t, err)
 		assert.False(t, sut)
 	})
@@ -64,7 +66,7 @@ func TestCreateRoles(t *testing.T) {
 			Metadata:     models.Metadata{},
 		}
 
-		sut, err := testClient.Access().CreateRole(name, roleRequest)
+		sut, err := testClient.Access().CreateRole(context.Background(), name, roleRequest)
 		assert.NotNil(t, err)
 		assert.False(t, sut)
 	})
@@ -86,7 +88,7 @@ func TestCreateUser(t *testing.T) {
 			Email:    "lex@megalos.com",
 			Metadata: nil,
 		}
-		sut, err := testClient.Access().CreateUser(name, userRequest)
+		sut, err := testClient.Access().CreateUser(context.Background(), name, userRequest)
 		assert.Nil(t, err)
 		assert.True(t, sut)
 	})
@@ -105,7 +107,7 @@ func TestCreateUser(t *testing.T) {
 			Metadata: nil,
 		}
 
-		sut, err := testClient.Access().CreateUser(name, userRequest)
+		sut, err := testClient.Access().CreateUser(context.Background(), name, userRequest)
 		assert.NotNil(t, err)
 		assert.False(t, sut)
 	})
@@ -128,7 +130,7 @@ func TestCreateUser(t *testing.T) {
 			Metadata: nil,
 		}
 
-		sut, err := testClient.Access().CreateUser(name, userRequest)
+		sut, err := testClient.Access().CreateUser(context.Background(), name, userRequest)
 		assert.NotNil(t, err)
 		assert.False(t, sut)
 	})

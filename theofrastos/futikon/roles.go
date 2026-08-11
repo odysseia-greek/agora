@@ -1,12 +1,13 @@
 package futikon
 
 import (
+	"context"
 	"fmt"
 	"github.com/odysseia-greek/agora/aristoteles/models"
 	"github.com/odysseia-greek/agora/plato/logging"
 )
 
-func (t *TheofratosHandler) createElasticRoles(role RoleMapping, roleName string) error {
+func (t *TheofratosHandler) createElasticRoles(ctx context.Context, role RoleMapping, roleName string) error {
 	// Create the role for each index
 	if len(role.Indices) == 0 || role.Indices[0] == "" {
 		logging.Debug(fmt.Sprintf("creating a role for admin with role %s", roleName))
@@ -20,7 +21,7 @@ func (t *TheofratosHandler) createElasticRoles(role RoleMapping, roleName string
 			Metadata:     models.Metadata{Version: 1},
 		}
 
-		roleCreated, err := t.Elastic.Access().CreateRole(roleName, putRole)
+		roleCreated, err := t.Elastic.Access().CreateRole(ctx, roleName, putRole)
 		if err != nil {
 			return fmt.Errorf("failed to create role %s: %v", roleName, err)
 		}
@@ -62,7 +63,7 @@ func (t *TheofratosHandler) createElasticRoles(role RoleMapping, roleName string
 			}
 
 			nameInElastic := fmt.Sprintf("%s_%s", index, roleName)
-			roleCreated, err := t.Elastic.Access().CreateRole(nameInElastic, putRole)
+			roleCreated, err := t.Elastic.Access().CreateRole(ctx, nameInElastic, putRole)
 			if err != nil {
 				return fmt.Errorf("failed to create role %s for index %s: %v", roleName, index, err)
 			}

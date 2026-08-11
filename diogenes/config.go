@@ -1,6 +1,7 @@
 package diogenes
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -23,7 +24,8 @@ const (
 	AuthMethodKube          = "kubernetes"
 	AuthMethodToken         = "token"
 	defaultTLSFileLocation  = "/etc/certs"
-	serviceAccountTokenPath = "/var/run/secrets/kubernetes.io/serviceaccount/token"
+	EnvVaultKubernetesTokenPath    = "VAULT_KUBERNETES_TOKEN_PATH"
+	defaultServiceAccountTokenPath = "/var/run/secrets/kubernetes.io/serviceaccount/token"
 )
 
 func getStringFromEnv(envName, defaultValue string) string {
@@ -48,10 +50,19 @@ func getBoolFromEnv(envName string) bool {
 	return value
 }
 
-func CreateVaultClient(healthCheck bool) (Client, error) {
+func CreateVaultClient(ctx context.Context, healthCheck bool) (Client, error) {
 	var vaultClient Client
 
 	vaultAuthMethod := getStringFromEnv(EnvAuthMethod, AuthMethodToken)
+	if vaultAuthMethod != AuthMethodKube && vaultAuthMethod != AuthMethodToken {
+		return nil, fmt.Errorf(
+			"unsupported %s %q: expected %q or %q",
+			EnvAuthMethod,
+			vaultAuthMethod,
+			AuthMethodKube,
+			AuthMethodToken,
+		)
+	}
 	vaultService := getStringFromEnv(EnvVaultService, defaultVault)
 	vaultRole := getStringFromEnv(EnvVaultRole, defaultRoleName)
 	tlsEnabled := getBoolFromEnv(EnvTLSEnabled)
@@ -69,6 +80,7 @@ func CreateVaultClient(healthCheck bool) (Client, error) {
 	}
 
 	if vaultAuthMethod == AuthMethodKube {
+		serviceAccountTokenPath := getStringFromEnv(EnvVaultKubernetesTokenPath, defaultServiceAccountTokenPath)
 		jwt, err := os.ReadFile(serviceAccountTokenPath)
 		if err != nil {
 			log.Print(err)
@@ -77,7 +89,7 @@ func CreateVaultClient(healthCheck bool) (Client, error) {
 
 		vaultToken := string(jwt)
 
-		client, err := CreateVaultClientKubernetes(vaultService, vaultRole, vaultToken, tlsConfig)
+		client, err := CreateVaultClientKubernetes(ctx, vaultService, vaultRole, vaultToken, tlsConfig)
 		if err != nil {
 			log.Print(err)
 			return nil, err
@@ -86,7 +98,7 @@ func CreateVaultClient(healthCheck bool) (Client, error) {
 		if healthCheck {
 			ticks := 120 * time.Second
 			tick := 1 * time.Second
-			healthy := client.CheckHealthyStatus(ticks, tick)
+			healthy := client.CheckHealthyStatus(ctx, ticks, tick)
 			if !healthy {
 				return nil, fmt.Errorf("error getting healthy status from vault")
 			}

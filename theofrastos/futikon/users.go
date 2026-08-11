@@ -8,12 +8,12 @@ import (
 	"github.com/odysseia-greek/agora/plato/generator"
 	"github.com/odysseia-greek/agora/plato/logging"
 	corev1 "k8s.io/api/core/v1"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"strings"
 	"time"
 )
 
-func (t *TheofratosHandler) createElasticUser(user UserMapping, username string) error {
+func (t *TheofratosHandler) createElasticUser(ctx context.Context, user UserMapping, username string) error {
 	logging.Debug(fmt.Sprintf("creating a user %s with role %s", username, user.Role))
 
 	password, err := generator.RandomPassword(24)
@@ -27,20 +27,16 @@ func (t *TheofratosHandler) createElasticUser(user UserMapping, username string)
 		"password": []byte(password),
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
+	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
 	defer cancel()
 
-	secretExists := true
 	_, err = t.Kube.CoreV1().Secrets(t.Namespace).Get(ctx, secretName, metav1.GetOptions{})
-	if err != nil {
-		if strings.Contains(err.Error(), "not found") {
-			secretExists = false
-		}
-	}
-
-	if secretExists {
+	if err == nil {
 		logging.Info(fmt.Sprintf("secret %s already exists", secretName))
 		return nil
+	}
+	if !k8serrors.IsNotFound(err) {
+		return fmt.Errorf("check whether secret %s exists: %w", secretName, err)
 	}
 
 	logging.Info(fmt.Sprintf("secret %s does not exist", secretName))
@@ -82,7 +78,7 @@ func (t *TheofratosHandler) createElasticUser(user UserMapping, username string)
 		Metadata: &models.Metadata{Version: 1},
 	}
 
-	userCreated, err := t.Elastic.Access().CreateUser(username, putUser)
+	userCreated, err := t.Elastic.Access().CreateUser(ctx, username, putUser)
 	if err != nil {
 		return err
 	}

@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	pb "github.com/odysseia-greek/agora/eupalinos/proto"
+	pb "github.com/odysseia-greek/agora/eupalinos/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -20,6 +20,8 @@ type QueueService interface {
 	GetQueueLength(ctx context.Context, in *pb.ChannelInfo) (*pb.QueueLength, error)
 	EnqueueMessageBytes(ctx context.Context, in *pb.EpistelloBytes) (*pb.EnqueueResponse, error)
 	DequeueMessageBytes(ctx context.Context, in *pb.ChannelInfo) (*pb.EpistelloBytes, error)
+	AcknowledgeMessage(ctx context.Context, in *pb.AcknowledgeRequest) (*pb.AcknowledgeResponse, error)
+	NackMessage(ctx context.Context, in *pb.NackRequest) (*pb.NackResponse, error)
 }
 
 const (
@@ -96,6 +98,14 @@ func (q *QueueClient) DequeueMessage(ctx context.Context, request *pb.ChannelInf
 
 func (q *QueueClient) DequeueMessageBytes(ctx context.Context, request *pb.ChannelInfo) (*pb.EpistelloBytes, error) {
 	return q.queue.DequeueMessageBytes(ctx, request)
+}
+
+func (q *QueueClient) AcknowledgeMessage(ctx context.Context, request *pb.AcknowledgeRequest) (*pb.AcknowledgeResponse, error) {
+	return q.queue.AcknowledgeMessage(ctx, request)
+}
+
+func (q *QueueClient) NackMessage(ctx context.Context, request *pb.NackRequest) (*pb.NackResponse, error) {
+	return q.queue.NackMessage(ctx, request)
 }
 
 func (q *QueueClient) GetQueueLength(ctx context.Context, request *pb.ChannelInfo) (*pb.QueueLength, error) {

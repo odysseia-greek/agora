@@ -10,31 +10,32 @@ import (
 )
 
 type Client interface {
-	CheckHealthyStatus(ticks, tick time.Duration) bool
-	Health() (bool, error)
-	CreateOneTimeToken(policy []string) (string, error)
-	ValidateToken(oneTimeToken string) (map[string]interface{}, error)
-	CreateNewSecret(name string, payload []byte) (bool, error)
-	GetSecret(name string) (*api.Secret, error)
-	RemoveSecret(name string) error
-	DeleteSecret(name string) error
-	ListSecrets() ([]string, error)
+	CheckHealthyStatus(ctx context.Context, ticks, tick time.Duration) bool
+	Health(ctx context.Context) (bool, error)
+	CreateOneTimeToken(ctx context.Context, policy []string) (string, error)
+	ValidateToken(ctx context.Context, oneTimeToken string) (map[string]interface{}, error)
+	CreateNewSecret(ctx context.Context, name string, payload []byte) (bool, error)
+	GetSecret(ctx context.Context, name string) (*api.Secret, error)
+	RemoveSecret(ctx context.Context, name string) error
+	DeleteSecret(ctx context.Context, name string) error
+	ListSecrets(ctx context.Context) ([]string, error)
 	SetOnetimeToken(token string)
 	LoginWithRootToken(rootToken string) error
 	GetCurrentToken() string
-	Unseal(keys []string) (bool, error)
-	AutoUnsealGCP(keyRing, cryptoKey, location string, keys []string) (bool, error)
-	Status() (*api.SealStatusResponse, error)
-	Initialize(shares, threshold int) (*api.InitResponse, error)
-	InitializeAutoUnseal(shares, threshold int) (*api.InitResponse, error)
-	EnableKVSecretsEngine(namespace, configName string) error
-	WritePolicy(policyName string, policyContent []byte) error
-	DeletePolicy(policyName string) (*api.Secret, error)
-	ReadPolicy(policyName string) (string, error)
-	ListPolicies() ([]string, error)
-	KubernetesAuthMethod(role, serviceAccountName, namespace, kubeHost string) error
-	RaftJoin(leaderAddress string, cert, key, ca []byte) (*api.RaftJoinResponse, error)
-	Leader() (*api.LeaderResponse, error)
+	Unseal(ctx context.Context, keys []string) (bool, error)
+	AutoUnsealGCP(ctx context.Context, keyRing, cryptoKey, location string, keys []string) (bool, error)
+	Status(ctx context.Context) (*api.SealStatusResponse, error)
+	Initialize(ctx context.Context, shares, threshold int) (*api.InitResponse, error)
+	InitializeAutoUnseal(ctx context.Context, shares, threshold int) (*api.InitResponse, error)
+	EnableKVSecretsEngine(ctx context.Context, namespace, configName string) error
+	WritePolicy(ctx context.Context, policyName string, policyContent []byte) error
+	DeletePolicy(ctx context.Context, policyName string) (*api.Secret, error)
+	ReadPolicy(ctx context.Context, policyName string) (string, error)
+	ListPolicies(ctx context.Context) ([]string, error)
+	KubernetesAuthMethod(ctx context.Context, role, serviceAccountName, namespace, kubeHost string) error
+	KubernetesAuthMethodWithAudience(ctx context.Context, role, serviceAccountName, namespace, kubeHost, audience string) error
+	RaftJoin(ctx context.Context, leaderAddress string, cert, key, ca []byte) (*api.RaftJoinResponse, error)
+	Leader(ctx context.Context) (*api.LeaderResponse, error)
 }
 
 type Vault struct {
@@ -73,7 +74,7 @@ func NewVaultClient(address, token string, tlsConfig *api.TLSConfig) (Client, er
 	return &Vault{Connection: client, SecretPath: defaultKVSecretData, KVSecretPath: defaultKVSecretPath}, nil
 }
 
-func CreateVaultClientKubernetes(address, vaultRole, jwt string, tlsConfig *api.TLSConfig) (Client, error) {
+func CreateVaultClientKubernetes(ctx context.Context, address, vaultRole, jwt string, tlsConfig *api.TLSConfig) (Client, error) {
 	config := api.Config{
 		Address: address,
 	}
@@ -94,9 +95,12 @@ func CreateVaultClientKubernetes(address, vaultRole, jwt string, tlsConfig *api.
 		vaultRole,
 		auth.WithServiceAccountToken(jwt),
 	)
+	if err != nil {
+		return nil, fmt.Errorf("create Kubernetes auth method: %w", err)
+	}
 
 	// log in to Vault's Kubernetes auth method
-	resp, err := client.Auth().Login(context.Background(), k8sAuth)
+	resp, err := client.Auth().Login(ctx, k8sAuth)
 	if err != nil {
 		return nil, fmt.Errorf("unable to log in with Kubernetes auth: %w", err)
 	}

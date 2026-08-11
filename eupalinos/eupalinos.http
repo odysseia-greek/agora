@@ -1,4 +1,4 @@
-GRPC localhost:50051/proto.Eupalinos/EnqueueMessage
+GRPC localhost:50051/eupalinos.v1.Eupalinos/EnqueueMessage
 
 {
   "data": "{\"method\":\"\",\"category\":\"\",\"greek\":\"Ἄβδηρα\",\"translation\":\"town of Abdera, known for stupidity of inhabitants\",\"chapter\":57}",
@@ -6,14 +6,14 @@ GRPC localhost:50051/proto.Eupalinos/EnqueueMessage
 }
 
 ###
-GRPC localhost:50052/proto.Eupalinos/DequeueMessage
+GRPC localhost:50052/eupalinos.v1.Eupalinos/DequeueMessage
 
 {
   "name": "test-channel"
 }
 
 ###
-GRPC localhost:50051/proto.Eupalinos/GetQueueLength
+GRPC localhost:50051/eupalinos.v1.Eupalinos/GetQueueLength
 
 {
   "name": "eupalinos"

@@ -1,9 +1,11 @@
 package diogenes
 
 import (
-	"github.com/stretchr/testify/assert"
+	"context"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestHealthClient(t *testing.T) {
@@ -14,7 +16,7 @@ func TestHealthClient(t *testing.T) {
 		fixtures := []string{"health"}
 		testClient, err := CreateMockVaultClient(fixtures, 200)
 		assert.Nil(t, err)
-		sut, err := testClient.Health()
+		sut, err := testClient.Health(context.Background())
 		assert.Nil(t, err)
 		assert.True(t, sut)
 	})
@@ -24,7 +26,7 @@ func TestHealthClient(t *testing.T) {
 		testClient, err := CreateMockVaultClient(fixtures, 200)
 		assert.Nil(t, err)
 
-		sut := testClient.CheckHealthyStatus(standardTicks, tick)
+		sut := testClient.CheckHealthyStatus(context.Background(), standardTicks, tick)
 		assert.Nil(t, err)
 		assert.True(t, sut)
 	})

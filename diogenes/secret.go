@@ -1,6 +1,7 @@
 package diogenes
 
 import (
+	"context"
 	"fmt"
 	"github.com/hashicorp/vault/api"
 	"log"
@@ -8,10 +9,10 @@ import (
 
 const SecretPrefix string = "secret"
 
-func (v *Vault) CreateNewSecret(name string, payload []byte) (bool, error) {
+func (v *Vault) CreateNewSecret(ctx context.Context, name string, payload []byte) (bool, error) {
 	vaultPath := fmt.Sprintf("%s/%s", v.SecretPath, name)
 
-	_, err := v.Connection.Logical().WriteBytes(vaultPath, payload)
+	_, err := v.Connection.Logical().WriteBytesWithContext(ctx, vaultPath, payload)
 	if err != nil {
 		return false, fmt.Errorf("unable to connect to vault: %w", err)
 	}
@@ -19,10 +20,10 @@ func (v *Vault) CreateNewSecret(name string, payload []byte) (bool, error) {
 	return true, nil
 }
 
-func (v *Vault) GetSecret(name string) (*api.Secret, error) {
+func (v *Vault) GetSecret(ctx context.Context, name string) (*api.Secret, error) {
 	vaultPath := fmt.Sprintf("%s/%s", v.SecretPath, name)
 
-	secret, err := v.Connection.Logical().Read(vaultPath)
+	secret, err := v.Connection.Logical().ReadWithContext(ctx, vaultPath)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read data from vault: %w", err)
 	}
@@ -30,12 +31,12 @@ func (v *Vault) GetSecret(name string) (*api.Secret, error) {
 	return secret, nil
 }
 
-func (v *Vault) ListSecrets() ([]string, error) {
+func (v *Vault) ListSecrets(ctx context.Context) ([]string, error) {
 	//curl -k -H "X-Vault-Token: $token" \
 	//--request LIST \
 	//https://vault:8200/v1/configs/metadata
 	vaultPath := fmt.Sprintf("%s/metadata", v.KVSecretPath)
-	secret, err := v.Connection.Logical().List(vaultPath)
+	secret, err := v.Connection.Logical().ListWithContext(ctx, vaultPath)
 	if err != nil {
 		return nil, fmt.Errorf("unable to list secrets in vault: %w", err)
 	}
@@ -62,23 +63,23 @@ func (v *Vault) ListSecrets() ([]string, error) {
 	return result, nil
 }
 
-func (v *Vault) RemoveSecret(name string) error {
+func (v *Vault) RemoveSecret(ctx context.Context, name string) error {
 	//	curl -k -H "X-Vault-Token: $token" \
 	//	--request DELETE \
 	//https://vault:8200/v1/configs/metadata/$secretName
 	vaultPath := fmt.Sprintf("%s/metadata/%s", v.KVSecretPath, name)
 
-	_, err := v.Connection.Logical().Delete(vaultPath)
+	_, err := v.Connection.Logical().DeleteWithContext(ctx, vaultPath)
 	if err != nil {
 		return fmt.Errorf("unable to delete secret in vault: %w", err)
 	}
 
 	return nil
 }
-func (v *Vault) DeleteSecret(name string) error {
+func (v *Vault) DeleteSecret(ctx context.Context, name string) error {
 	vaultPath := fmt.Sprintf("%s/%s", v.SecretPath, name)
 
-	_, err := v.Connection.Logical().Delete(vaultPath)
+	_, err := v.Connection.Logical().DeleteWithContext(ctx, vaultPath)
 	if err != nil {
 		return fmt.Errorf("unable to delete secret in vault: %w", err)
 	}
@@ -104,12 +105,12 @@ func (v *Vault) DeleteSecret(name string) error {
 // Usage example:
 //
 // // Enable KV secrets engine without using namespaces
-// err := EnableKVSecretsEngine("", "configs")
+// err := EnableKVSecretsEngine(ctx, "", "configs")
 //
 //	if err != nil {
 //	    log.Printf("Error enabling KV secrets engine: %v", err)
 //	}
-func (v *Vault) EnableKVSecretsEngine(namespace, configName string) error {
+func (v *Vault) EnableKVSecretsEngine(ctx context.Context, namespace, configName string) error {
 	var path string
 
 	// Set the path based on whether a namespace is provided
@@ -124,7 +125,7 @@ func (v *Vault) EnableKVSecretsEngine(namespace, configName string) error {
 	}
 
 	// Enable the KV secrets engine
-	err := v.Connection.Sys().Mount(path, &api.MountInput{
+	err := v.Connection.Sys().MountWithContext(ctx, path, &api.MountInput{
 		Type:        "kv",
 		Description: "KV secrets engine for odysseia-greek",
 		Options:     options,

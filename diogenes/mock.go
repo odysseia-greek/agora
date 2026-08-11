@@ -2,112 +2,96 @@ package diogenes
 
 import (
 	"bytes"
+	"embed"
 	"fmt"
-	"github.com/hashicorp/vault/api"
 	"io"
-	"io/ioutil"
 	"net/http"
-	"os"
-	"path/filepath"
-	"runtime"
-	"strings"
+	"sync"
+
+	"github.com/hashicorp/vault/api"
 )
 
-var (
-	fixtures = make(map[string]io.ReadCloser)
-)
-
-func init() {
-	_, callingFile, _, _ := runtime.Caller(0)
-	callingDir := filepath.Dir(callingFile)
-	dirParts := strings.Split(callingDir, string(os.PathSeparator))
-	var aristotelesElasticPath []string
-	for i, part := range dirParts {
-		if strings.Contains(part, "diogenes") {
-			aristotelesElasticPath = dirParts[0 : i+1]
-		}
-	}
-	l := "/"
-	for _, path := range aristotelesElasticPath {
-		l = filepath.Join(l, path)
-	}
-	eratosthenesDir := filepath.Join(l, "eratosthenes", "*.json")
-	fixtureFiles, err := filepath.Glob(eratosthenesDir)
-	if err != nil {
-		panic(fmt.Sprintf("Cannot glob fixture files: %s", err))
-	}
-
-	for _, fpath := range fixtureFiles {
-		f, err := ioutil.ReadFile(fpath)
-		if err != nil {
-			panic(fmt.Sprintf("Cannot read fixture file: %s", err))
-		}
-		fixtures[filepath.Base(fpath)] = ioutil.NopCloser(bytes.NewReader(f))
-	}
-}
-
-func fixture(fname string) io.ReadCloser {
-	out := new(bytes.Buffer)
-	b1 := bytes.NewBuffer([]byte{})
-	b2 := bytes.NewBuffer([]byte{})
-	tr := io.TeeReader(fixtures[fname], b1)
-
-	defer func() { fixtures[fname] = ioutil.NopCloser(b1) }()
-	io.Copy(b2, tr)
-	out.ReadFrom(b2)
-
-	return ioutil.NopCloser(out)
-}
+//go:embed eratosthenes/*.json
+var fixtureFiles embed.FS
 
 type MockVaultTransport struct {
-	Responses   []*http.Response
-	ResponseIdx int
+	Responses      []*http.Response
+	ResponseIdx    int
+	mu             sync.Mutex
+	responseBodies [][]byte
 }
 
 func (t *MockVaultTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	response := t.Responses[t.ResponseIdx]
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
+	if len(t.Responses) == 0 {
+		return nil, fmt.Errorf("mock Vault transport has no responses")
+	}
+
+	template := t.Responses[t.ResponseIdx]
 	t.ResponseIdx = (t.ResponseIdx + 1) % len(t.Responses)
+	if template == nil {
+		return nil, fmt.Errorf("mock Vault response is nil")
+	}
+	if len(t.responseBodies) != len(t.Responses) {
+		t.responseBodies = make([][]byte, len(t.Responses))
+	}
+	responseIndex := (t.ResponseIdx - 1 + len(t.Responses)) % len(t.Responses)
+	if t.responseBodies[responseIndex] == nil {
+		if template.Body == nil {
+			return nil, fmt.Errorf("mock Vault response body is nil")
+		}
+		body, err := io.ReadAll(template.Body)
+		if err != nil {
+			return nil, fmt.Errorf("read mock Vault response body: %w", err)
+		}
+		t.responseBodies[responseIndex] = body
+	}
+
+	response := new(http.Response)
+	*response = *template
+	response.Body = io.NopCloser(bytes.NewReader(t.responseBodies[responseIndex]))
+	response.Request = req
 	return response, nil
 }
 
-func CreateMockVaultClient(fixtureFiles []string, statusCode int) (Client, error) {
-	mockCode := 500
-	switch statusCode {
-	case 200:
-		mockCode = http.StatusOK
-	case 404:
-		mockCode = http.StatusNotFound
-	case 500:
-		mockCode = http.StatusInternalServerError
-	case 502:
-		mockCode = http.StatusBadGateway
-	default:
-		mockCode = 200
+func CreateMockVaultClient(fixtures []string, statusCode int) (Client, error) {
+	if statusCode < 100 || statusCode > 599 {
+		return nil, fmt.Errorf("invalid mock Vault HTTP status code %d", statusCode)
+	}
+	if len(fixtures) == 0 {
+		return nil, fmt.Errorf("at least one mock Vault fixture is required")
 	}
 
-	var responses []*http.Response
-	for _, fix := range fixtureFiles {
-		body := fixture(fmt.Sprintf("%s.json", fix))
-		response := &http.Response{
-			StatusCode: mockCode,
-			Body:       body,
+	responses := make([]*http.Response, 0, len(fixtures))
+	for _, fixtureName := range fixtures {
+		fixturePath := fmt.Sprintf("eratosthenes/%s.json", fixtureName)
+		body, err := fixtureFiles.ReadFile(fixturePath)
+		if err != nil {
+			return nil, fmt.Errorf("read mock Vault fixture %q: %w", fixtureName, err)
 		}
-		responses = append(responses, response)
-	}
 
-	mockTrans := &MockVaultTransport{
-		Responses:   responses,
-		ResponseIdx: 0,
+		responses = append(responses, &http.Response{
+			StatusCode: statusCode,
+			Status:     fmt.Sprintf("%d %s", statusCode, http.StatusText(statusCode)),
+			Header:     http.Header{"Content-Type": []string{"application/json"}},
+			Body:       io.NopCloser(bytes.NewReader(body)),
+		})
 	}
 
 	config := api.DefaultConfig()
-	config.Address = "http://example.com" // Replace with your Vault server address
-	config.HttpClient.Transport = mockTrans
+	config.Address = "http://example.com"
+	config.HttpClient.Transport = &MockVaultTransport{Responses: responses}
 
 	client, err := api.NewClient(config)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("create mock Vault client: %w", err)
 	}
 
-	return &Vault{Connection: client, SecretPath: defaultKVSecretData}, nil
+	return &Vault{
+		Connection:   client,
+		SecretPath:   defaultKVSecretData,
+		KVSecretPath: defaultKVSecretPath,
+	}, nil
 }

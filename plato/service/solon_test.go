@@ -71,7 +71,8 @@ func TestSolonClient(t *testing.T) {
 		assert.Nil(t, err)
 		sut, err := testClient.Solon().OneTimeToken(uuid)
 		assert.NotNil(t, err)
-		assert.Nil(t, sut)
+		assert.NotNil(t, sut)
+		defer sut.Body.Close()
 		assert.Contains(t, err.Error(), "500")
 	})
 
@@ -117,7 +118,8 @@ func TestSolonClient(t *testing.T) {
 		assert.Nil(t, err)
 		sut, err := testClient.Solon().Register(requestBody, uuid)
 		assert.NotNil(t, err)
-		assert.Nil(t, sut)
+		assert.NotNil(t, sut)
+		defer sut.Body.Close()
 		assert.Contains(t, err.Error(), "500")
 	})
 }

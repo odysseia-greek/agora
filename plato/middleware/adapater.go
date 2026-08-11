@@ -75,8 +75,14 @@ func ValidateRestMethod(method string) Adapter {
 			if r.Method != method {
 				startTime := time.Now()
 				var err models.MethodError
-				e := models.MethodMessages{method, "Method " + r.Method + " not allowed at this endpoint"}
-				err = models.MethodError{models.ErrorModel{UniqueCode: "methodError"}, append(err.Messages, e)}
+				e := models.MethodMessages{
+					Methods: method,
+					Message: "Method " + r.Method + " not allowed at this endpoint",
+				}
+				err = models.MethodError{
+					ErrorModel: models.ErrorModel{UniqueCode: "methodError"},
+					Messages:   append(err.Messages, e),
+				}
 				requestId := r.Header.Get(service.HeaderKey)
 				duration := time.Since(startTime)
 				logging.Api(http.StatusMethodNotAllowed, method, requestId, r.RemoteAddr, r.URL.Path, duration)
