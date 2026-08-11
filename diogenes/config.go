@@ -24,7 +24,8 @@ const (
 	AuthMethodKube          = "kubernetes"
 	AuthMethodToken         = "token"
 	defaultTLSFileLocation  = "/etc/certs"
-	serviceAccountTokenPath = "/var/run/secrets/kubernetes.io/serviceaccount/token"
+	EnvVaultKubernetesTokenPath    = "VAULT_KUBERNETES_TOKEN_PATH"
+	defaultServiceAccountTokenPath = "/var/run/secrets/kubernetes.io/serviceaccount/token"
 )
 
 func getStringFromEnv(envName, defaultValue string) string {
@@ -79,6 +80,7 @@ func CreateVaultClient(ctx context.Context, healthCheck bool) (Client, error) {
 	}
 
 	if vaultAuthMethod == AuthMethodKube {
+		serviceAccountTokenPath := getStringFromEnv(EnvVaultKubernetesTokenPath, defaultServiceAccountTokenPath)
 		jwt, err := os.ReadFile(serviceAccountTokenPath)
 		if err != nil {
 			log.Print(err)

@@ -24,6 +24,25 @@ func TestCreateVaultClientRejectsUnknownAuthMethod(t *testing.T) {
 	assert.Contains(t, err.Error(), `unsupported AUTH_METHOD "kubernets"`)
 }
 
+func TestVaultKubernetesTokenPath(t *testing.T) {
+	t.Run("defaults to the standard Kubernetes token", func(t *testing.T) {
+		t.Setenv(EnvVaultKubernetesTokenPath, "")
+
+		path := getStringFromEnv(EnvVaultKubernetesTokenPath, defaultServiceAccountTokenPath)
+
+		assert.Equal(t, defaultServiceAccountTokenPath, path)
+	})
+
+	t.Run("uses a dedicated projected Vault token", func(t *testing.T) {
+		const projectedTokenPath = "/var/run/secrets/vault/token"
+		t.Setenv(EnvVaultKubernetesTokenPath, projectedTokenPath)
+
+		path := getStringFromEnv(EnvVaultKubernetesTokenPath, defaultServiceAccountTokenPath)
+
+		assert.Equal(t, projectedTokenPath, path)
+	})
+}
+
 func TestCheckHealthyStatusValidatesDurations(t *testing.T) {
 	client, err := CreateMockVaultClient([]string{"health"}, http.StatusOK)
 	require.NoError(t, err)

@@ -52,6 +52,19 @@ Use an incoming request or job context when available. At process boundaries,
 derive a cancellable or timeout context instead of using an unbounded
 `context.Background()` for Vault operations.
 
+## Kubernetes authentication token
+
+By default, Kubernetes authentication reads the ServiceAccount token from
+`/var/run/secrets/kubernetes.io/serviceaccount/token`. Set
+`VAULT_KUBERNETES_TOKEN_PATH` when Vault uses a dedicated audience and its
+projected ServiceAccount token is mounted elsewhere:
+
+```yaml
+env:
+  - name: VAULT_KUBERNETES_TOKEN_PATH
+    value: /var/run/secrets/vault/token
+```
+
 ## Testing
 
 The embedded mock fixtures remain available without a live Vault server:
