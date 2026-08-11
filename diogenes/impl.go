@@ -33,6 +33,7 @@ type Client interface {
 	ReadPolicy(ctx context.Context, policyName string) (string, error)
 	ListPolicies(ctx context.Context) ([]string, error)
 	KubernetesAuthMethod(ctx context.Context, role, serviceAccountName, namespace, kubeHost string) error
+	KubernetesAuthMethodWithAudience(ctx context.Context, role, serviceAccountName, namespace, kubeHost, audience string) error
 	RaftJoin(ctx context.Context, leaderAddress string, cert, key, ca []byte) (*api.RaftJoinResponse, error)
 	Leader(ctx context.Context) (*api.LeaderResponse, error)
 }

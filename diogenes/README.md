@@ -65,6 +65,19 @@ env:
     value: /var/run/secrets/vault/token
 ```
 
+Configure the same audience on the Vault Kubernetes auth role:
+
+```go
+err := client.KubernetesAuthMethodWithAudience(
+	ctx,
+	"solon",
+	"solon-access-sa",
+	"delphi",
+	"https://kubernetes.default.svc",
+	"vault",
+)
+```
+
 ## Testing
 
 The embedded mock fixtures remain available without a live Vault server:

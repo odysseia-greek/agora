@@ -11,6 +11,18 @@ const (
 )
 
 func (v *Vault) KubernetesAuthMethod(ctx context.Context, role, serviceAccountName, namespace, kubeHost string) error {
+	return v.kubernetesAuthMethod(ctx, role, serviceAccountName, namespace, kubeHost, "")
+}
+
+func (v *Vault) KubernetesAuthMethodWithAudience(ctx context.Context, role, serviceAccountName, namespace, kubeHost, audience string) error {
+	if audience == "" {
+		return fmt.Errorf("Kubernetes auth audience cannot be empty")
+	}
+
+	return v.kubernetesAuthMethod(ctx, role, serviceAccountName, namespace, kubeHost, audience)
+}
+
+func (v *Vault) kubernetesAuthMethod(ctx context.Context, role, serviceAccountName, namespace, kubeHost, audience string) error {
 	path := fmt.Sprintf("auth/%s", defaultMountPath)
 
 	err := v.Connection.Sys().EnableAuthWithOptionsWithContext(ctx, defaultMountPath, &api.EnableAuthOptions{
@@ -43,6 +55,9 @@ func (v *Vault) KubernetesAuthMethod(ctx context.Context, role, serviceAccountNa
 		"bound_service_account_names":      fmt.Sprintf("vault,%s", serviceAccountName),
 		"bound_service_account_namespaces": namespace, // Replace with the namespace
 		"policies":                         role,      // Replace with the desired policies
+	}
+	if audience != "" {
+		roleData["audience"] = audience
 	}
 
 	_, err = v.Connection.Logical().WriteWithContext(ctx, rolePath, roleData)
